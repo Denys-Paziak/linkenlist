@@ -19,6 +19,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { ResourceModule } from './resource/resource.module';
 import { DealModule } from './deal/deal.module';
 import { LinkModule } from './link/link.module';
+import { S3StorageModule } from './s3-storage/s3-storage.module';
 
 @Module({
 	imports: [
@@ -38,7 +39,8 @@ import { LinkModule } from './link/link.module';
 		FavoriteModule,
 		ResourceModule,
 		DealModule,
-		LinkModule
+		LinkModule,
+		S3StorageModule
 	],
 	providers: [
 		{

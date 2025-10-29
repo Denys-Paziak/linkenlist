@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
 
 import { Authorization } from '@/decorators/auth.decorator'
 import { Files } from '@/decorators/files.decorator'
@@ -9,7 +9,8 @@ import { fetchImageAsIMultipartFile } from '@/utils/fetch-image.util'
 import { MultipartOptions, validateFile } from '@/utils/file.util'
 
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
-import { LinkService } from '../services/link.service'
+import { LinkCommandService } from '../services/link-command.service'
+import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
 
 const MAX_MB = 2
 const MAX_BYTES = MAX_MB * 1024 * 1024
@@ -17,7 +18,7 @@ const ACCEPT_IMAGES = /(image\/(jpeg|png|webp))$/
 
 @Controller('link')
 export class LinkController {
-	constructor(private readonly linkService: LinkService) {}
+	constructor(private readonly linkCommandService: LinkCommandService) {}
 
 	//@Authorization(ERoleNames.ADMIN)
 	@Post()
@@ -46,9 +47,11 @@ export class LinkController {
 			file = fetched
 		}
 
-		return {
-			dto,
-			file
-		}
+		await this.linkCommandService.createLink(dto, file)
+	}
+
+	@Delete()
+	async deleteLink(@Body() dto: DeleteLinkDto) {
+		await this.linkCommandService.deleteLink(dto)
 	}
 }

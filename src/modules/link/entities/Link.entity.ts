@@ -1,13 +1,9 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
 
 import { ELinkBranch } from '@/interfaces/ELinkBranch'
 import { ELinkCategory } from '@/interfaces/ELinkCategory'
-
-export enum LinkStatus {
-	PUBLISHED = 'published',
-	DRAFT = 'draft',
-	ARCHIVED = 'archived'
-}
+import { ELinkStatus } from '@/interfaces/ELinkStatus'
+import { LinkImage } from './LinkImage.entity'
 
 @Entity('links')
 @Unique(['slug'])
@@ -29,8 +25,9 @@ export class Link {
 	@Column({ type: 'text' })
 	url: string
 
-	@Column({ type: 'text' })
-	imageUrl: string
+	@OneToOne(() => LinkImage, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({name: 'image_id'})
+	image?: LinkImage | null
 
 	@Index()
 	@Column({ type: 'enum', enum: ELinkCategory })
@@ -42,8 +39,8 @@ export class Link {
 	@Column({ type: 'enum', enum: ELinkBranch, array: true })
 	branches: ELinkBranch[]
 
-	@Column({ type: 'enum', enum: LinkStatus, default: LinkStatus.PUBLISHED })
-	status: LinkStatus
+	@Column({ type: 'enum', enum: ELinkStatus, default: ELinkStatus.PUBLISHED })
+	status: ELinkStatus
 
 	@Column({ type: 'boolean', default: false })
 	verified: boolean
@@ -51,11 +48,8 @@ export class Link {
 	@Column({ type: 'timestamptz', nullable: true })
 	verifiedAt?: Date | null
 
-	@Column({ type: 'uuid', nullable: true })
-	verifiedBy?: string | null // admin userId
-
-	@Column({ type: 'timestamptz', nullable: true })
-	lastCheckedAt?: Date | null
+	@Column({ type: 'enum', enum: ['system', 'admin'], default: 'system' })
+	verifiedBy: 'system' | 'admin'
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

@@ -1,5 +1,6 @@
 import { BadRequestException, PayloadTooLargeException, UnprocessableEntityException } from '@nestjs/common'
 import { fileTypeFromBuffer } from 'file-type'
+import imageSize from 'image-size'
 import { lookup as dnsLookup } from 'node:dns/promises'
 import net from 'node:net'
 import { basename } from 'node:path'
@@ -93,6 +94,15 @@ export async function fetchImageAsIMultipartFile(urlStr: string, maxBytes: numbe
 	}
 	const buffer = Buffer.concat(chunks)
 
+	let width: number | undefined
+	let height: number | undefined
+
+	try {
+		const dimensions = imageSize(buffer)
+		width = dimensions.width
+		height = dimensions.height
+	} catch {}
+
 	const detected = await fileTypeFromBuffer(buffer)
 	const mime = detected?.mime || res.headers.get('content-type') || 'application/octet-stream'
 
@@ -102,5 +112,5 @@ export async function fetchImageAsIMultipartFile(urlStr: string, maxBytes: numbe
 	const ext = detected?.ext ? `.${detected.ext}` : ''
 	const filename = base.endsWith(ext) ? base : `${base}${ext}`
 
-	return { buffer, size: buffer.length, filename, mimetype: mime, fieldname: 'imgUrl' }
+	return { buffer, size: buffer.length, filename, mimetype: mime, fieldname: 'imgUrl', width, height }
 }

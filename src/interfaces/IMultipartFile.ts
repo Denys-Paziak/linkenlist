@@ -4,4 +4,6 @@ export interface IMultipartFile {
 	size: number
 	mimetype: string
 	fieldname: string
+	width?: number
+	height?: number
 }

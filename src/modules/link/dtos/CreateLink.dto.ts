@@ -15,7 +15,7 @@ export class CreateLinkDto {
 
 	@IsString()
 	@IsOptional()
-	shortDescription?: string
+	description?: string
 
 	@IsUrl()
 	url: string
