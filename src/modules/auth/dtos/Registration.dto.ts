@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsEmail, IsString, MaxLength, MinLength, Validate } from 'class-validator'
 
-import { IsPasswordsEqual } from '@/decorators/is-passwords-equal.decorator'
+import { IsPasswordsEqual } from '../../../decorators/is-passwords-equal.decorator'
 
 export class RegistrationDto {
 	@ApiProperty({

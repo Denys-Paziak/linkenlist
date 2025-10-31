@@ -1,11 +1,13 @@
 // s3-storage.service.ts
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { createHash, randomUUID } from 'node:crypto'
-import { extname } from 'node:path'
+import { basename, extname } from 'node:path'
+
 
 import { createS3Client } from './s3.client'
+import { generateRandomSuffix } from '../../utils/generate-random-suffix.util'
+import { generateSlug } from '../../utils/slug.util'
 
 @Injectable()
 export class S3StorageService {
@@ -23,17 +25,16 @@ export class S3StorageService {
 		this.region = this.configService.getOrThrow<string>('S3_REGION')
 	}
 
-	private buildKey(prefix: string, originalName: string, buffer?: Buffer) {
-		// prefix типу: 'avatars/USER_ID' або 'uploads/projects/42'
-		const p = prefix.replace(/^\/+|\/+$/g, '') // обрізаємо зайві '/'
+	private buildKey(path: string, entityId: number, originalName: string) {
+		const p = path.replace(/^\/+|\/+$/g, '')
 		const ext = (extname(originalName) || '').toLowerCase()
+		const slugName = generateSlug(basename(originalName, ext))
 		const d = new Date()
 		const yyyy = d.getUTCFullYear()
 		const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
 		const dd = String(d.getUTCDate()).padStart(2, '0')
-		const hash = buffer ? createHash('sha1').update(buffer).digest('hex').slice(0, 10) : randomUUID()
 		// структура: <prefix>/<YYYY>/<MM>/<DD>/<hash>-<uuid><ext>
-		return `${p}/${yyyy}/${mm}/${dd}/${hash}-${randomUUID()}${ext}`
+		return `${p}/${entityId}/${yyyy}-${mm}-${dd}-${slugName}-${generateRandomSuffix()}${ext}`
 	}
 
 	private publicUrlForKey(key: string) {
@@ -47,9 +48,20 @@ export class S3StorageService {
 	}
 
 	/** Завантаження буфера; повертає публічну стабільну URL */
-	async uploadPublic(buffer: Buffer, filename: string, contentType: string, prefix: string, cacheForever = true) {
-		const Key = this.buildKey(prefix, filename, buffer)
-        
+	async uploadPublic(
+		buffer: Buffer,
+		contentType: string,
+		cacheForever = true,
+		key:
+			| string
+			| {
+					filename: string
+					path: string
+					entityId: number
+			  }
+	) {
+		const Key = typeof key === 'string' ? key : this.buildKey(key.path, key.entityId, key.filename)
+
 		try {
 			await this.s3.send(
 				new PutObjectCommand({
@@ -70,5 +82,12 @@ export class S3StorageService {
 
 	async delete(key: string) {
 		await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }))
+	}
+
+	async getObjectAsBuffer(key: string): Promise<Buffer> {
+		const res = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }))
+		const chunks: Uint8Array[] = []
+		for await (const chunk of res.Body as any) chunks.push(chunk)
+		return Buffer.concat(chunks)
 	}
 }

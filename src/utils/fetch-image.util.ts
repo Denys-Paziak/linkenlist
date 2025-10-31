@@ -4,8 +4,8 @@ import imageSize from 'image-size'
 import { lookup as dnsLookup } from 'node:dns/promises'
 import net from 'node:net'
 import { basename } from 'node:path'
+import { IMultipartFile } from '../interfaces/IMultipartFile'
 
-import { IMultipartFile } from '@/interfaces/IMultipartFile'
 
 function isPrivateIp(ip: string) {
 	if (net.isIPv4(ip)) {

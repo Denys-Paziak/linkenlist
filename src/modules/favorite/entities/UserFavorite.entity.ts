@@ -1,10 +1,10 @@
 import { CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
 
-import { Deal } from '@/modules/deal/entities/Deal.entity'
-import { Link } from '@/modules/link/entities/Link.entity'
-import { Listing } from '@/modules/listing/entities/Listing.entity'
-import { Resource } from '@/modules/resource/entities/Resource.entity'
-import { User } from '@/modules/user/entities/User.entity'
+import { Deal } from '../../deal/entities/Deal.entity'
+import { Link } from '../../link/entities/Link.entity'
+import { Listing } from '../../listing/entities/Listing.entity'
+import { Resource } from '../../resource/entities/Resource.entity'
+import { User } from '../../user/entities/User.entity'
 
 @Entity('user_favorite_deals')
 @Unique(['user', 'deal'])

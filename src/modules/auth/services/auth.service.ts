@@ -11,12 +11,10 @@ import * as bcrypt from 'bcrypt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { IsNull, Not } from 'typeorm'
 
-import { ETokenTypes } from '@/interfaces/ETokenTypes'
-import { User } from '@/modules/user/entities/User.entity'
-import { generateRandomSuffix } from '@/utils/generate-random-suffix.util'
-
+import { ETokenTypes } from '../../../interfaces/ETokenTypes'
 import { UserCommandService } from '../../../modules/user/services/user-command.service'
 import { UserSystemService } from '../../../modules/user/services/user-system.service'
+import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { MailService } from '../../mail/mail.service'
 import { TokenService } from '../../token/token.service'
 import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
@@ -292,7 +290,10 @@ export class AuthService {
 
 		await this.tokenService.deleteToken(tokenFromDB)
 
-		const resultUpdatePassword = await this.userCommandService.updatePassword({ id: user.id, password: Not(IsNull()) }, hashPassword)
+		const resultUpdatePassword = await this.userCommandService.updatePassword(
+			{ id: user.id, password: Not(IsNull()) },
+			hashPassword
+		)
 
 		if (!tokenFromDB.user.emailVerified) {
 			const resultVerifyEmail = await this.userCommandService.verifyEmail(tokenFromDB.user.id)

@@ -1,10 +1,10 @@
 import { Controller, Get, Req } from '@nestjs/common'
 import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { FastifyRequest } from 'fastify'
-import { Authorization } from '@/decorators/auth.decorator'
-import { ERoleNames } from '@/interfaces/ERoleNames'
-import { ITokenUser } from '@/interfaces/ITokenUser'
 
+import { Authorization } from '../../../decorators/auth.decorator'
+import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetSelfResponse } from '../responses/GetSelf.response'
 import { UserQueryService } from '../services/user-query.service'
 
@@ -28,15 +28,9 @@ export class UserController {
 		return await this.userQueryService.getSelf(userFromToken.id, userFromToken.role)
 	}
 
-	async savePublicProfile() {
+	async savePublicProfile() {}
 
-	}
+	async switchFooterDisclaimer() {}
 
-	async switchFooterDisclaimer() {
-
-	}
-
-	async deleteAccount() {
-
-	}
+	async deleteAccount() {}
 }

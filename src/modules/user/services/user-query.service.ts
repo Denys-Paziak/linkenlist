@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
-import { ERoleNames } from '@/interfaces/ERoleNames'
 import { Repository } from 'typeorm'
+
+import { ERoleNames } from '../../../interfaces/ERoleNames'
 import { User } from '../entities/User.entity'
 import { GetSelfResponse } from '../responses/GetSelf.response'
 
@@ -10,7 +11,7 @@ import { GetSelfResponse } from '../responses/GetSelf.response'
 export class UserQueryService {
 	constructor(
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		private readonly userRepository: Repository<User>
 	) {}
 
 	async getSelf(userId: number, userRole: ERoleNames) {
@@ -19,12 +20,8 @@ export class UserQueryService {
 
 		await this.userRepository.update(userId, { lastActivity: new Date() })
 
-		return plainToInstance(
-			GetSelfResponse,
-			userFromDB,
-			{
-				excludeExtraneousValues: true
-			}
-		)
+		return plainToInstance(GetSelfResponse, userFromDB, {
+			excludeExtraneousValues: true
+		})
 	}
 }

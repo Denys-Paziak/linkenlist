@@ -1,4 +1,3 @@
-// interceptors/multipart.interceptor.ts
 import { MultipartValue } from '@fastify/multipart'
 import {
 	CallHandler,
@@ -15,9 +14,9 @@ import {
 import * as fastify from 'fastify'
 import { Observable } from 'rxjs'
 
-import { IMultipartFile } from '@/interfaces/IMultipartFile'
-import { coerceArrays } from '@/utils/coerce-arrays.util'
-import { getFileFromPart, MultipartOptions, validateFile } from '@/utils/file.util'
+import { IMultipartFile } from '../interfaces/IMultipartFile'
+import { coerceArrays } from '../utils/coerce-arrays.util'
+import { getFileFromPart, MultipartOptions, validateFile } from '../utils/file.util'
 
 export interface MultipartInterceptorOptions {
 	/** Глобальний ліміт розміру файлу (байти) — передається в parts({ limits }) */

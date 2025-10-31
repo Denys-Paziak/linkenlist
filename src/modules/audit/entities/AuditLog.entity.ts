@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
-import { User } from '@/modules/user/entities/User.entity'
+import { User } from '../../user/entities/User.entity'
 
 export enum AuditEntity {
 	LINK = 'link',

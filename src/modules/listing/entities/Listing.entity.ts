@@ -12,7 +12,7 @@ import {
 	UpdateDateColumn
 } from 'typeorm'
 
-import { User } from '@/modules/user/entities/User.entity'
+import { User } from '../../user/entities/User.entity'
 
 import { ListingAmenity } from './ListingAmenity.entity'
 import { ListingPhoto } from './ListingPhoto.entity'

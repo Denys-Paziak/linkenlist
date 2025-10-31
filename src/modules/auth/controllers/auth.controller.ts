@@ -4,7 +4,6 @@ import { ApiOAuth2, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
-import { ThrottleMessage } from '@/decorators/throttle-message.decorator'
 
 import { ConfirmEmailDto } from '../dtos/ConfirmEmail.dto'
 import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
@@ -13,6 +12,7 @@ import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResendConfirmationEmailDto } from '../dtos/ResendConfirmationEmail.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
 import { AuthService } from '../services/auth.service'
+import { ThrottleMessage } from '../../../decorators/throttle-message.decorator'
 
 @ApiTags('Authentication')
 @Controller('auth')

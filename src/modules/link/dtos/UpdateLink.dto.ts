@@ -1,36 +1,59 @@
 import { Type } from 'class-transformer'
-import { ArrayNotEmpty, IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator'
+import {
+	IsArray,
+	IsEnum,
+	IsInt,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	IsUrl,
+	Length,
+	Matches,
+	Min,
+	ValidateIf
+} from 'class-validator'
 
 import { ELinkBranch } from '../../../interfaces/ELinkBranch'
 import { ELinkCategory } from '../../../interfaces/ELinkCategory'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
+import { Nullable } from '../../../validators/nullable.transform'
 
-export class CreateLinkDto {
+export class UpdateLinkDto {
+	@IsInt()
+	@Min(1)
+	@Type(() => Number)
+	id: number
+
+	@Nullable()
+	@ValidateIf(o => o.imgUrl !== null)
 	@IsOptional()
 	@IsUrl()
-	imgUrl?: string
+	imgUrl?: string | null
 
+	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
-	title: string
+	title?: string
 
 	@IsString()
 	@IsOptional()
 	description?: string
 
+	@IsOptional()
 	@IsUrl()
-	url: string
+	url?: string
 
+	@IsOptional()
 	@IsEnum(ELinkCategory)
-	category: ELinkCategory
+	category?: ELinkCategory
 
+	@IsOptional()
 	@IsEnum(ELinkBranch, { each: true })
-	@ArrayNotEmpty()
 	@Type(() => String)
-	branches: ELinkBranch[]
+	branches?: ELinkBranch[]
 
+	@IsOptional()
 	@IsArray()
-	@ArrayNotEmpty()
 	@Type(() => String)
 	@IsString({ each: true })
 	@Matches(/^[A-Za-z0-9-]+$/, {
@@ -41,11 +64,13 @@ export class CreateLinkDto {
 		each: true,
 		message: 'Each tag must be between 2 and 30 characters long'
 	})
-	tags: string[]
+	tags?: string[]
 
+	@IsOptional()
 	@IsEnum(ELinkStatus)
-	status: ELinkStatus
+	status?: ELinkStatus
 
+	@IsOptional()
 	@IsEnum(['true', 'false'])
-	verified: 'true' | 'false'
+	verified?: 'true' | 'false'
 }

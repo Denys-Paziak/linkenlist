@@ -1,11 +1,10 @@
 import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
-import { ERoleNames } from '@/interfaces/ERoleNames'
-import { EUserStatus } from '@/interfaces/EUserStatus'
-
-import { Token } from '../../../modules/token/entities/Token.entity'
-import { AuditLog } from '@/modules/audit/entities/AuditLog.entity'
-import { Listing } from '@/modules/listing/entities/Listing.entity'
+import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { EUserStatus } from '../../../interfaces/EUserStatus'
+import { AuditLog } from '../../audit/entities/AuditLog.entity'
+import { Listing } from '../../listing/entities/Listing.entity'
+import { Token } from '../../token/entities/Token.entity'
 
 @Entity({ name: 'users' })
 export class User {
@@ -69,9 +68,8 @@ export class User {
 	@Column({ name: 'ban_reason', type: 'text', nullable: true })
 	banReason: string | null
 
-	// Relations
-	@OneToMany(() => Listing, l => l.owner) 
-	listings: Listing[];
+	@OneToMany(() => Listing, l => l.owner)
+	listings: Listing[]
 
 	@OneToMany(() => Token, token => token.user)
 	tokens: Token[]

@@ -1,9 +1,23 @@
-import { Column, CreateDateColumn, Entity, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
+import {
+	Column,
+	CreateDateColumn,
+	Entity,
+	Index,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	OneToOne,
+	PrimaryGeneratedColumn,
+	Unique,
+	UpdateDateColumn
+} from 'typeorm'
 
-import { ELinkBranch } from '@/interfaces/ELinkBranch'
-import { ELinkCategory } from '@/interfaces/ELinkCategory'
-import { ELinkStatus } from '@/interfaces/ELinkStatus'
+import { ELinkBranch } from '../../../interfaces/ELinkBranch'
+import { ELinkCategory } from '../../../interfaces/ELinkCategory'
+import { ELinkStatus } from '../../../interfaces/ELinkStatus'
+
 import { LinkImage } from './LinkImage.entity'
+import { LinkTag } from './LinkTag.entity'
 
 @Entity('links')
 @Unique(['slug'])
@@ -26,15 +40,16 @@ export class Link {
 	url: string
 
 	@OneToOne(() => LinkImage, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
-	@JoinColumn({name: 'image_id'})
+	@JoinColumn({ name: 'image_id' })
 	image?: LinkImage | null
 
 	@Index()
 	@Column({ type: 'enum', enum: ELinkCategory })
 	category: ELinkCategory
 
-	@Column({ type: 'text', array: true, default: '{}' })
-	tags: string[]
+	@ManyToMany(() => LinkTag)
+	@JoinTable({ name: 'link_tags_join' })
+	tags: LinkTag[]
 
 	@Column({ type: 'enum', enum: ELinkBranch, array: true })
 	branches: ELinkBranch[]
@@ -48,8 +63,8 @@ export class Link {
 	@Column({ type: 'timestamptz', nullable: true })
 	verifiedAt?: Date | null
 
-	@Column({ type: 'enum', enum: ['system', 'admin'], default: 'system' })
-	verifiedBy: 'system' | 'admin'
+	@Column({ type: 'enum', enum: ['system', 'admin'], nullable: true })
+	verifiedBy?: 'system' | 'admin' | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

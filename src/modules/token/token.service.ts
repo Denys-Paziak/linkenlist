@@ -2,11 +2,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
-import { FindOneOptions, Repository } from 'typeorm'
 import { randomUUID as uuid } from 'node:crypto'
+import { FindOneOptions, Repository } from 'typeorm'
 
-import { ETokenTypes } from '@/interfaces/ETokenTypes'
-import { ITokenUser } from '@/interfaces/ITokenUser'
+import { ETokenTypes } from '../../interfaces/ETokenTypes'
+import { ITokenUser } from '../../interfaces/ITokenUser'
 
 import { Token } from './entities/Token.entity'
 

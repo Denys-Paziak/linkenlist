@@ -1,4 +1,7 @@
 import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+
+import { ELinkImageStatus } from '../../../interfaces/ELinkImage'
+
 import { Link } from './Link.entity'
 
 @Entity('links_images')
@@ -12,14 +15,20 @@ export class LinkImage {
 	@Column({ type: 'text' })
 	url: string
 
-	@Column({ type: 'text' })
-	key: string
+	@Column({ type: 'text', name: 'original_key', nullable: true })
+	originalKey?: string | null
+
+	@Column({ type: 'text', name: 'processed_key', nullable: true })
+	processedKey?: string | null
 
 	@Column({ type: 'int' })
 	width: number
 
 	@Column({ type: 'int' })
 	height: number
+
+	@Column({ type: 'enum', enum: ELinkImageStatus, default: ELinkImageStatus.PROCESSING })
+	status: ELinkImageStatus
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	createdAt: Date

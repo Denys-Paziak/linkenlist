@@ -3,7 +3,7 @@ import { FileTypeValidator, FileValidator, MaxFileSizeValidator } from '@nestjs/
 import { fileTypeFromBuffer } from 'file-type'
 import imageSize from 'image-size'
 
-import { IMultipartFile } from '@/interfaces/IMultipartFile'
+import { IMultipartFile } from '../interfaces/IMultipartFile'
 
 export class MultipartOptions {
 	constructor(
