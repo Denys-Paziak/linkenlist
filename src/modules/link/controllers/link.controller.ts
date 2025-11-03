@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Patch, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
 
 import { Files } from '../../../decorators/files.decorator'
+import { ParamId } from '../../../dtos/ParamId.dto'
 import { MultipartInterceptor } from '../../../interceptors/multipart.interceptor'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { fetchImageAsIMultipartFile } from '../../../utils/fetch-image.util'
@@ -22,14 +23,18 @@ export class LinkController {
 		private readonly linkQueryService: LinkQueryService
 	) {}
 
+	@Get()
+	async getAllLinks() {
+		return this.linkQueryService.getAllLinks()
+	}
+
 	//@Authorization(ERoleNames.ADMIN)
 	@Post()
 	@UseInterceptors(
 		MultipartInterceptor({
 			globalFileSizeLimit: MAX_BYTES,
 			maxFiles: 1,
-			validators: [new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)],
-			arrayKeys: ['branches', 'tags']
+			validators: [new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)]
 		})
 	)
 	async createLink(@Files() files: Record<string, IMultipartFile[]>, @Body() dto: CreateLinkDto) {
@@ -49,20 +54,21 @@ export class LinkController {
 			file = fetched
 		}
 
+		if (!file) throw new BadRequestException('No image available')
+
 		await this.linkCommandService.createLink(dto, file)
 	}
 
-	@Patch()
+	@Patch(':id')
 	@UseInterceptors(
 		MultipartInterceptor({
 			globalFileSizeLimit: MAX_BYTES,
 			maxFiles: 1,
-			validators: [new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)],
-			arrayKeys: ['branches', 'tags']
+			validators: [new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)]
 		})
 	)
-	async updateLink(@Files() files: Record<string, IMultipartFile[]>, @Body() dto: UpdateLinkDto) {
-		let file: IMultipartFile | undefined | null
+	async updateLink(@Files() files: Record<string, IMultipartFile[]>, @Param() params: ParamId, @Body() dto: UpdateLinkDto) {
+		let file: IMultipartFile | undefined
 		const firstField = files && Object.keys(files)[0]
 
 		if (firstField && files![firstField]?.length) {
@@ -75,16 +81,16 @@ export class LinkController {
 				throw new UnprocessableEntityException(err)
 			}
 			file = fetched
-		} else if (typeof dto.imgUrl !== 'string') {
-			file = dto.imgUrl
-		} 
+		}
 
-		await this.linkCommandService.updateLink(dto, file)
+		if (!file) throw new BadRequestException('No image available')
+
+		await this.linkCommandService.updateLink(params.id, dto, file)
 	}
 
-	@Delete()
-	async deleteLink(@Body() dto: DeleteLinkDto) {
-		await this.linkCommandService.deleteLink(dto)
+	@Delete(':id')
+	async deleteLink(@Param() params: ParamId, @Body() dto: DeleteLinkDto) {
+		await this.linkCommandService.deleteLink(params.id, dto)
 	}
 
 	@Get('tags')

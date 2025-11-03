@@ -15,10 +15,10 @@ export class LinkImage {
 	@Column({ type: 'text' })
 	url: string
 
-	@Column({ type: 'text', name: 'original_key', nullable: true })
+	@Column({ type: 'text', name: 'original_key', nullable: true, select: false })
 	originalKey?: string | null
 
-	@Column({ type: 'text', name: 'processed_key', nullable: true })
+	@Column({ type: 'text', name: 'processed_key', nullable: true, select: false })
 	processedKey?: string | null
 
 	@Column({ type: 'int' })
@@ -27,7 +27,7 @@ export class LinkImage {
 	@Column({ type: 'int' })
 	height: number
 
-	@Column({ type: 'enum', enum: ELinkImageStatus, default: ELinkImageStatus.PROCESSING })
+	@Column({ type: 'enum', enum: ELinkImageStatus, default: ELinkImageStatus.QUEUED })
 	status: ELinkImageStatus
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })

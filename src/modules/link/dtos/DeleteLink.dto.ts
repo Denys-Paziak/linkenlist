@@ -1,4 +1,6 @@
+import { IsEnum } from 'class-validator'
+
 export class DeleteLinkDto {
-    id: number
-    method: 'soft' | 'hard'
+	@IsEnum(['soft', 'hard'])
+	method: 'soft' | 'hard'
 }

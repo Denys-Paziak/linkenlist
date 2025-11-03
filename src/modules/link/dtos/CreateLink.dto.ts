@@ -1,5 +1,16 @@
 import { Type } from 'class-transformer'
-import { ArrayNotEmpty, IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator'
+import {
+	ArrayNotEmpty,
+	IsArray,
+	IsBoolean,
+	IsEnum,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	IsUrl,
+	Length,
+	Matches
+} from 'class-validator'
 
 import { ELinkBranch } from '../../../interfaces/ELinkBranch'
 import { ELinkCategory } from '../../../interfaces/ELinkCategory'
@@ -46,6 +57,6 @@ export class CreateLinkDto {
 	@IsEnum(ELinkStatus)
 	status: ELinkStatus
 
-	@IsEnum(['true', 'false'])
-	verified: 'true' | 'false'
+	@IsBoolean()
+	verified: boolean
 }

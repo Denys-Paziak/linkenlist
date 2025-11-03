@@ -15,209 +15,189 @@ import { Link } from '../entities/Link.entity'
 import { LinkImage } from '../entities/LinkImage.entity'
 import { LinkTag } from '../entities/LinkTag.entity'
 
+type UploadedImage = { key: string; url: string; width?: number; height?: number }
+
 @Injectable()
 export class LinkCommandService {
 	constructor(
-		@InjectRepository(Link)
-		private readonly linkRepository: Repository<Link>,
-		@InjectRepository(LinkImage)
-		private readonly linkImageRepository: Repository<LinkImage>,
-
+		@InjectRepository(Link) private readonly linkRepository: Repository<Link>,
+		@InjectRepository(LinkImage) private readonly linkImageRepository: Repository<LinkImage>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
-
 		private readonly s3StorageService: S3StorageService
 	) {}
 
-	async createLink(dto: CreateLinkDto, file?: IMultipartFile) {
-		const slug = await this.generateSlug(dto.title)
-
-		const link = await this.dataSource.transaction(async manager => {
-			const { title, description, branches, category, tags, status, url } = dto
-			const verified = dto.verified === 'true'
-
-			const tagEntities = await this.saveTags(tags, manager)
-
-			return await manager.getRepository(Link).save({
-				title,
-				description,
-				branches,
-				category,
-				tags: tagEntities,
-				slug,
-				status,
-				url,
-				verified: verified,
-				verifiedAt: verified ? new Date() : undefined,
-				verifiedBy: verified ? 'admin' : null
-			})
-		})
-
-		if (link) {
-			const imageData = file ? await this.saveImage(file, link.id) : null
-
-			const { image } = await this.linkRepository.save({
-				id: link.id,
-				image: imageData
-					? {
-							originalKey: imageData.key,
-							height: imageData.height,
-							width: imageData.width,
-							url: imageData.url
-						}
-					: null
-			})
-
-			if (image && imageData) {
-				this.imageQueueService.enqueueProcess({ linkId: link.id, linkImageId: image.id, srcKey: imageData.key })
-			}
-		}
-	}
-
-	async updateLink(dto: UpdateLinkDto, file?: IMultipartFile | null) {
-		const existsLink = await this.linkRepository.findOne({ where: { id: dto.id }, relations: ['image'] })
-		if (!existsLink) throw new NotFoundException('Link not found.')
-
-		let newImageData:
-			| {
-					key: string
-					url: string
-					width?: number
-					height?: number
-			  }
-			| undefined
-			| null = !file ? file : undefined
-
-		let newSlug: string | undefined = undefined
-		let newTags: LinkTag[] | undefined = undefined
-
-		if (file !== undefined) {
-			if (existsLink.image) {
-				if (existsLink.image?.originalKey) {
-					await this.s3StorageService.delete(existsLink.image.originalKey)
-				}
-				if (existsLink.image?.processedKey) {
-					await this.s3StorageService.delete(existsLink.image.processedKey)
-				}
-			}
-			if (file !== null) {
-				newImageData = await this.saveImage(file, existsLink.id)
-			}
-		}
-
-		if (dto.title) {
-			newSlug = await this.generateSlug(dto.title)
-		}
-
-		const link = await this.dataSource.transaction(async manager => {
-			const { id, title, description, branches, category, tags, status, url } = dto
-			const verified = dto.verified === undefined ? undefined : dto.verified === 'true'
-
-			if (tags?.length) {
-				newTags = await this.saveTags(tags, manager)
-			}
-
-			if (newImageData === null && existsLink.image) {
-				await this.linkImageRepository.delete(existsLink.image.id)
-			}
-
-			return await manager.getRepository(Link).save({
-				id,
-				title,
-				description,
-				branches: branches?.length ? branches : undefined,
-				category,
-				tags: newTags?.length ? newTags : undefined,
-				slug: newSlug,
-				status,
-				url,
-				image: newImageData
-					? {
-							originalKey: newImageData.key,
-							height: newImageData.height,
-							width: newImageData.width,
-							url: newImageData.url
-						}
-					: newImageData,
-				verified: verified,
-				verifiedAt: verified ? new Date() : undefined,
-				verifiedBy: verified === undefined ? undefined : verified ? 'admin' : null
-			})
-		})
-		
-		if (newImageData && link.image) {
-			this.imageQueueService.enqueueProcess({
-				linkId: link.id,
-				linkImageId: link.image.id,
-				srcKey: newImageData.key
-			})
-		}
-	}
-
-	async deleteLink(dto: DeleteLinkDto) {
-		if (dto.method === 'soft') {
-			await this.linkRepository.update(dto.id, { status: ELinkStatus.ARCHIVED })
-		}
-
-		if (dto.method === 'hard') {
-			const link = await this.linkRepository.findOne({ where: { id: dto.id } })
-
-			if (link?.image) {
-				if (link.image?.originalKey) {
-					await this.s3StorageService.delete(link.image.originalKey)
-				}
-				if (link.image?.processedKey) {
-					await this.s3StorageService.delete(link.image.processedKey)
-				}
-				await this.linkImageRepository.delete(link.image.id)
-			}
-
-			await this.linkRepository.delete(dto.id)
-		}
-	}
-
-	private async saveImage(file: IMultipartFile, linkId: number) {
+	private async saveImage(file: IMultipartFile, linkId: number): Promise<UploadedImage> {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
 			path: 'links',
 			entityId: linkId
 		})
-
-		return {
-			key,
-			url,
-			width: file.width,
-			height: file.height
-		}
+		return { key, url, width: file.width, height: file.height }
 	}
 
-	private async generateSlug(title: string) {
+	private async generateSlugUnique(title: string) {
 		let slug = generateSlug(title)
-
 		const exists = await this.linkRepository.exists({ where: { slug } })
-		if (exists) {
-			const randomSuffix = generateRandomSuffix()
-			slug = `${slug}-${randomSuffix}`
-		}
-
+		if (exists) slug = `${slug}-${generateRandomSuffix()}`
 		return slug
 	}
 
-	private async saveTags(tags: string[], manager: EntityManager) {
-		const tagsFormat = tags.map(name => name.trim().toLowerCase())
+	private async upsertTagsByNames(names: string[] | null, manager: EntityManager): Promise<LinkTag[] | null | undefined> {
+		if (names === undefined) return undefined
+		if (names === null) return []
 
+		const tags = names.map(n => n.trim().toLowerCase()).filter(Boolean)
+		if (tags.length === 0) return []
 		await manager
 			.createQueryBuilder()
 			.insert()
 			.into(LinkTag)
-			.values(tagsFormat.map(name => ({ name })))
+			.values(tags.map(name => ({ name })))
 			.onConflict('("name") DO NOTHING')
 			.execute()
-
-		return await manager
+		return manager
 			.getRepository(LinkTag)
 			.createQueryBuilder('tag')
-			.where('tag.name IN (:...names)', { names: tagsFormat })
+			.where('tag.name IN (:...names)', { names: tags })
 			.getMany()
+	}
+
+	async createLink(dto: CreateLinkDto, file: IMultipartFile) {
+		const slug = await this.generateSlugUnique(dto.title)
+		const link = await this.dataSource.transaction(async manager => {
+			const tags = await this.upsertTagsByNames(dto.tags ?? [], manager)
+
+			return manager.getRepository(Link).save({
+				title: dto.title,
+				description: dto.description,
+				branches: dto.branches,
+				category: dto.category,
+				tags: tags ?? [],
+				slug,
+				status: dto.status,
+				url: dto.url,
+				verified: dto.verified ?? false,
+				verifiedAt: dto.verified ? new Date() : null,
+				verifiedBy: dto.verified ? 'admin' : null
+			})
+		})
+
+		if (!link) return
+
+		const uploaded = await this.saveImage(file, link.id)
+		const { image } = await this.linkRepository.save({
+			id: link.id,
+			image: {
+				originalKey: uploaded.key,
+				height: uploaded.height,
+				width: uploaded.width,
+				url: uploaded.url
+			}
+		})
+
+		this.imageQueueService.enqueueProcess({ linkId: link.id, linkImageId: image.id, srcKey: uploaded.key })
+	}
+
+	async updateLink(linkId: number, dto: UpdateLinkDto, file?: IMultipartFile) {
+		const exists = await this.linkRepository.findOne({ where: { id: linkId }, relations: ['image'] })
+		if (!exists) throw new NotFoundException('Link not found.')
+
+		let newImage: UploadedImage | undefined = undefined
+		const oldKeys: string[] = []
+
+		if (file) {
+			newImage = await this.saveImage(file, exists.id)
+			if (exists.image?.originalKey) oldKeys.push(exists.image.originalKey)
+			if (exists.image?.processedKey) oldKeys.push(exists.image.processedKey)
+		}
+
+		let slugToSet: string | undefined = undefined
+		if (dto.title) {
+			slugToSet = await this.generateSlugUnique(dto.title)
+		}
+
+		const updated = await this.dataSource.transaction(async manager => {
+			const repo = manager.getRepository(Link)
+
+			const tagsToSet = await this.upsertTagsByNames(dto.tags as any, manager)
+
+			if (newImage !== undefined && exists.image) {
+				await this.linkImageRepository.delete(exists.image.id)
+			}
+
+			const verified = dto.verified
+
+			return repo.save({
+				id: linkId,
+
+				title: dto.title,
+				description: dto.description,
+				branches: dto.branches,
+				category: dto.category,
+
+				tags: tagsToSet === undefined ? undefined : (tagsToSet ?? []),
+
+				slug: slugToSet,
+
+				status: dto.status,
+				url: dto.url,
+
+				image:
+					newImage === undefined
+						? undefined
+						: {
+								originalKey: newImage.key,
+								height: newImage.height,
+								width: newImage.width,
+								url: newImage.url
+							},
+
+				verified: verified === undefined ? undefined : !!verified,
+				verifiedAt: verified === undefined ? undefined : verified ? new Date() : null,
+				verifiedBy: verified === undefined ? undefined : verified ? 'admin' : null
+			})
+		})
+
+		for (const key of oldKeys) {
+			try {
+				await this.s3StorageService.delete(key)
+			} catch {}
+		}
+
+		if (newImage && updated.image) {
+			this.imageQueueService.enqueueProcess({
+				linkId: updated.id,
+				linkImageId: updated.image.id,
+				srcKey: newImage.key
+			})
+		}
+	}
+
+	async deleteLink(linkId: number, dto: DeleteLinkDto) {
+		if (dto.method === 'soft') {
+			await this.linkRepository.update(linkId, { status: ELinkStatus.ARCHIVED })
+			return
+		}
+
+		if (dto.method === 'hard') {
+			const link = await this.linkRepository.findOne({ where: { id: linkId } })
+			if (!link) return
+
+			const keysToDelete: string[] = []
+			if (link.image?.originalKey) keysToDelete.push(link.image.originalKey)
+			if (link.image?.processedKey) keysToDelete.push(link.image.processedKey)
+
+			await this.dataSource.transaction(async manager => {
+				if (link.image) await this.linkImageRepository.delete(link.image.id)
+				await manager.getRepository(Link).delete(linkId)
+			})
+
+			for (const key of keysToDelete) {
+				try {
+					await this.s3StorageService.delete(key)
+				} catch {}
+			}
+		}
 	}
 }

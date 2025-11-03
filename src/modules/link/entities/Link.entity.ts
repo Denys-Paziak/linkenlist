@@ -41,7 +41,7 @@ export class Link {
 
 	@OneToOne(() => LinkImage, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'image_id' })
-	image?: LinkImage | null
+	image?: LinkImage
 
 	@Index()
 	@Column({ type: 'enum', enum: ELinkCategory })

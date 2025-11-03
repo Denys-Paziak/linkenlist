@@ -15,7 +15,6 @@ import * as fastify from 'fastify'
 import { Observable } from 'rxjs'
 
 import { IMultipartFile } from '../interfaces/IMultipartFile'
-import { coerceArrays } from '../utils/coerce-arrays.util'
 import { getFileFromPart, MultipartOptions, validateFile } from '../utils/file.util'
 
 export interface MultipartInterceptorOptions {
@@ -25,12 +24,10 @@ export interface MultipartInterceptorOptions {
 	maxFiles?: number
 	/** Набір правил валідації, що застосовуються до кожного файлу */
 	validators?: MultipartOptions[]
-	/** Які текстові поля нормалізувати як масиви */
-	arrayKeys?: string[]
 }
 
 export function MultipartInterceptor(opts: MultipartInterceptorOptions = {}): Type<NestInterceptor> {
-	const { globalFileSizeLimit, maxFiles = 1, validators = [], arrayKeys = ['branches', 'tags'] } = opts
+	const { globalFileSizeLimit, maxFiles = 1, validators = [] } = opts
 
 	@Injectable()
 	class MixinInterceptor implements NestInterceptor {
@@ -89,7 +86,7 @@ export function MultipartInterceptor(opts: MultipartInterceptorOptions = {}): Ty
 			}
 
 			req.storedFiles = files
-			req.body = coerceArrays(body, arrayKeys)
+			req.body = JSON.parse(body.payload)
 
 			return next.handle()
 		}

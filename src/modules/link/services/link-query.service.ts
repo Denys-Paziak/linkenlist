@@ -8,9 +8,15 @@ import { LinkTag } from '../entities/LinkTag.entity'
 @Injectable()
 export class LinkQueryService {
 	constructor(
+		@InjectRepository(Link)
+		private readonly linkRepository: Repository<Link>,
 		@InjectRepository(LinkTag)
 		private readonly linkTagRepository: Repository<LinkTag>
 	) {}
+
+	async getAllLinks() {
+		return await this.linkRepository.find()
+	}
 
 	async getAllLinkTags() {
 		return await this.linkTagRepository
