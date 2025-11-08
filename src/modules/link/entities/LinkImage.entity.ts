@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
-import { ELinkImageStatus } from '../../../interfaces/ELinkImage'
+import { ELinkImageStatus } from '../../../interfaces/ELinkImageStatus'
 
 import { Link } from './Link.entity'
 

@@ -47,7 +47,7 @@ export class LinkCommandService {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
-		const tags = names.map(n => n.trim().toLowerCase()).filter(Boolean)
+		const tags = names.map(n => n.trim()).filter(Boolean)
 		if (tags.length === 0) return []
 		await manager
 			.createQueryBuilder()

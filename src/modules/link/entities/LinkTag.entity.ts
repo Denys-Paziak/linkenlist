@@ -6,7 +6,6 @@ export class LinkTag {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@Index()
 	@Column({ type: 'text' })
 	name: string
 

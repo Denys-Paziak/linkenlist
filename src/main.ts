@@ -44,6 +44,6 @@ async function bootstrap() {
 	const documentFactory = () => SwaggerModule.createDocument(app, configSwagger)
 	SwaggerModule.setup('api', app, documentFactory)
 
-	await app.listen(config.getOrThrow('SERVER_PORT'))
+	await app.listen({ port: config.getOrThrow<number>('SERVER_PORT'), host: '0.0.0.0' })
 }
 bootstrap()

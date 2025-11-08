@@ -4,7 +4,8 @@ import { ApiOAuth2, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
-
+import { ThrottleMessage } from '../../../decorators/throttle-message.decorator'
+import { ERoleNames } from '../../../interfaces/ERoleNames'
 import { ConfirmEmailDto } from '../dtos/ConfirmEmail.dto'
 import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
@@ -12,7 +13,6 @@ import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResendConfirmationEmailDto } from '../dtos/ResendConfirmationEmail.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
 import { AuthService } from '../services/auth.service'
-import { ThrottleMessage } from '../../../decorators/throttle-message.decorator'
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -74,7 +74,7 @@ export class AuthController {
 			path: '/'
 		})
 		response.setCookie('access_token', data.accessToken, {
-			maxAge: 30 * 60,
+			maxAge: 5 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',
@@ -92,7 +92,7 @@ export class AuthController {
 	@ApiResponse({ status: 200, description: 'Successful login' })
 	@ApiResponse({ status: 401, description: 'Invalid password or login' })
 	async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: FastifyReply) {
-		const data = await this.authService.login(dto)
+		const data = await this.authService.login(dto, ERoleNames.USER)
 
 		response.setCookie('refresh_token', data.refreshToken, {
 			maxAge: 30 * 24 * 60 * 60,
@@ -102,12 +102,14 @@ export class AuthController {
 			path: '/'
 		})
 		response.setCookie('access_token', data.accessToken, {
-			maxAge: 30 * 60,
+			maxAge: 5 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',
 			path: '/'
 		})
+
+		return { ok: true }
 	}
 
 	@HttpCode(200)
@@ -123,12 +125,14 @@ export class AuthController {
 			path: '/'
 		})
 		response.clearCookie('access_token', {
-			maxAge: 30 * 60,
+			maxAge: 5 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',
 			path: '/'
 		})
+
+		return { ok: true }
 	}
 
 	@HttpCode(200)
@@ -137,6 +141,8 @@ export class AuthController {
 	@ApiResponse({ status: 200, description: 'Password reset link sent to email' })
 	async forgotPassword(@Body() dto: ForgotPasswordDto) {
 		await this.authService.forgotPassword(dto)
+
+		return { ok: true }
 	}
 
 	@HttpCode(200)
@@ -146,11 +152,13 @@ export class AuthController {
 	@ApiResponse({ status: 400, description: 'Invalid token for password reset' })
 	async resetPassword(@Body() dto: ResetPasswordDto) {
 		await this.authService.resetPassword(dto)
+
+		return { ok: true }
 	}
 
 	async changeEmail() {}
 
-	@Get('refresh')
+	@Post('refresh')
 	@ApiOperation({ summary: 'Update access and refresh tokens' })
 	@ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
 	@ApiResponse({ status: 401, description: 'Invalid refresh token' })
@@ -166,11 +174,13 @@ export class AuthController {
 			path: '/'
 		})
 		response.cookie('access_token', data.accessToken, {
-			maxAge: 30 * 60,
+			maxAge: 5 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',
 			path: '/'
 		})
+
+		return { ok: true }
 	}
 }

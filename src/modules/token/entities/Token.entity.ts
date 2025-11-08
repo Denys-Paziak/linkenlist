@@ -1,14 +1,15 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
 
 import { ETokenTypes } from '../../../interfaces/ETokenTypes'
 import { User } from '../../../modules/user/entities/User.entity'
 
+@Unique('UQ_tokens_token_user', ['tokenOrCode', 'user'])
 @Entity({ name: 'tokens' })
 export class Token {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@Column({ type: 'varchar', unique: true })
+	@Column({ type: 'varchar' })
 	tokenOrCode: string
 
 	@Column({

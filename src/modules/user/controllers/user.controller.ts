@@ -14,7 +14,7 @@ import { UserQueryService } from '../services/user-query.service'
 export class UserController {
 	constructor(private readonly userQueryService: UserQueryService) {}
 
-	@Authorization(ERoleNames.USER, ERoleNames.ADMIN)
+	@Authorization(ERoleNames.USER)
 	@Get('self')
 	@ApiOperation({ summary: 'Get self information' })
 	@ApiResponse({
@@ -25,7 +25,7 @@ export class UserController {
 	async getSelf(@Req() request: FastifyRequest): Promise<GetSelfResponse> {
 		const userFromToken = request.user as ITokenUser
 
-		return await this.userQueryService.getSelf(userFromToken.id, userFromToken.role)
+		return await this.userQueryService.getSelf(userFromToken.id, ERoleNames.USER)
 	}
 
 	async savePublicProfile() {}

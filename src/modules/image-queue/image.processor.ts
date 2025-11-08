@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
 import sharp from 'sharp'
 
-import { ELinkImageStatus } from '../../interfaces/ELinkImage'
+import { ELinkImageStatus } from '../../interfaces/ELinkImageStatus'
 import { replaceExt } from '../../utils/replace-ext.utils'
 import { LinkSystemService } from '../link/services/link-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'

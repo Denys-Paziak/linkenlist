@@ -10,6 +10,7 @@ import { getJWTConfig } from '../configs/jwt.config'
 import { getPostgresConfig } from '../configs/postgres.config'
 import { getThrottlerConfig } from '../configs/throttler.config'
 
+import { AppController } from './app.controller'
 import { AuditModule } from './audit/audit.module'
 import { AuthModule } from './auth/auth.module'
 import { DealModule } from './deal/deal.module'
@@ -27,8 +28,7 @@ import { UserModule } from './user/user.module'
 	imports: [
 		ScheduleModule.forRoot(),
 		ConfigModule.forRoot({
-			isGlobal: true,
-			envFilePath: '.env.development.local'
+			isGlobal: true
 		}),
 		TypeOrmModule.forRootAsync(getPostgresConfig()),
 		JwtModule.registerAsync(getJWTConfig()),
@@ -46,6 +46,7 @@ import { UserModule } from './user/user.module'
 		S3StorageModule,
 		ImageQueueModule
 	],
+	controllers: [AppController],
 	providers: [
 		{
 			provide: APP_GUARD,

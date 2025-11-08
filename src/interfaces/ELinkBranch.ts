@@ -1,5 +1,4 @@
 export enum ELinkBranch {
-	ALL = 'All',
 	ARMY = 'Army',
 	NAVY = 'Navy',
 	AIR_FORCE = 'Air Force',

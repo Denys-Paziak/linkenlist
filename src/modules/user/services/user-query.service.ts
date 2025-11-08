@@ -14,14 +14,21 @@ export class UserQueryService {
 		private readonly userRepository: Repository<User>
 	) {}
 
-	async getSelf(userId: number, userRole: ERoleNames) {
+	async getSelf(userId: number, userRole: ERoleNames): Promise<GetSelfResponse> {
 		const userFromDB = await this.userRepository.findOne({ where: { id: userId, role: userRole } })
 		if (!userFromDB) throw new NotFoundException('No such user found')
 
 		await this.userRepository.update(userId, { lastActivity: new Date() })
 
-		return plainToInstance(GetSelfResponse, userFromDB, {
-			excludeExtraneousValues: true
-		})
+		return {
+			id: userFromDB.id,
+			firstName: userFromDB.firstName,
+			lastName: userFromDB.lastName,
+			email: userFromDB.privateEmail,
+			phone: userFromDB.phone,
+			lastActivity: userFromDB.lastActivity,
+			updatedAt: userFromDB.updatedAt,
+			createdAt: userFromDB.createdAt
+		}
 	}
 }

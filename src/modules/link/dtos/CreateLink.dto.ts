@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer'
 import {
+	ArrayMaxSize,
 	ArrayNotEmpty,
 	IsArray,
 	IsBoolean,
@@ -42,6 +43,7 @@ export class CreateLinkDto {
 
 	@IsArray()
 	@ArrayNotEmpty()
+	@ArrayMaxSize(10)
 	@Type(() => String)
 	@IsString({ each: true })
 	@Matches(/^[A-Za-z0-9-]+$/, {

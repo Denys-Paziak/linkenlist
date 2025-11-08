@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DeepPartial, Repository } from 'typeorm'
 
-import { ELinkImageStatus } from '../../../interfaces/ELinkImage'
+import { ELinkImageStatus } from '../../../interfaces/ELinkImageStatus'
 import { Link } from '../entities/Link.entity'
 import { LinkImage } from '../entities/LinkImage.entity'
 

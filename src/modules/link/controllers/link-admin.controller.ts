@@ -1,13 +1,28 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	Patch,
+	Post,
+	Query,
+	UnprocessableEntityException,
+	UseInterceptors
+} from '@nestjs/common'
 
+import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { MultipartInterceptor } from '../../../interceptors/multipart.interceptor'
+import { ERoleNames } from '../../../interfaces/ERoleNames'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { fetchImageAsIMultipartFile } from '../../../utils/fetch-image.util'
 import { MultipartOptions, validateFile } from '../../../utils/file.util'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
 import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
+import { GetAllLinksDto } from '../dtos/GetAllLinks.dto'
 import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
 import { LinkCommandService } from '../services/link-command.service'
 import { LinkQueryService } from '../services/link-query.service'
@@ -16,19 +31,26 @@ const MAX_MB = 2
 const MAX_BYTES = MAX_MB * 1024 * 1024
 const ACCEPT_IMAGES = /(image\/(jpeg|png|webp))$/
 
-@Controller('links')
-export class LinkController {
+@Controller('admin/links')
+export class LinkAdminController {
 	constructor(
 		private readonly linkCommandService: LinkCommandService,
 		private readonly linkQueryService: LinkQueryService
 	) {}
 
+	@Authorization(ERoleNames.ADMIN)
 	@Get()
-	async getAllLinks() {
-		return this.linkQueryService.getAllLinks()
+	async getAllLinks(@Query() query: GetAllLinksDto) {
+		return this.linkQueryService.getAllLinks(query)
 	}
 
-	//@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleNames.ADMIN)
+	@Get(':id')
+	async getOneLink(@Param() param: ParamId) {
+		return this.linkQueryService.getOneLink(param.id)
+	}
+
+	@Authorization(ERoleNames.ADMIN)
 	@Post()
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -57,8 +79,11 @@ export class LinkController {
 		if (!file) throw new BadRequestException('No image available')
 
 		await this.linkCommandService.createLink(dto, file)
+
+		return { ok: true }
 	}
 
+	@Authorization(ERoleNames.ADMIN)
 	@Patch(':id')
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -83,14 +108,17 @@ export class LinkController {
 			file = fetched
 		}
 
-		if (!file) throw new BadRequestException('No image available')
-
 		await this.linkCommandService.updateLink(params.id, dto, file)
+
+		return { ok: true }
 	}
 
+	@Authorization(ERoleNames.ADMIN)
 	@Delete(':id')
 	async deleteLink(@Param() params: ParamId, @Body() dto: DeleteLinkDto) {
 		await this.linkCommandService.deleteLink(params.id, dto)
+
+		return { ok: true }
 	}
 
 	@Get('tags')

@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator'
 
 import { ELinkBranch } from '../../../interfaces/ELinkBranch'
 import { ELinkCategory } from '../../../interfaces/ELinkCategory'
@@ -32,6 +32,7 @@ export class UpdateLinkDto {
 
 	@IsOptional()
 	@IsArray()
+	@ArrayMaxSize(10)
 	@IsString({ each: true })
 	@Matches(/^[A-Za-z0-9-]+$/, {
 		each: true,

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
+import { GetAllLinksDto } from '../dtos/GetAllLinks.dto'
 import { Link } from '../entities/Link.entity'
 import { LinkTag } from '../entities/LinkTag.entity'
 
@@ -14,8 +15,17 @@ export class LinkQueryService {
 		private readonly linkTagRepository: Repository<LinkTag>
 	) {}
 
-	async getAllLinks() {
-		return await this.linkRepository.find()
+	async getAllLinks(query: GetAllLinksDto) {
+		return await this.linkRepository.findAndCount({
+			skip: (query.page - 1) * query.limit,
+			take: query.limit,
+			order: { createdAt: 'DESC' },
+			relations: ['tags']
+		})
+	}
+
+	async getOneLink(id: number) {
+		return await this.linkRepository.findOne({ where: { id }, relations: ['tags'] })
 	}
 
 	async getAllLinkTags() {

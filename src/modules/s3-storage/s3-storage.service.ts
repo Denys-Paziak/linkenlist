@@ -1,19 +1,18 @@
-// s3-storage.service.ts
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { basename, extname } from 'node:path'
 
-
-import { createS3Client } from './s3.client'
 import { generateRandomSuffix } from '../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../utils/slug.util'
+
+import { createS3Client } from './s3.client'
 
 @Injectable()
 export class S3StorageService {
 	private readonly s3: S3Client
 	private readonly bucket: string
-	private readonly publicBase: string | null // MinIO / CDN / власний домен
+	private readonly publicBase: string | null
 	private readonly isPath: boolean
 	private readonly region: string
 
@@ -33,21 +32,19 @@ export class S3StorageService {
 		const yyyy = d.getUTCFullYear()
 		const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
 		const dd = String(d.getUTCDate()).padStart(2, '0')
-		// структура: <prefix>/<YYYY>/<MM>/<DD>/<hash>-<uuid><ext>
+
 		return `${p}/${entityId}/${yyyy}-${mm}-${dd}-${slugName}-${generateRandomSuffix()}${ext}`
 	}
 
 	private publicUrlForKey(key: string) {
 		if (this.publicBase) {
-			// MinIO/CDN: для MinIO в path-style додаємо назву бакета
 			const base = this.publicBase.replace(/\/$/, '')
 			return this.isPath ? `${base}/${this.bucket}/${key}` : `${base}/${key}`
 		}
-		// Стандартна AWS URL для публічного бакета
+
 		return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`
 	}
 
-	/** Завантаження буфера; повертає публічну стабільну URL */
 	async uploadPublic(
 		buffer: Buffer,
 		contentType: string,
@@ -70,7 +67,6 @@ export class S3StorageService {
 					Body: buffer,
 					ContentType: contentType,
 					CacheControl: cacheForever ? 'public, max-age=31536000, immutable' : 'public, max-age=600'
-					// ACL не потрібен, якщо bucket policy вже публічний.
 				})
 			)
 		} catch (err) {

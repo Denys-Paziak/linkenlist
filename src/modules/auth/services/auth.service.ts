@@ -21,6 +21,7 @@ import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
 import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
+import { ERoleNames } from '../../../interfaces/ERoleNames'
 
 @Injectable()
 export class AuthService {
@@ -193,11 +194,12 @@ export class AuthService {
 		}
 	}
 
-	async login(dto: LoginDto) {
+	async login(dto: LoginDto, role: ERoleNames) {
 		const userFromDB = await this.userSystemService.findOne({
 			where: {
 				privateEmail: dto.email,
-				emailVerified: true
+				emailVerified: true,
+				role
 			},
 			select: {
 				id: true,

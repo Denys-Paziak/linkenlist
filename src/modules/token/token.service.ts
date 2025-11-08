@@ -42,12 +42,18 @@ export class TokenService {
 			await this.tokenRepository.delete({ tokenOrCode: deleteToken })
 		}
 
-		this.tokenRepository.save({
-			tokenOrCode: token,
-			type: ETokenTypes.REFRESH_TOKEN,
-			user: { id: payload.id },
-			expiresIn: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000)
-		})
+		await this.tokenRepository
+			.createQueryBuilder()
+			.insert()
+			.into(Token)
+			.values({
+				tokenOrCode: token,
+				type: ETokenTypes.REFRESH_TOKEN,
+				user: { id: payload.id },
+				expiresIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+			})
+			.onConflict(`("tokenOrCode","user_id") DO NOTHING`)
+			.execute()
 
 		return token
 	}
@@ -55,7 +61,7 @@ export class TokenService {
 	generateAccessToken(payload: ITokenUser) {
 		return this.jwtService.signAsync(payload, {
 			secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET_KEY'),
-			expiresIn: '15m'
+			expiresIn: '5m'
 		})
 	}
 
