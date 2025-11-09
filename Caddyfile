@@ -1,0 +1,11 @@
+linkenlist.com, www.linkenlist.com {
+	encode zstd gzip
+
+	# бекенд по шляху /api
+	handle_path /api/* {
+		reverse_proxy api:3001
+	}
+
+	# усе інше — на фронт
+	reverse_proxy web:3000
+}
