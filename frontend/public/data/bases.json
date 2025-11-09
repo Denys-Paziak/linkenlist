@@ -1,0 +1,65 @@
+[
+  {
+    "id": "ns-norfolk",
+    "name": "Naval Station Norfolk",
+    "state": "VA",
+    "lat": 36.944,
+    "lng": -76.305,
+    "listingCount": 42,
+    "medianRent": 2250
+  },
+  {
+    "id": "jbsa",
+    "name": "Joint Base San Antonio",
+    "state": "TX",
+    "lat": 29.452,
+    "lng": -98.461,
+    "listingCount": 67,
+    "medianRent": 1950
+  },
+  {
+    "id": "pendleton",
+    "name": "MCB Camp Pendleton",
+    "state": "CA",
+    "lat": 33.304,
+    "lng": -117.355,
+    "listingCount": 51,
+    "medianRent": 2950
+  },
+  {
+    "id": "liberty",
+    "name": "Fort Liberty (Bragg)",
+    "state": "NC",
+    "lat": 35.141,
+    "lng": -79.009,
+    "listingCount": 58,
+    "medianRent": 1750
+  },
+  {
+    "id": "lejeune",
+    "name": "MCB Camp Lejeune",
+    "state": "NC",
+    "lat": 34.63,
+    "lng": -77.32,
+    "listingCount": 33,
+    "medianRent": 1850
+  },
+  {
+    "id": "eglin",
+    "name": "Eglin AFB",
+    "state": "FL",
+    "lat": 30.483,
+    "lng": -86.525,
+    "listingCount": 24,
+    "medianRent": 2100
+  },
+  {
+    "id": "wpafb",
+    "name": "Wright-Patterson AFB",
+    "state": "OH",
+    "lat": 39.826,
+    "lng": -84.047,
+    "listingCount": 18,
+    "medianRent": 1650
+  }
+]

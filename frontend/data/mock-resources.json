@@ -1,0 +1,130 @@
+[
+  {
+    "id": 1,
+    "title": "MyPay",
+    "description": "Access your military pay statements, leave and earnings statements, and tax documents.",
+    "url": "https://mypay.dfas.mil",
+    "tags": ["Army", "Navy", "Air Force", "Marine Corps", "Space Force", "Coast Guard", "Pay", "Finance"],
+    "screenshotImage": "/images/mypay.png"
+  },
+  {
+    "id": 2,
+    "title": "Military OneSource",
+    "description": "Free resources and support for military families including financial counseling, tax services, and more.",
+    "url": "https://www.militaryonesource.mil",
+    "tags": ["Army", "Navy", "Air Force", "Marine Corps", "Space Force", "Coast Guard", "Support", "Family"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 3,
+    "title": "TRICARE Online",
+    "description": "Manage your military health benefits, find providers, and access medical records.",
+    "url": "https://www.tricareonline.com",
+    "tags": ["Army", "Navy", "Air Force", "Marine Corps", "Space Force", "Coast Guard", "Health", "Medical"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 4,
+    "title": "VA Benefits",
+    "description": "Apply for and manage your Veterans Affairs benefits including disability, education, and home loans.",
+    "url": "https://www.va.gov",
+    "tags": ["Veterans", "Benefits", "Education", "Disability", "Home Loans"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 5,
+    "title": "Army Knowledge Online (AKO)",
+    "description": "Army portal for email, training records, and administrative tasks.",
+    "url": "https://www.army.mil",
+    "tags": ["Army", "Email", "Training", "Records"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 6,
+    "title": "Navy e-Learning (NEL)",
+    "description": "Navy's online learning management system for training and professional development.",
+    "url": "https://www.navy.mil",
+    "tags": ["Navy", "Training", "Education", "Professional Development"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 7,
+    "title": "Air Force Portal",
+    "description": "Centralized access to Air Force applications, news, and resources.",
+    "url": "https://www.af.mil",
+    "tags": ["Air Force", "Portal", "Applications", "News"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 8,
+    "title": "Marine Online (MOL)",
+    "description": "Marine Corps portal for personnel information, training records, and unit information.",
+    "url": "https://www.marines.mil",
+    "tags": ["Marine Corps", "Personnel", "Training", "Records"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 9,
+    "title": "Space Force Portal",
+    "description": "Official portal for Space Force personnel and resources.",
+    "url": "https://www.spaceforce.mil",
+    "tags": ["Space Force", "Portal", "Personnel", "Resources"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 10,
+    "title": "Coast Guard Portal",
+    "description": "Coast Guard's official portal for personnel and operational information.",
+    "url": "https://www.uscg.mil",
+    "tags": ["Coast Guard", "Portal", "Personnel", "Operations"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 11,
+    "title": "Defense Travel System (DTS)",
+    "description": "Book official travel, submit vouchers, and manage travel authorizations.",
+    "url": "https://www.defensetravel.dod.mil",
+    "tags": ["Army", "Navy", "Air Force", "Marine Corps", "Space Force", "Coast Guard", "Travel", "Finance"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 12,
+    "title": "MyCAA",
+    "description": "Military Spouse Career Advancement Accounts for education and career development.",
+    "url": "https://www.myCAA.mil",
+    "tags": ["Spouse", "Education", "Career", "Benefits"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 13,
+    "title": "GI Bill Benefits",
+    "description": "Manage your GI Bill education benefits and find approved schools.",
+    "url": "https://www.va.gov/education",
+    "tags": ["Veterans", "Education", "GI Bill", "Benefits"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 14,
+    "title": "Military Family Life Counseling",
+    "description": "Confidential counseling services for military families and children.",
+    "url": "https://www.militaryfamilylife.org",
+    "tags": ["Family", "Counseling", "Support", "Children"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 15,
+    "title": "Armed Forces Vacation Club",
+    "description": "Discounted vacation rentals and travel deals for military families.",
+    "url": "https://www.afvclub.com",
+    "tags": ["Recreation", "Travel", "Discounts", "Family"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  },
+  {
+    "id": 16,
+    "title": "Military Child Care",
+    "description": "Find and manage military child development centers and family child care.",
+    "url": "https://www.militarychildcare.com",
+    "tags": ["Family", "Children", "Childcare", "Support"],
+    "screenshotImage": "/placeholder.svg?height=170&width=370"
+  }
+]
