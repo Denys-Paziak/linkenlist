@@ -1,0 +1,131 @@
+# version: "3.8"   # можна прибрати
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-ulimits: &default-ulimits
+  nofile:
+    soft: 65536
+    hard: 65536
+
+networks:
+  app-net:
+    driver: bridge
+
+services:
+  # --- Redis ---
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+    networks: [app-net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    logging: *default-logging
+
+  # --- API (Nest HTTP) ---
+  api:
+    image: linkenlist-backend:prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["node", "dist/main.js"]
+    restart: unless-stopped
+    env_file: [.env]
+    expose:
+      - "3001"                 # << залишаємо всередині мережі
+    # ports:
+    #   - "3001:3001"          # << прибрати
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [app-net]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging: *default-logging
+    ulimits: *default-ulimits
+    mem_limit: 1g
+    cpus: "1.5"
+
+  # --- Worker (BullMQ) ---
+  worker:
+    image: linkenlist-backend:prod
+    command: ["node", "dist/worker.main.js"]
+    restart: unless-stopped
+    env_file: [.env]
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [app-net]
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging: *default-logging
+    ulimits: *default-ulimits
+    mem_limit: 768m
+    cpus: "1.0"
+
+  # --- Web (Next.js) ---
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        API_INTERNAL_URL: ${API_INTERNAL_URL}
+    image: linkenlist-web:prod
+    restart: unless-stopped
+    env_file: [.env]
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [app-net]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', r=>{if(r.statusCode<500)process.exit(0);process.exit(1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+    expose:
+      - "3000"                 # << лишаємо тільки expose
+    # ports:
+    #   - "3000:3000"          # << прибрати
+
+  # --- Caddy (reverse proxy + HTTPS) ---
+  caddy:
+    image: caddy:2.8
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [app-net]
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
