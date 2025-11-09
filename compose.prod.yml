@@ -1,4 +1,4 @@
-version: "3.8"
+# version: "3.8"   # можна прибрати
 
 x-logging: &default-logging
   driver: "json-file"
@@ -39,9 +39,9 @@ services:
     restart: unless-stopped
     env_file: [.env]
     expose:
-      - "3001"
-    ports:
-      - "3001:3001" 
+      - "3001"                 # << залишаємо всередині мережі
+    # ports:
+    #   - "3001:3001"          # << прибрати
     depends_on:
       redis:
         condition: service_healthy
@@ -63,7 +63,7 @@ services:
     mem_limit: 1g
     cpus: "1.5"
 
-  # --- Worker (BullMQ воркер) ---
+  # --- Worker (BullMQ) ---
   worker:
     image: linkenlist-backend:prod
     command: ["node", "dist/worker.main.js"]
@@ -84,6 +84,7 @@ services:
     mem_limit: 768m
     cpus: "1.0"
 
+  # --- Web (Next.js) ---
   web:
     build:
       context: ./frontend
@@ -103,5 +104,28 @@ services:
       interval: 30s
       timeout: 3s
       retries: 10
+    expose:
+      - "3000"                 # << лишаємо тільки expose
+    # ports:
+    #   - "3000:3000"          # << прибрати
+
+  # --- Caddy (reverse proxy + HTTPS) ---
+  caddy:
+    image: caddy:2.8
+    container_name: caddy
     ports:
-      - "3000:3000" 
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [app-net]
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
