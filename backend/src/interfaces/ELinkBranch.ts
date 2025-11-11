@@ -5,5 +5,5 @@ export enum ELinkBranch {
 	MARINES = 'Marines',
 	SPACE_FORCE = 'Space Force',
 	COAST_GUARD = 'Coast Guard',
-	DOD_WIDE = 'DoD-wide'
+	DOW_WIDE = 'DoW-wide'
 }

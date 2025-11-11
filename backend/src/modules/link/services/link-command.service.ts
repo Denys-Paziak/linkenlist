@@ -4,8 +4,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm'
 
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
-import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
-import { generateSlug } from '../../../utils/slug.util'
+import { IUploadedImage } from '../../../interfaces/IUploadedImage'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
@@ -14,8 +13,6 @@ import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
 import { Link } from '../entities/Link.entity'
 import { LinkImage } from '../entities/LinkImage.entity'
 import { LinkTag } from '../entities/LinkTag.entity'
-
-type UploadedImage = { key: string; url: string; width?: number; height?: number }
 
 @Injectable()
 export class LinkCommandService {
@@ -27,20 +24,13 @@ export class LinkCommandService {
 		private readonly s3StorageService: S3StorageService
 	) {}
 
-	private async saveImage(file: IMultipartFile, linkId: number): Promise<UploadedImage> {
+	private async saveImage(file: IMultipartFile, linkId: number): Promise<IUploadedImage> {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
 			path: 'links',
 			entityId: linkId
 		})
 		return { key, url, width: file.width, height: file.height }
-	}
-
-	private async generateSlugUnique(title: string) {
-		let slug = generateSlug(title)
-		const exists = await this.linkRepository.exists({ where: { slug } })
-		if (exists) slug = `${slug}-${generateRandomSuffix()}`
-		return slug
 	}
 
 	private async upsertTagsByNames(names: string[] | null, manager: EntityManager): Promise<LinkTag[] | null | undefined> {
@@ -64,7 +54,6 @@ export class LinkCommandService {
 	}
 
 	async createLink(dto: CreateLinkDto, file: IMultipartFile) {
-		const slug = await this.generateSlugUnique(dto.title)
 		const link = await this.dataSource.transaction(async manager => {
 			const tags = await this.upsertTagsByNames(dto.tags ?? [], manager)
 
@@ -74,7 +63,6 @@ export class LinkCommandService {
 				branches: dto.branches,
 				category: dto.category,
 				tags: tags ?? [],
-				slug,
 				status: dto.status,
 				url: dto.url,
 				verified: dto.verified ?? false,
@@ -103,18 +91,13 @@ export class LinkCommandService {
 		const exists = await this.linkRepository.findOne({ where: { id: linkId }, relations: ['image'] })
 		if (!exists) throw new NotFoundException('Link not found.')
 
-		let newImage: UploadedImage | undefined = undefined
+		let newImage: IUploadedImage | undefined = undefined
 		const oldKeys: string[] = []
 
 		if (file) {
 			newImage = await this.saveImage(file, exists.id)
 			if (exists.image?.originalKey) oldKeys.push(exists.image.originalKey)
 			if (exists.image?.processedKey) oldKeys.push(exists.image.processedKey)
-		}
-
-		let slugToSet: string | undefined = undefined
-		if (dto.title) {
-			slugToSet = await this.generateSlugUnique(dto.title)
 		}
 
 		const updated = await this.dataSource.transaction(async manager => {
@@ -137,8 +120,6 @@ export class LinkCommandService {
 				category: dto.category,
 
 				tags: tagsToSet === undefined ? undefined : (tagsToSet ?? []),
-
-				slug: slugToSet,
 
 				status: dto.status,
 				url: dto.url,

@@ -2,15 +2,15 @@ import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, Upd
 
 import { EImageStatus } from '../../../interfaces/EImageStatus'
 
-import { Link } from './Link.entity'
+import { Deal } from './Deal.entity'
 
-@Entity('links_images')
-export class LinkImage {
+@Entity('deals_images')
+export class DealImage {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@OneToOne(() => Link, link => link.image)
-	link: Link
+	@OneToOne(() => Deal, deal => deal.image)
+	deal: Deal
 
 	@Column({ type: 'text' })
 	url: string

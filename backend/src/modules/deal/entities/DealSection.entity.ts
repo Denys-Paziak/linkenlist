@@ -14,9 +14,12 @@ export class DealSection {
 	@Column({ type: 'int' })
 	position: number
 
-	@Column({ type: 'text' }) title: string
-	@Column({ type: 'boolean', default: true }) enabled: boolean
-	@Column({ type: 'text', nullable: true }) bodyMd?: string | null
+	@Column({ type: 'text' }) 
+	title: string
+	@Column({ type: 'boolean', default: true }) 
+	enabled: boolean
+	@Column({ type: 'text', nullable: true }) 
+	bodyMd?: string | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

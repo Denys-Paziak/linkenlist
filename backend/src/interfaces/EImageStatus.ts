@@ -1,4 +1,4 @@
-export enum ELinkImageStatus {
+export enum EImageStatus {
 	PROCESSING = 'processing',
 	READY = 'ready',
 	FAILED = 'failed',

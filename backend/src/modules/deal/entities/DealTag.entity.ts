@@ -6,7 +6,6 @@ export class DealTag {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@Index()
 	@Column({ type: 'text' })
 	name: string
 

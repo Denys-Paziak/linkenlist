@@ -20,7 +20,6 @@ import { LinkImage } from './LinkImage.entity'
 import { LinkTag } from './LinkTag.entity'
 
 @Entity('links')
-@Unique(['slug'])
 export class Link {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -28,10 +27,6 @@ export class Link {
 	@Index()
 	@Column({ type: 'text' })
 	title: string
-
-	@Index()
-	@Column({ type: 'text', unique: true })
-	slug: string
 
 	@Column({ type: 'text', nullable: true })
 	description?: string | null

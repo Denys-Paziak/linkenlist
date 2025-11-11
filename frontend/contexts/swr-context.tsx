@@ -12,6 +12,8 @@ export function SWRProvider({ children }: { children: React.ReactNode }) {
         revalidateOnReconnect: false,
         revalidateIfStale: false,
         keepPreviousData: true,
+        shouldRetryOnError: false,
+        errorRetryCount: 0,
       }}
     >
       {children}

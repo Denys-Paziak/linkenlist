@@ -39,9 +39,7 @@ services:
     restart: unless-stopped
     env_file: [.env]
     expose:
-      - "3001"                 # << залишаємо всередині мережі
-    # ports:
-    #   - "3001:3001"          # << прибрати
+      - "3001"
     depends_on:
       redis:
         condition: service_healthy
@@ -105,9 +103,7 @@ services:
       timeout: 3s
       retries: 10
     expose:
-      - "3000"                 # << лишаємо тільки expose
-    # ports:
-    #   - "3000:3000"          # << прибрати
+      - "3000"
 
   # --- Caddy (reverse proxy + HTTPS) ---
   caddy:

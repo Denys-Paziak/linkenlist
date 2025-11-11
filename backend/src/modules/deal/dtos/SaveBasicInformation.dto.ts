@@ -1,8 +1,10 @@
+import { Type } from 'class-transformer'
 import {
 	ArrayMaxSize,
+	ArrayNotEmpty,
 	IsArray,
-	IsBoolean,
 	IsEnum,
+	IsInt,
 	IsNotEmpty,
 	IsOptional,
 	IsString,
@@ -12,37 +14,32 @@ import {
 	MaxLength
 } from 'class-validator'
 
-import { ELinkBranch } from '../../../interfaces/ELinkBranch'
-import { ELinkCategory } from '../../../interfaces/ELinkCategory'
-import { ELinkStatus } from '../../../interfaces/ELinkStatus'
+import { EDealCategory } from '../../../interfaces/EDealCategory'
 
-export class UpdateLinkDto {
+export class SaveBasicInformationDto {
 	@IsOptional()
-	@IsUrl()
-	imgUrl?: string | null
+	@IsInt()
+	id?: number
 
 	@IsOptional()
 	@IsString()
-	@IsNotEmpty()
-	@MaxLength(40)
+	@MaxLength(140)
 	title?: string
 
 	@IsString()
 	@IsOptional()
+	@MaxLength(140)
+	slug?: string
+
+	@IsString()
+	@IsOptional()
 	@MaxLength(200)
-	description?: string
+	teaser?: string
 
-	@IsOptional()
-	@IsUrl()
-	url?: string
-
-	@IsOptional()
-	@IsEnum(ELinkCategory)
-	category?: ELinkCategory
-
-	@IsOptional()
-	@IsEnum(ELinkBranch, { each: true })
-	branches?: ELinkBranch[]
+	@IsEnum(EDealCategory, { each: true })
+	@ArrayNotEmpty()
+	@Type(() => String)
+	branches: EDealCategory[]
 
 	@IsOptional()
 	@IsArray()
@@ -59,10 +56,14 @@ export class UpdateLinkDto {
 	tags?: string[] | null
 
 	@IsOptional()
-	@IsEnum(ELinkStatus)
-	status?: ELinkStatus
+	@IsUrl()
+	imgUrl?: string
 
 	@IsOptional()
-	@IsBoolean()
-	verified?: boolean
+	@IsString()
+    outboundURL?: string
+
+    @IsOptional()
+	@IsString()
+    outboundURLButtonLabel?: string
 }

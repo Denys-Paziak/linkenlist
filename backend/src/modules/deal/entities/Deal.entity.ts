@@ -1,34 +1,27 @@
-// src/entities/deals/deal.entity.ts
 import {
 	Column,
 	CreateDateColumn,
 	Entity,
 	Index,
+	JoinColumn,
 	JoinTable,
 	ManyToMany,
 	OneToMany,
+	OneToOne,
 	PrimaryGeneratedColumn,
 	Unique,
 	UpdateDateColumn
 } from 'typeorm'
 
+import { EDealStatus } from '../../../interfaces/EDealStatus'
+import { EDealType } from '../../../interfaces/EDealType'
+import { LinkImage } from '../../link/entities/LinkImage.entity'
+
+import { DealImage } from './DealImage.entity'
 import { DealRelated } from './DealRelated.entity'
 import { DealSection } from './DealSection.entity'
 import { DealTag } from './DealTag.entity'
-
-export enum DealStatus {
-	DRAFT = 'draft',
-	SCHEDULED = 'scheduled',
-	PUBLISHED = 'published',
-	EXPIRED = 'expired',
-	ARCHIVED = 'archived'
-}
-export enum DealType {
-	PERCENTAGE = 'percentage',
-	FIXED = 'fixed',
-	FREE = 'free',
-	SUBSCRIPTION = 'subscription'
-}
+import { EDealCategory } from '../../../interfaces/EDealCategory'
 
 @Entity('deals')
 @Unique(['slug'])
@@ -37,18 +30,19 @@ export class Deal {
 	id: number
 
 	@Index()
-	@Column({ type: 'text' })
-	title: string
+	@Column({ type: 'text', nullable: true })
+	title?: string | null
 
 	@Index()
-	@Column({ type: 'text' })
-	slug: string
+	@Column({ type: 'text', nullable: true })
+	slug?: string | null
 
 	@Column({ type: 'text', nullable: true })
 	teaser?: string | null
 
-	@Column({ type: 'text', nullable: true })
-	heroImageUrl?: string | null
+	@OneToOne(() => DealImage, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'image_id' })
+	image?: LinkImage
 
 	@Column({ type: 'boolean', default: false })
 	isVerified: boolean
@@ -56,24 +50,25 @@ export class Deal {
 	@Column({ type: 'boolean', default: false })
 	isFeatured: boolean
 
-	// Основна категорія + додаткові
-	@Index()
-	@Column({ type: 'text', nullable: true })
-	primaryCategory?: string | null
-
-	@Column({ type: 'text', array: true, default: [] })
-	categories: string[]
+	@Column({ type: 'enum', enum: EDealCategory, array: true, default: [] })
+	categories: EDealCategory[]
 
 	@ManyToMany(() => DealTag, { cascade: ['insert'] })
 	@JoinTable({ name: 'deal_tags_join' })
 	tags: DealTag[]
 
+	@Column({ type: 'text', name: "outbound_url", nullable: true })
+	outboundURL?: string | null
+
+	@Column({ type: 'text', name: "outbound_url_button_label", default: "Go to Deal" })
+	outboundURLButtonLabel: string
+
 	// Offer Details
 	@Column({ type: 'boolean', default: true })
 	offerEnabled: boolean
 
-	@Column({ type: 'enum', enum: DealType, nullable: true })
-	dealType?: DealType | null
+	@Column({ type: 'enum', enum: EDealType, nullable: true })
+	dealType?: EDealType | null
 
 	@Column({ type: 'numeric', precision: 12, scale: 2, nullable: true })
 	originalPrice?: string | null
@@ -81,16 +76,21 @@ export class Deal {
 	@Column({ type: 'numeric', precision: 12, scale: 2, nullable: true })
 	yourPrice?: string | null
 
-	@Column({ type: 'text', nullable: true }) promoCode?: string | null
-	@Column({ type: 'text', nullable: true }) whereToEnterCode?: string | null
+	@Column({ type: 'text', nullable: true })
+	promoCode?: string | null
+	@Column({ type: 'text', nullable: true })
+	whereToEnterCode?: string | null
 
 	@Column({ type: 'boolean', default: false })
 	ongoingOffer: boolean
 
-	@Column({ type: 'date', nullable: true }) validFrom?: string | null
-	@Column({ type: 'date', nullable: true }) validUntil?: string | null
+	@Column({ type: 'date', nullable: true })
+	validFrom?: string | null
+	@Column({ type: 'date', nullable: true })
+	validUntil?: string | null
 
-	@Column({ type: 'text', nullable: true }) providerDisplayName?: string | null
+	@Column({ type: 'text', nullable: true })
+	providerDisplayName?: string | null
 
 	// Content (Markdown секції)
 	@OneToMany(() => DealSection, b => b.deal, { cascade: true })
@@ -107,17 +107,20 @@ export class Deal {
 	@Column({ type: 'text', nullable: true })
 	seoMetaDescription?: string | null
 
-	@Column({ type: 'text', nullable: true }) ogImageMode?: string | null // "use_hero" | "custom"
-	@Column({ type: 'text', nullable: true }) ogImageUrl?: string | null
-	@Column({ type: 'text', nullable: true }) canonicalUrl?: string | null
+	@Column({ type: 'text', nullable: true })
+	ogImageMode?: string | null // "use_hero" | "custom"
+	@Column({ type: 'text', nullable: true })
+	ogImageUrl?: string | null
+	@Column({ type: 'text', nullable: true })
+	canonicalUrl?: string | null
 
 	@Column({ type: 'boolean', default: true })
 	allowIndexing: boolean
 
 	// Publishing workflow
 	@Index()
-	@Column({ type: 'enum', enum: DealStatus, default: DealStatus.DRAFT })
-	status: DealStatus
+	@Column({ type: 'enum', enum: EDealStatus, default: EDealStatus.DRAFT })
+	status: EDealStatus
 
 	@Column({ type: 'timestamptz', nullable: true })
 	publishAt?: Date | null

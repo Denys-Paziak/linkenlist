@@ -8,9 +8,11 @@ import {
 	Patch,
 	Post,
 	Query,
+	Req,
 	UnprocessableEntityException,
 	UseInterceptors
 } from '@nestjs/common'
+import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
@@ -27,7 +29,7 @@ import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
 import { LinkCommandService } from '../services/link-command.service'
 import { LinkQueryService } from '../services/link-query.service'
 
-const MAX_MB = 2
+const MAX_MB = 5
 const MAX_BYTES = MAX_MB * 1024 * 1024
 const ACCEPT_IMAGES = /(image\/(jpeg|png|webp))$/
 

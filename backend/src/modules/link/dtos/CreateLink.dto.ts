@@ -10,7 +10,8 @@ import {
 	IsString,
 	IsUrl,
 	Length,
-	Matches
+	Matches,
+	MaxLength
 } from 'class-validator'
 
 import { ELinkBranch } from '../../../interfaces/ELinkBranch'
@@ -24,10 +25,12 @@ export class CreateLinkDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@MaxLength(40)
 	title: string
 
 	@IsString()
 	@IsOptional()
+	@MaxLength(200)
 	description?: string
 
 	@IsUrl()
@@ -44,11 +47,10 @@ export class CreateLinkDto {
 	@IsArray()
 	@ArrayNotEmpty()
 	@ArrayMaxSize(10)
-	@Type(() => String)
 	@IsString({ each: true })
-	@Matches(/^[A-Za-z0-9-]+$/, {
+	@Matches(/^[A-Za-z0-9 !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]+$/, {
 		each: true,
-		message: 'Tags can only contain letters, numbers, and hyphens'
+		message: 'Tags can only contain letters, numbers, spaces, and special characters'
 	})
 	@Length(2, 30, {
 		each: true,

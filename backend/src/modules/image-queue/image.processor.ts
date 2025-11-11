@@ -3,14 +3,13 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
 import sharp from 'sharp'
 
-import { ELinkImageStatus } from '../../interfaces/ELinkImageStatus'
+import { EImageStatus } from '../../interfaces/EImageStatus'
 import { replaceExt } from '../../utils/replace-ext.utils'
 import { LinkSystemService } from '../link/services/link-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 
 import { ImageJobData } from './image-queue.service'
 
-/** Сигнал для BullMQ: job оброблена логічно і її не треба ретраїти */
 class DiscardedError extends Error {
 	constructor(message: string) {
 		super(message)
@@ -37,12 +36,12 @@ export class ImageProcessor extends WorkerHost {
 		// 0) Ідемпотентність та перехід у PROCESSING
 		// Якщо хтось уже зробив цю роботу — просто вийдемо
 		try {
-			const alreadyReady = await this.linkSystemService.isImageStatus(linkImageId, ELinkImageStatus.QUEUED)
+			const alreadyReady = await this.linkSystemService.isImageStatus(linkImageId, EImageStatus.QUEUED)
 			if (!alreadyReady) {
 				this.logger.log(`Skip job ${job.id}: image already READY (linkImageId=${linkImageId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.linkSystemService.updateImageStatus(linkImageId, ELinkImageStatus.PROCESSING)
+			await this.linkSystemService.updateImageStatus(linkImageId, EImageStatus.PROCESSING)
 		} catch (e) {
 			// Якщо LinkImage вже видалили — немає сенсу далі працювати
 			if (isNotFoundError(e)) {
@@ -100,7 +99,7 @@ export class ImageProcessor extends WorkerHost {
 					url: uploaded.url,
 					width: meta.width ?? 0,
 					height: meta.height ?? 0,
-					status: ELinkImageStatus.READY
+					status: EImageStatus.READY
 				}
 			})
 		} catch (e) {
@@ -169,7 +168,7 @@ function isNotFoundError(e: any) {
 /** Безпечне проставлення FAILED для LinkImage */
 async function safeSetFailed(linkSystemService: LinkSystemService, linkImageId: number, reason: string) {
 	try {
-		await linkSystemService.updateImageStatus(linkImageId, ELinkImageStatus.FAILED)
+		await linkSystemService.updateImageStatus(linkImageId, EImageStatus.FAILED)
 	} catch {
 		/* якщо сутність пропала — нічого не робимо */
 	}

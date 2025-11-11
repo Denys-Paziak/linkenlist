@@ -14,7 +14,8 @@ export class DealRelated {
 	@ManyToOne(() => Deal, { onDelete: 'CASCADE' })
 	target: Deal
 
-	@Column({ type: 'int' }) position: number
+	@Column({ type: 'int' }) 
+	position: number
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()
