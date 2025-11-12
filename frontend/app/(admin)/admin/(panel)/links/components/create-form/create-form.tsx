@@ -21,7 +21,7 @@ import {
 import { ErrorAlert } from "@/components/ui/error-alert";
 import { FilePen, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetcher } from "@/lib/fetcher";
+import { fetcherAdmin } from "@/lib/fetcher";
 import { TagsField } from "./components/tags-field";
 import {
   CreateLinkFormData,
@@ -107,7 +107,7 @@ export function CreateForm() {
         formData.append("imageFile", imageFile);
       }
 
-      await fetcher("/admin/links", {
+      await fetcherAdmin("/admin/links", {
         method: "POST",
         credentials: "include",
         body: formData,

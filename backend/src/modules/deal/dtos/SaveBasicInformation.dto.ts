@@ -25,7 +25,6 @@ export class SaveBasicInformationDto {
 	@IsString()
 	@IsOptional()
 	@MaxLength(140)
-	@IsNotEmpty()
 	@Matches(/^[a-z0-9-]+$/, {
 		message: 'Slug can only contain letters, numbers, and special characters'
 	})
@@ -62,9 +61,9 @@ export class SaveBasicInformationDto {
 
 	@IsOptional()
 	@IsUrl()
-	outboundURL?: string
+	outboundUrl?: string
 
 	@IsOptional()
 	@IsString()
-	outboundURLButtonLabel?: string
+	outboundUrlButtonLabel?: string
 }

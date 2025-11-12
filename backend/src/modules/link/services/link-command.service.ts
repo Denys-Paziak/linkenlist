@@ -37,9 +37,9 @@ export class LinkCommandService {
 	}
 
 	private async upsertTagsByNames(
-		names: string[] | null | undefined,
+		names: string[] | undefined,
 		manager: EntityManager
-	): Promise<LinkTag[] | null | undefined> {
+	): Promise<LinkTag[] | undefined> {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
@@ -126,7 +126,7 @@ export class LinkCommandService {
 				branches: dto.branches,
 				category: dto.category,
 
-				tags: tagsToSet === undefined ? undefined : (tagsToSet ?? []),
+				tags: tagsToSet,
 
 				status: dto.status,
 				url: dto.url,

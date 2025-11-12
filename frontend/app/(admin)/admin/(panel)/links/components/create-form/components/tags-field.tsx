@@ -7,7 +7,7 @@ import {
   FieldValues,
   UseFormReturn,
 } from "react-hook-form";
-import { LinksTag } from "../../../../../../../../types/Link";
+import { ILinksTag } from "../../../../../../../../types/Link";
 
 type AnyWithTags = FieldValues & { image?: string };
 
@@ -17,7 +17,7 @@ interface TagsFieldProps {
 }
 
 export function TagsField({ form, disabled }: TagsFieldProps) {
-  const { data } = useSWR<LinksTag[]>("/admin/links/tags");
+  const { data } = useSWR<ILinksTag[]>("/admin/links/tags");
 
   return (
     <div>

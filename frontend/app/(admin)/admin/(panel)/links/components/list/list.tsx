@@ -4,7 +4,7 @@ import type React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Trash2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ILink } from "../../../../../../../types/Link";
 import Image from "next/image";
 import { DeleteDialog } from "./components/delete-dialog";
@@ -27,16 +27,18 @@ export function List() {
     sync: true,
   });
 
-  const [limit, setLimit] = useQueryStateWithLocalStorage("/admin/links?limit", {
-    defaultValue: 9,
-    parse: (v) => parseAsInteger.parse(v),
-    sync: true,
-  });
+  const [limit, setLimit] = useQueryStateWithLocalStorage(
+    "/admin/links?limit",
+    {
+      defaultValue: 9,
+      parse: (v) => parseAsInteger.parse(v),
+      sync: true,
+    }
+  );
 
-  const { data, mutate, isLoading, error } = useSWR<[ILink[], number]>(
+  const { data, mutate, isLoading, error, isValidating } = useSWR<[ILink[], number]>(
     "/admin/links?" + `page=${page}` + "&" + `limit=${limit}`,
     {
-      revalidateOnFocus: true,
       revalidateIfStale: true
     }
   );
@@ -161,7 +163,7 @@ export function List() {
                 {/* Edit Button - top left */}
                 <div className="absolute top-2 left-2 flex gap-1 z-20">
                   <SafeLink
-                    href={"/admin/links/"+item.id+"/edit"}
+                    href={"/admin/links/" + item.id + "/edit"}
                     onClick={(e) => {
                       e.stopPropagation();
                     }}

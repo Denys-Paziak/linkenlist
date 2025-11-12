@@ -26,7 +26,10 @@ export const updateFormSchema = z.object({
     .string()
     .min(1, "URL is required")
     .url("Enter a valid URL")
-    .startsWith("https://", "URL must start with https://"),
+    .refine(
+      (val) => val.startsWith("https://") || val.startsWith("http://"),
+      "URL must start with http:// or https://"
+    ),
 
   category: z.string().min(1, "Category is required"),
 

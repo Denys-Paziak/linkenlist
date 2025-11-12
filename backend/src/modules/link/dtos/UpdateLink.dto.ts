@@ -60,7 +60,7 @@ export class UpdateLinkDto {
 		each: true,
 		message: 'Each tag must be between 2 and 30 characters long'
 	})
-	tags?: string[] | null
+	tags?: string[]
 
 	@IsOptional()
 	@IsEnum(ELinkStatus)

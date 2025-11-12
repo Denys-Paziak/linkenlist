@@ -14,8 +14,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../../../../../../../../components/ui/dialog";
-import { Link } from "../../../../../../../../types/Link";
-import { fetcher } from "../../../../../../../../lib/fetcher";
+import { ILink } from "../../../../../../../../types/Link";
+import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
 
 export function DeleteDialog({
   showDeleteDialog,
@@ -26,7 +26,7 @@ export function DeleteDialog({
   showDeleteDialog: boolean;
   handleCancelDelete: () => void;
   handleSuccessDelete: () => void;
-  itemToDelete: Link;
+  itemToDelete: ILink;
 }) {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
   const [errors, setErrors] = useState<string>("");
@@ -38,7 +38,7 @@ export function DeleteDialog({
     setDeleteMode(method);
 
     try {
-      const response = await fetcher("/admin/links/" + itemToDelete.id, {
+      const response = await fetcherAdmin("/admin/links/" + itemToDelete.id, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

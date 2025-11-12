@@ -1,11 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ILink } from "../../../../types/Link";
-import { fetcher } from "../../../../lib/fetcher";
+import { fetcherUser } from "../../../../lib/fetcher";
 
 interface ResourceCardProps {
   data: ILink;
@@ -17,7 +16,7 @@ export function Card({ data, isLoading }: ResourceCardProps) {
     let url = data.url || "#";
 
     try {
-      await fetcher("user")(`/links/${data.id}/add-view`, { method: "PATCH" });
+      await fetcherUser(`/links/${data.id}/add-view`, { method: "PATCH" });
     } catch {}
 
     window.open(url, "_blank", "noopener noreferrer");

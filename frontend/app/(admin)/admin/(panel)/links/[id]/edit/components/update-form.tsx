@@ -21,7 +21,7 @@ import {
 import { ErrorAlert } from "@/components/ui/error-alert";
 import { FilePen, CheckCircle, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetcher } from "@/lib/fetcher";
+import { fetcherAdmin } from "@/lib/fetcher";
 import {
   UpdateLinkFormData,
   updateFormSchema,
@@ -30,7 +30,7 @@ import {
 } from "../../../../../../../../lib/schemas/link-form-schema";
 import { ImageUploadField } from "../../../components/create-form/components/image-upload-field";
 import { TagsField } from "../../../components/create-form/components/tags-field";
-import { Link } from "../../../../../../../../types/Link";
+import { ILink } from "../../../../../../../../types/Link";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
@@ -56,11 +56,11 @@ export function EditForm({ linkId }: { linkId: string }) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data, error, isLoading } = useSWR<Link>(
+  const { data, error, isLoading } = useSWR<ILink>(
     linkId ? `/admin/links/${linkId}` : null
   );
 
-  const originalRef = useRef<Link | null>(null);
+  const originalRef = useRef<ILink | null>(null);
 
   const form = useForm<UpdateLinkFormData>({
     resolver: zodResolver(updateFormSchema),
@@ -112,7 +112,8 @@ export function EditForm({ linkId }: { linkId: string }) {
     }
 
     const imageUrl = form.getValues("image")?.trim();
-    if (imageUrl && imageFile) {
+
+    if (!imageUrl || !imageFile) {
       form.setError("image", {
         message: "Use either image URL or file, not both.",
       });
@@ -126,14 +127,6 @@ export function EditForm({ linkId }: { linkId: string }) {
       const dirty = pickDirty(values, form.formState.dirtyFields);
 
       const hasImageFile = !!imageFile;
-
-      const noDirtyFields = Object.keys(dirty).length === 0 && !hasImageFile;
-
-      if (noDirtyFields) {
-        setStatus("success");
-        setTimeout(() => setStatus("idle"), 1500);
-        return;
-      }
 
       const formData = new FormData();
 
@@ -149,7 +142,7 @@ export function EditForm({ linkId }: { linkId: string }) {
         formData.append("imageFile", imageFile as File);
       }
 
-      await fetcher(`/admin/links/${linkId}`, {
+      await fetcherAdmin(`/admin/links/${linkId}`, {
         method: "PATCH",
         credentials: "include",
         body: formData,

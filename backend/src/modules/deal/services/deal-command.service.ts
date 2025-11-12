@@ -42,7 +42,7 @@ export class DealCommandService {
 	private async upsertTagsByNames(
 		names: string[] | null | undefined,
 		manager: EntityManager
-	): Promise<DealTag[] | null | undefined> {
+	): Promise<DealTag[] | undefined> {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
@@ -68,7 +68,7 @@ export class DealCommandService {
 		if (!exists.image && !file) throw new BadRequestException('Image required.')
 		if (!exists.title && !dto.title) throw new BadRequestException('Title required.')
 		if (!exists.categories && !dto.categories) throw new BadRequestException('Categories required.')
-		if (!exists.outboundURL && !dto.outboundURL) throw new BadRequestException('Outbound URL required.')
+		if (!exists.outboundUrl && !dto.outboundUrl) throw new BadRequestException('Outbound URL required.')
 
 		let newImage: IUploadedImage | undefined = undefined
 		const oldKeys: string[] = []
@@ -106,13 +106,13 @@ export class DealCommandService {
 				id: dealId,
 				title: dto.title,
 				seoMetaTitle: dto.title,
-				slug,
-				tags: tagsToSet === undefined ? undefined : (tagsToSet ?? []),
-				teaser: dto.teaser,
-				seoMetaDescription: dto.teaser,
+				slug: slug === '' ? undefined : slug,
+				tags: tagsToSet,
+				teaser: dto.teaser === '' ? null : dto.teaser,
+				seoMetaDescription: dto.teaser === '' ? null : dto.teaser,
 				categories: dto.categories,
-				outboundURL: dto.outboundURL,
-				outboundURLButtonLabel: dto.outboundURLButtonLabel,
+				outboundURL: dto.outboundUrl,
+				outboundURLButtonLabel: dto.outboundUrlButtonLabel === '' ? 'Go to Deal' : dto.outboundUrlButtonLabel,
 				image:
 					newImage === undefined
 						? undefined

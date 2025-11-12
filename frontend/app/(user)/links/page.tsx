@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ResourceCard } from "@/components/resource-card";
 import { ProposalLinkModal } from "@/components/proposal-link-modal";
 import { ScrollButtons } from "@/components/scroll-buttons";
-import { useUser } from "@/contexts/user-context";
 import { Star, Filter, Loader2 } from "lucide-react";
 import { useQueryStateWithLocalStorage } from "../../../hooks/use-query-state-with-local-storage";
 import { parseAsString, parseAsBoolean, parseAsInteger } from "nuqs";
@@ -14,7 +12,6 @@ import useSWR from "swr";
 import { ILink } from "../../../types/Link";
 import { Pagination } from "../../../components/ui/pagination";
 import { ErrorAlert } from "../../../components/ui/error-alert";
-import { fetcher } from "../../../lib/fetcher";
 import { Card } from "./components/card";
 
 export default function LinksPage() {
@@ -76,7 +73,6 @@ export default function LinksPage() {
 
   const key = `/links?${params.toString()}`;
   const { data, mutate, isLoading, error } = useSWR<[ILink[], number]>(key, {
-    revalidateOnFocus: true,
     revalidateIfStale: true,
   });
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
@@ -199,11 +195,7 @@ export default function LinksPage() {
           {data ? (
             <div className="grid-container-links">
               {data[0].map((resource) => (
-                <Card
-                  key={resource.id}
-                  data={resource}
-                  isLoading={isLoading}
-                />
+                <Card key={resource.id} data={resource} isLoading={isLoading} />
               ))}
             </div>
           ) : (
