@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { SubmitLinkModal } from "@/components/proposal-link-modal"
+import { ProposalLinkModal } from "@/components/proposal-link-modal"
 import { Button } from "@/components/ui/button"
 import { CustomDropdown } from "@/components/custom-dropdown"
 
@@ -161,7 +161,7 @@ export default function AddEditLinkPage() {
         </div>
       </main>
 
-      <SubmitLinkModal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} />
+      <ProposalLinkModal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} />
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
