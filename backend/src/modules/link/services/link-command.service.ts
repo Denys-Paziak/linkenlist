@@ -2,11 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 
+import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedImage } from '../../../interfaces/IUploadedImage'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
+import { ViewsSystemService } from '../../views/services/views-system.service'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
 import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
 import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
@@ -21,7 +23,8 @@ export class LinkCommandService {
 		@InjectRepository(LinkImage) private readonly linkImageRepository: Repository<LinkImage>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
-		private readonly s3StorageService: S3StorageService
+		private readonly s3StorageService: S3StorageService,
+		private readonly viewsSystemService: ViewsSystemService
 	) {}
 
 	private async saveImage(file: IMultipartFile, linkId: number): Promise<IUploadedImage> {
@@ -33,7 +36,10 @@ export class LinkCommandService {
 		return { key, url, width: file.width, height: file.height }
 	}
 
-	private async upsertTagsByNames(names: string[] | null, manager: EntityManager): Promise<LinkTag[] | null | undefined> {
+	private async upsertTagsByNames(
+		names: string[] | null | undefined,
+		manager: EntityManager
+	): Promise<LinkTag[] | null | undefined> {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
@@ -67,7 +73,8 @@ export class LinkCommandService {
 				url: dto.url,
 				verified: dto.verified ?? false,
 				verifiedAt: dto.verified ? new Date() : null,
-				verifiedBy: dto.verified ? 'admin' : null
+				verifiedBy: dto.verified ? 'admin' : null,
+				isOfficial: dto.url.split('/')[0].includes('.mil') || dto.url.split('/')[0].includes('.gov')
 			})
 		})
 
@@ -84,7 +91,7 @@ export class LinkCommandService {
 			}
 		})
 
-		this.imageQueueService.enqueueProcess({ linkId: link.id, linkImageId: image.id, srcKey: uploaded.key })
+		this.imageQueueService.enqueueLinkProcess({ entityId: link.id, entityImageId: image.id, srcKey: uploaded.key })
 	}
 
 	async updateLink(linkId: number, dto: UpdateLinkDto, file?: IMultipartFile) {
@@ -103,7 +110,7 @@ export class LinkCommandService {
 		const updated = await this.dataSource.transaction(async manager => {
 			const repo = manager.getRepository(Link)
 
-			const tagsToSet = await this.upsertTagsByNames(dto.tags as any, manager)
+			const tagsToSet = await this.upsertTagsByNames(dto.tags, manager)
 
 			if (newImage !== undefined && exists.image) {
 				await this.linkImageRepository.delete(exists.image.id)
@@ -136,7 +143,8 @@ export class LinkCommandService {
 
 				verified: verified === undefined ? undefined : !!verified,
 				verifiedAt: verified === undefined ? undefined : verified ? new Date() : null,
-				verifiedBy: verified === undefined ? undefined : verified ? 'admin' : null
+				verifiedBy: verified === undefined ? undefined : verified ? 'admin' : null,
+				isOfficial: dto.url ? dto.url.split('/')[0].includes('.mil') || dto.url.split('/')[0].includes('.gov') : undefined
 			})
 		})
 
@@ -147,9 +155,9 @@ export class LinkCommandService {
 		}
 
 		if (newImage && updated.image) {
-			this.imageQueueService.enqueueProcess({
-				linkId: updated.id,
-				linkImageId: updated.image.id,
+			this.imageQueueService.enqueueLinkProcess({
+				entityId: updated.id,
+				entityImageId: updated.image.id,
 				srcKey: newImage.key
 			})
 		}
@@ -180,5 +188,9 @@ export class LinkCommandService {
 				} catch {}
 			}
 		}
+	}
+
+	async addView(linkId: number) {
+		this.viewsSystemService.incrementDailyView(EDailyViewEntityType.LINK, linkId)
 	}
 }

@@ -11,10 +11,12 @@ import { DealRelated } from './entities/DealRelated.entity'
 import { DealSection } from './entities/DealSection.entity'
 import { DealTag } from './entities/DealTag.entity'
 import { DealCommandService } from './services/deal-command.service'
+import { DealSystemService } from './services/deal-system.service'
 
 @Module({
 	imports: [TypeOrmModule.forFeature([Deal, DealRelated, DealSection, DealTag, DealImage]), S3StorageModule, ImageQueueModule],
 	controllers: [DealAdminController],
-	providers: [DealCommandService]
+	providers: [DealCommandService, DealSystemService],
+	exports: [DealSystemService]
 })
 export class DealModule {}

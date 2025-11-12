@@ -1,4 +1,4 @@
-export interface LinkImage {
+export interface ILinkImage {
   id: number;
   url: string;
   width: number;
@@ -8,23 +8,23 @@ export interface LinkImage {
   updatedAt: string;
 }
 
-export interface LinksTag {
+export interface ILinksTag {
   id: number;
   name: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Link {
+export interface ILink {
   id: number;
   title: string;
   slug: string;
   description: string;
   url: string;
-  image: LinkImage | null;
+  image: ILinkImage | null;
   category: string;
   branches: string[];
-  tags: LinksTag[]
+  tags: ILinksTag[]
   status: 'draft' | 'published' | 'archived';
   verified: boolean;
   verifiedAt: string | null;

@@ -5,6 +5,7 @@ import sharp from 'sharp'
 
 import { EImageStatus } from '../../interfaces/EImageStatus'
 import { replaceExt } from '../../utils/replace-ext.utils'
+import { DealSystemService } from '../deal/services/deal-system.service'
 import { LinkSystemService } from '../link/services/link-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 
@@ -24,29 +25,41 @@ export class ImageProcessor extends WorkerHost {
 
 	constructor(
 		private readonly s3: S3StorageService,
-		private readonly linkSystemService: LinkSystemService
+		private readonly linkSystemService: LinkSystemService,
+		private readonly dealSystemService: DealSystemService
 	) {
 		super()
 	}
 
 	async process(job: Job<ImageJobData>) {
-		const { linkId, linkImageId, srcKey } = job.data
-		this.logger.log(`Start job ${job.id} for linkId=${linkId}, linkImageId=${linkImageId}, srcKey=${srcKey}`)
+		switch (job.name) {
+			case 'link':
+				return this.link(job)
+			case 'deal':
+				return this.deal(job)
+			default:
+				throw new Error(`Unknown job type: ${job.name}`)
+		}
+	}
+
+	private async link(job: Job<ImageJobData>) {
+		const { entityId, entityImageId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for linkId=${entityId}, linkImageId=${entityImageId}, srcKey=${srcKey}`)
 
 		// 0) Ідемпотентність та перехід у PROCESSING
 		// Якщо хтось уже зробив цю роботу — просто вийдемо
 		try {
-			const alreadyReady = await this.linkSystemService.isImageStatus(linkImageId, EImageStatus.QUEUED)
+			const alreadyReady = await this.linkSystemService.isImageStatus(entityImageId, EImageStatus.QUEUED)
 			if (!alreadyReady) {
-				this.logger.log(`Skip job ${job.id}: image already READY (linkImageId=${linkImageId})`)
+				this.logger.log(`Skip job ${job.id}: image already READY (linkImageId=${entityImageId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.linkSystemService.updateImageStatus(linkImageId, EImageStatus.PROCESSING)
+			await this.linkSystemService.updateImageStatus(entityImageId, EImageStatus.PROCESSING)
 		} catch (e) {
 			// Якщо LinkImage вже видалили — немає сенсу далі працювати
 			if (isNotFoundError(e)) {
-				this.logger.warn(`Skip: LinkImage ${linkImageId} not found before processing`)
-				throw new DiscardedError(`LinkImage ${linkImageId} not found`)
+				this.logger.warn(`Skip: LinkImage ${entityImageId} not found before processing`)
+				throw new DiscardedError(`LinkImage ${entityImageId} not found`)
 			}
 			throw e
 		}
@@ -58,8 +71,8 @@ export class ImageProcessor extends WorkerHost {
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
 				// Оригінал зник/видалили — фіксуємо бізнес-стан і НЕ ретраїмо
-				await safeSetFailed(this.linkSystemService, linkImageId, 'ORIGINAL_NOT_FOUND')
-				this.logger.warn(`Original not found for linkImageId=${linkImageId}, key=${srcKey}`)
+				await safeSetFailed(this.linkSystemService, entityImageId, 'ORIGINAL_NOT_FOUND')
+				this.logger.warn(`Original not found for linkImageId=${entityImageId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
 			// Інші помилки — хай ретраяться згідно attempts/backoff
@@ -91,10 +104,10 @@ export class ImageProcessor extends WorkerHost {
 
 		// 5) Оновлення БД. Можуть трапитись ситуації, коли лінк/картинку видалили.
 		try {
-			await this.linkSystemService.updateLink(linkId, {
-				id: linkId,
+			await this.linkSystemService.updateLink(entityId, {
+				id: entityId,
 				image: {
-					id: linkImageId,
+					id: entityImageId,
 					processedKey: uploaded.key,
 					url: uploaded.url,
 					width: meta.width ?? 0,
@@ -106,7 +119,7 @@ export class ImageProcessor extends WorkerHost {
 			// Якщо пов’язану сутність видалили — намагаємося прибрати із S3 згенероване зображення
 			if (isNotFoundError(e)) {
 				this.logger.warn(
-					`Linked entity missing while saving result (linkId=${linkId}, linkImageId=${linkImageId}). Cleaning up S3...`
+					`Linked entity missing while saving result (linkId=${entityId}, linkImageId=${entityImageId}). Cleaning up S3...`
 				)
 				try {
 					if (uploaded?.key) await this.s3.delete(uploaded.key)
@@ -121,11 +134,115 @@ export class ImageProcessor extends WorkerHost {
 			throw e
 		}
 
-		this.logger.log(`Completed job ${job.id}: linkImageId=${linkImageId} -> ${uploaded.url}`)
+		this.logger.log(`Completed job ${job.id}: linkImageId=${entityImageId} -> ${uploaded.url}`)
 		return {
 			ok: true,
-			linkId,
-			linkImageId,
+			entityId,
+			entityImageId,
+			key: uploaded.key,
+			url: uploaded.url,
+			width: meta.width ?? 0,
+			height: meta.height ?? 0
+		}
+	}
+
+	private async deal(job: Job<ImageJobData>) {
+		const { entityId, entityImageId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for dealId=${entityId}, dealImageId=${entityImageId}, srcKey=${srcKey}`)
+
+		// 0) Ідемпотентність та перехід у PROCESSING
+		// Якщо хтось уже зробив цю роботу — просто вийдемо
+		try {
+			const alreadyReady = await this.dealSystemService.isImageStatus(entityImageId, EImageStatus.QUEUED)
+			if (!alreadyReady) {
+				this.logger.log(`Skip job ${job.id}: image already READY (linkImageId=${entityImageId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.dealSystemService.updateImageStatus(entityImageId, EImageStatus.PROCESSING)
+		} catch (e) {
+			// Якщо LinkImage вже видалили — немає сенсу далі працювати
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: DealImage ${entityImageId} not found before processing`)
+				throw new DiscardedError(`DealImage ${entityImageId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Спроба отримати оригінал з S3
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				// Оригінал зник/видалили — фіксуємо бізнес-стан і НЕ ретраїмо
+				await safeSetFailed(this.dealSystemService, entityImageId, 'ORIGINAL_NOT_FOUND')
+				this.logger.warn(`Original not found for dealImageId=${entityImageId}, key=${srcKey}`)
+				throw new DiscardedError('Original image not found in S3')
+			}
+			// Інші помилки — хай ретраяться згідно attempts/backoff
+			throw e
+		}
+
+		// 2) Обробка зображення
+		const out = await sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({ width: 1200, height: 630, fit: 'inside', withoutEnlargement: true })
+			.toColourspace('srgb')
+			.webp({ quality: 82, effort: 5 })
+			.toBuffer()
+
+		const meta = await sharp(out).metadata()
+
+		// 3) Ключ призначення: той самий шлях, інше розширення
+		const dstKey = replaceExt(srcKey, '.webp')
+
+		// 4) Запис результату у S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			// твій підпис: uploadPublic(buffer, contentType, cacheForever, keyOverride)
+			uploaded = await this.s3.uploadPublic(out, 'image/webp', true, dstKey)
+		} catch (e) {
+			// Проблеми з S3 ретраяться
+			throw e
+		}
+
+		// 5) Оновлення БД. Можуть трапитись ситуації, коли лінк/картинку видалили.
+		try {
+			await this.dealSystemService.updateDeal(entityId, {
+				id: entityId,
+				image: {
+					id: entityImageId,
+					processedKey: uploaded.key,
+					url: uploaded.url,
+					width: meta.width ?? 0,
+					height: meta.height ?? 0,
+					status: EImageStatus.READY
+				}
+			})
+		} catch (e) {
+			// Якщо пов’язану сутність видалили — намагаємося прибрати із S3 згенероване зображення
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Deal entity missing while saving result (dealId=${entityId}, dealImageId=${entityImageId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				// Позначати FAILED для LinkImage тут уже нема кому (сутність зникла),
+				// тож просто **не ретраїмо** — job завершена логічно.
+				throw new DiscardedError('Deal entity deleted during processing')
+			}
+			// Інші помилки — нехай ретраяться
+			throw e
+		}
+
+		this.logger.log(`Completed job ${job.id}: dealImageId=${entityImageId} -> ${uploaded.url}`)
+		return {
+			ok: true,
+			entityId,
+			entityImageId,
 			key: uploaded.key,
 			url: uploaded.url,
 			width: meta.width ?? 0,
@@ -143,8 +260,8 @@ export class ImageProcessor extends WorkerHost {
 		}
 		// Інакше — реальна помилка. Спробуємо позначити FAILED, якщо LinkImage ще існує.
 		try {
-			if (job?.data?.linkImageId) {
-				await safeSetFailed(this.linkSystemService, job.data.linkImageId, err.message || 'PROCESSING_ERROR')
+			if (job?.data?.entityImageId) {
+				await safeSetFailed(this.linkSystemService, job.data.entityImageId, err.message || 'PROCESSING_ERROR')
 			}
 		} catch {
 			/* ігноруємо: сутність може не існувати */
@@ -166,9 +283,13 @@ function isNotFoundError(e: any) {
 }
 
 /** Безпечне проставлення FAILED для LinkImage */
-async function safeSetFailed(linkSystemService: LinkSystemService, linkImageId: number, reason: string) {
+async function safeSetFailed(
+	service: { updateImageStatus: (id: number, status: EImageStatus) => Promise<void> },
+	entityImageId: number,
+	reason: string
+) {
 	try {
-		await linkSystemService.updateImageStatus(linkImageId, EImageStatus.FAILED)
+		await service.updateImageStatus(entityImageId, EImageStatus.FAILED)
 	} catch {
 		/* якщо сутність пропала — нічого не робимо */
 	}

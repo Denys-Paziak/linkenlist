@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 
@@ -10,22 +10,24 @@ import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { SaveBasicInformationDto } from '../dtos/SaveBasicInformation.dto'
 import { Deal } from '../entities/Deal.entity'
+import { DealImage } from '../entities/DealImage.entity'
 import { DealTag } from '../entities/DealTag.entity'
 
 @Injectable()
 export class DealCommandService {
 	constructor(
 		@InjectRepository(Deal) private readonly dealRepository: Repository<Deal>,
+		@InjectRepository(Deal) private readonly dealImageRepository: Repository<DealImage>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly s3StorageService: S3StorageService
 	) {}
 
-	private async saveImage(file: IMultipartFile, linkId: number): Promise<IUploadedImage> {
+	private async saveImage(file: IMultipartFile, dealId: number): Promise<IUploadedImage> {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
-			path: 'links',
-			entityId: linkId
+			path: 'deals',
+			entityId: dealId
 		})
 		return { key, url, width: file.width, height: file.height }
 	}
@@ -37,7 +39,10 @@ export class DealCommandService {
 		return slug
 	}
 
-	private async upsertTagsByNames(names: string[] | null, manager: EntityManager): Promise<DealTag[] | null | undefined> {
+	private async upsertTagsByNames(
+		names: string[] | null | undefined,
+		manager: EntityManager
+	): Promise<DealTag[] | null | undefined> {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
@@ -57,12 +62,30 @@ export class DealCommandService {
 			.getMany()
 	}
 
-	async saveBasicInformation(dto: SaveBasicInformationDto, file: IMultipartFile) {
-		let slug: string | undefined 
-		
+	async saveBasicInformation(dealId: number, dto: SaveBasicInformationDto, file?: IMultipartFile) {
+		const exists = await this.dealRepository.findOne({ where: { id: dealId }, relations: ['image'] })
+		if (!exists) throw new NotFoundException('Deal not found.')
+		if (!exists.image && !file) throw new BadRequestException('Image required.')
+		if (!exists.title && !dto.title) throw new BadRequestException('Title required.')
+		if (!exists.categories && !dto.categories) throw new BadRequestException('Categories required.')
+		if (!exists.outboundURL && !dto.outboundURL) throw new BadRequestException('Outbound URL required.')
+
+		let newImage: IUploadedImage | undefined = undefined
+		const oldKeys: string[] = []
+
+		if (file) {
+			newImage = await this.saveImage(file, exists.id)
+			if (exists.image?.originalKey) oldKeys.push(exists.image.originalKey)
+			if (exists.image?.processedKey) oldKeys.push(exists.image.processedKey)
+		}
+
+		let slug: string | undefined
+
 		if (dto.slug) {
 			if (await this.dealRepository.exists({ where: { slug: dto.slug } })) {
 				throw new ConflictException('This slug already exists.')
+			} else {
+				slug = dto.slug
 			}
 		} else {
 			if (dto.title) {
@@ -70,33 +93,50 @@ export class DealCommandService {
 			}
 		}
 
-		const deal = await this.dataSource.transaction(async manager => {
-			const tags = await this.upsertTagsByNames(dto.tags ?? [], manager)
+		const updated = await this.dataSource.transaction(async manager => {
+			const repo = manager.getRepository(Deal)
 
-			return manager.getRepository(Deal).save({
+			const tagsToSet = await this.upsertTagsByNames(dto.tags, manager)
+
+			if (newImage !== undefined && exists.image) {
+				await this.dealImageRepository.delete(exists.image.id)
+			}
+
+			return repo.save({
+				id: dealId,
 				title: dto.title,
+				seoMetaTitle: dto.title,
 				slug,
-				tags: tags || [],
+				tags: tagsToSet === undefined ? undefined : (tagsToSet ?? []),
 				teaser: dto.teaser,
-				branches: dto.branches || [],
+				seoMetaDescription: dto.teaser,
+				categories: dto.categories,
 				outboundURL: dto.outboundURL,
-				outboundURLButtonLabel: dto.outboundURLButtonLabel
+				outboundURLButtonLabel: dto.outboundURLButtonLabel,
+				image:
+					newImage === undefined
+						? undefined
+						: {
+								originalKey: newImage.key,
+								height: newImage.height,
+								width: newImage.width,
+								url: newImage.url
+							}
 			})
 		})
 
-		if (!deal) return
+		for (const key of oldKeys) {
+			try {
+				await this.s3StorageService.delete(key)
+			} catch {}
+		}
 
-		const uploaded = await this.saveImage(file, deal.id)
-		const { image } = await this.dealRepository.save({
-			id: deal.id,
-			image: {
-				originalKey: uploaded.key,
-				height: uploaded.height,
-				width: uploaded.width,
-				url: uploaded.url
-			}
-		})
-
-		this.imageQueueService.enqueueProcess({ linkId: deal.id, linkImageId: image.id, srcKey: uploaded.key })
+		if (newImage && updated.image) {
+			this.imageQueueService.enqueueDealProcess({
+				entityId: updated.id,
+				entityImageId: updated.image.id,
+				srcKey: newImage.key
+			})
+		}
 	}
 }

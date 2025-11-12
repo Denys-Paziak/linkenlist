@@ -3,8 +3,8 @@ import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
 
 export type ImageJobData = {
-  linkId: number
-  linkImageId: number
+  entityId: number
+  entityImageId: number
   srcKey: string
 }
 
@@ -12,8 +12,17 @@ export type ImageJobData = {
 export class ImageQueueService {
   constructor(@InjectQueue('image') private readonly queue: Queue<ImageJobData>) {}
 
-  enqueueProcess(data: ImageJobData) {
-    this.queue.add('process', data, {
+  enqueueLinkProcess(data: ImageJobData) {
+    this.queue.add('link', data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5_000 },
+      removeOnComplete: true,
+      removeOnFail: false,
+    })
+  }
+
+  enqueueDealProcess(data: ImageJobData) {
+    this.queue.add('deal', data, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 5_000 },
       removeOnComplete: true,

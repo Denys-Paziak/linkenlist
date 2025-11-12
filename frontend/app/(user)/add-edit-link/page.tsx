@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { SubmitLinkModal } from "@/components/submit-link-modal"
+import { SubmitLinkModal } from "@/components/proposal-link-modal"
 import { Button } from "@/components/ui/button"
 import { CustomDropdown } from "@/components/custom-dropdown"
 

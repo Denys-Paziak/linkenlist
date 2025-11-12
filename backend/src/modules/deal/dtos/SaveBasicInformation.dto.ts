@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer'
 import {
 	ArrayMaxSize,
 	ArrayNotEmpty,
@@ -18,17 +17,18 @@ import { EDealCategory } from '../../../interfaces/EDealCategory'
 
 export class SaveBasicInformationDto {
 	@IsOptional()
-	@IsInt()
-	id?: number
-
-	@IsOptional()
 	@IsString()
 	@MaxLength(140)
+	@IsNotEmpty()
 	title?: string
 
 	@IsString()
 	@IsOptional()
 	@MaxLength(140)
+	@IsNotEmpty()
+	@Matches(/^[a-z0-9-]+$/, {
+		message: 'Slug can only contain letters, numbers, and special characters'
+	})
 	slug?: string
 
 	@IsString()
@@ -36,10 +36,11 @@ export class SaveBasicInformationDto {
 	@MaxLength(200)
 	teaser?: string
 
-	@IsEnum(EDealCategory, { each: true })
+	@IsOptional()
+	@IsArray()
 	@ArrayNotEmpty()
-	@Type(() => String)
-	branches: EDealCategory[]
+	@IsEnum(EDealCategory, { each: true })
+	categories?: EDealCategory[]
 
 	@IsOptional()
 	@IsArray()
@@ -60,10 +61,10 @@ export class SaveBasicInformationDto {
 	imgUrl?: string
 
 	@IsOptional()
-	@IsString()
-    outboundURL?: string
+	@IsUrl()
+	outboundURL?: string
 
-    @IsOptional()
+	@IsOptional()
 	@IsString()
-    outboundURLButtonLabel?: string
+	outboundURLButtonLabel?: string
 }

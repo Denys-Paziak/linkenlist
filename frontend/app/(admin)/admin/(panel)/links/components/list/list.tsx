@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "../../../../../../../types/Link";
+import { ILink } from "../../../../../../../types/Link";
 import Image from "next/image";
 import { DeleteDialog } from "./components/delete-dialog";
 import useSWR, { mutate as globalMutate } from "swr";
 import { cn } from "../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
-import { Pagination } from "./components/pagination";
 import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-query-state-with-local-storage";
 import { parseAsInteger } from "nuqs";
 import { SafeLink } from "../../../../../../../components/admin/safe-link";
+import { Pagination } from "../../../../../../../components/ui/pagination";
 
 export function List() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +33,7 @@ export function List() {
     sync: true,
   });
 
-  const { data, mutate, isLoading, error } = useSWR<[Link[], number]>(
+  const { data, mutate, isLoading, error } = useSWR<[ILink[], number]>(
     "/admin/links?" + `page=${page}` + "&" + `limit=${limit}`,
     {
       revalidateOnFocus: true,
@@ -195,7 +195,7 @@ export function List() {
                 </div>
 
                 {isLoading ? (
-                  <div className="absolute z-30 flex items-center justify-center top-0 left-0 w-full h-full bg-black/30">
+                  <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
                     <Loader2 className="animate-spin w-11 h-11 text-white" />
                   </div>
                 ) : null}
@@ -216,6 +216,7 @@ export function List() {
             page,
           }}
           totalPages={totalPages}
+          className="pb-8 px-6"
         />
       </Card>
       {/* Delete Confirmation Dialog */}

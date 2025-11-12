@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Button, ButtonProps, buttonVariants } from '@/components/ui/button'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 
-const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
+const PaginationContainer = ({ className, ...props }: React.ComponentProps<'nav'>) => (
   <nav
     role="navigation"
     aria-label="pagination"
@@ -13,7 +13,7 @@ const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
     {...props}
   />
 )
-Pagination.displayName = 'Pagination'
+PaginationContainer.displayName = 'PaginationContainer'
 
 const PaginationContent = React.forwardRef<
   HTMLUListElement,
@@ -49,6 +49,7 @@ const PaginationLink = ({
   <a
     aria-current={isActive ? 'page' : undefined}
     className={cn(
+      'cursor-pointer',
       buttonVariants({
         variant: isActive ? 'outline' : 'ghost',
         size,
@@ -67,7 +68,7 @@ const PaginationPrevious = ({
   <PaginationLink
     aria-label="Go to previous page"
     size="default"
-    className={cn('gap-1 pl-2.5', className)}
+    className={cn('gap-1 pl-2.5 cursor-pointer', className)}
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
@@ -83,7 +84,7 @@ const PaginationNext = ({
   <PaginationLink
     aria-label="Go to next page"
     size="default"
-    className={cn('gap-1 pr-2.5', className)}
+    className={cn('gap-1 pr-2.5 cursor-pointer', className)}
     {...props}
   >
     <span>Next</span>
@@ -125,7 +126,7 @@ const PaginationPageSize = ({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <span className="text-sm text-muted-foreground">{label}:</span>
-      <DropdownMenu.Root>
+      <DropdownMenu.Root modal={false}>
         <DropdownMenu.Trigger asChild>
           <Button variant="outline" size="sm" className="flex items-center gap-1">
             {value}
@@ -162,8 +163,132 @@ const PaginationPageSize = ({
 }
 PaginationPageSize.displayName = 'PaginationPageSize'
 
+function Pagination({
+  handlePageChange,
+  handleLimitPageChange,
+  pagination,
+  totalPages,
+  pageSizeOptions = [9, 18, 48, 99],
+  className
+}: {
+  handlePageChange: (page: number) => void;
+  handleLimitPageChange: (limit: number) => void;
+  pagination: {
+    page: number;
+    limit: number;
+  };
+  totalPages: number;
+  pageSizeOptions?: number[]
+  className?: string
+}) {
+  return (
+    <div className={cn("grid grid-cols-3 justify-center", className)}>
+      <div></div>
+      <PaginationContainer>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={(e) => {
+                e.preventDefault();
+                if (pagination.page > 1) handlePageChange(pagination.page - 1);
+              }}
+              className={
+                pagination.page <= 1 ? "pointer-events-none opacity-50" : ""
+              }
+            />
+          </PaginationItem>
+
+          {pagination.page > 3 && (
+            <>
+              <PaginationItem>
+                <PaginationLink
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(1);
+                  }}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+              {pagination.page > 4 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+            </>
+          )}
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((page) => {
+              return (
+                page >= Math.max(1, pagination.page - 2) &&
+                page <= Math.min(totalPages, pagination.page + 2)
+              );
+            })
+            .map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(page);
+                  }}
+                  isActive={pagination.page === page}
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+          {pagination.page < totalPages - 2 && (
+            <>
+              {pagination.page < totalPages - 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationLink
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(totalPages);
+                  }}
+                >
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            </>
+          )}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={(e) => {
+                e.preventDefault();
+                if (pagination.page < totalPages)
+                  handlePageChange(pagination.page + 1);
+              }}
+              className={
+                pagination.page >= totalPages
+                  ? "pointer-events-none opacity-50"
+                  : ""
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </PaginationContainer>
+      <PaginationPageSize
+        value={pagination.limit}
+        onChange={(limit) => handleLimitPageChange(limit)}
+        label="Items per page"
+        className="justify-self-end"
+        options={pageSizeOptions}
+      />
+    </div>
+  );
+}
+
 export {
   Pagination,
+  PaginationContainer,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,

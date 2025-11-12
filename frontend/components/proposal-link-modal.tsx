@@ -6,12 +6,12 @@ import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface SubmitLinkModalProps {
+interface ProposalLinkModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-export function SubmitLinkModal({ isOpen, onClose }: SubmitLinkModalProps) {
+export function ProposalLinkModal({ isOpen, onClose }: ProposalLinkModalProps) {
   const [formData, setFormData] = useState({
     action: "",
     name: "",

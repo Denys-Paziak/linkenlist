@@ -9,6 +9,7 @@ import { getBullmqConfig } from '../../configs/bullmq.config'
 import { getJWTConfig } from '../../configs/jwt.config'
 import { getPostgresConfig } from '../../configs/postgres.config'
 import { getThrottlerConfig } from '../../configs/throttler.config'
+import { DealModule } from '../deal/deal.module'
 import { LinkModule } from '../link/link.module'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 
@@ -24,7 +25,8 @@ import { ImageProcessor } from './image.processor'
 		BullModule.registerQueue({ name: 'image' }),
 		JwtModule.registerAsync(getJWTConfig()),
 		ThrottlerModule.forRootAsync(getThrottlerConfig()),
-		LinkModule
+		LinkModule,
+		DealModule
 	],
 	providers: [ImageProcessor, S3StorageService]
 })

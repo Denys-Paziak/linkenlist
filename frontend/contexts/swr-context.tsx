@@ -3,11 +3,11 @@
 import { SWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 
-export function SWRProvider({ children }: { children: React.ReactNode }) {
+export function SWRProvider({ children, role }: { children: React.ReactNode, role: "admin" | "user" }) {
   return (
     <SWRConfig
       value={{
-        fetcher,
+        fetcher: fetcher(role),
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
         revalidateIfStale: false,

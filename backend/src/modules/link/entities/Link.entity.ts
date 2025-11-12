@@ -55,11 +55,23 @@ export class Link {
 	@Column({ type: 'boolean', default: false })
 	verified: boolean
 
-	@Column({ type: 'timestamptz', nullable: true })
+	@Column({ type: 'timestamptz', nullable: true, name: 'verified_at' })
 	verifiedAt?: Date | null
 
-	@Column({ type: 'enum', enum: ['system', 'admin'], nullable: true })
+	@Column({ type: 'enum', enum: ['system', 'admin'], nullable: true, name: 'verified_by' })
 	verifiedBy?: 'system' | 'admin' | null
+
+	@Column({ type: 'int', default: 0, name: 'total_views' })
+	totalViews: number
+
+	@Column({ type: 'int', default: 0, name: 'views_30d' })
+	views30d: number
+
+	@Column({ type: 'int', default: 1, name: 'popular_score' })
+	popularScore: number
+
+	@Column({ type: 'boolean', default: false, name: "is_official" })
+	isOfficial: boolean
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

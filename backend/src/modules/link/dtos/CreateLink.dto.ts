@@ -39,9 +39,9 @@ export class CreateLinkDto {
 	@IsEnum(ELinkCategory)
 	category: ELinkCategory
 
-	@IsEnum(ELinkBranch, { each: true })
+	@IsArray()
 	@ArrayNotEmpty()
-	@Type(() => String)
+	@IsEnum(ELinkBranch, { each: true })
 	branches: ELinkBranch[]
 
 	@IsArray()

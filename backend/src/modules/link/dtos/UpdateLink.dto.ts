@@ -1,5 +1,6 @@
 import {
 	ArrayMaxSize,
+	ArrayNotEmpty,
 	IsArray,
 	IsBoolean,
 	IsEnum,
@@ -19,7 +20,7 @@ import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 export class UpdateLinkDto {
 	@IsOptional()
 	@IsUrl()
-	imgUrl?: string | null
+	imgUrl?: string
 
 	@IsOptional()
 	@IsString()
@@ -34,6 +35,7 @@ export class UpdateLinkDto {
 
 	@IsOptional()
 	@IsUrl()
+	@IsNotEmpty()
 	url?: string
 
 	@IsOptional()
@@ -41,6 +43,8 @@ export class UpdateLinkDto {
 	category?: ELinkCategory
 
 	@IsOptional()
+	@IsArray()
+	@ArrayNotEmpty()
 	@IsEnum(ELinkBranch, { each: true })
 	branches?: ELinkBranch[]
 

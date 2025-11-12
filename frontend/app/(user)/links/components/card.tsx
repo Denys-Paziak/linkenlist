@@ -2,19 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ExternalLink, Loader2 } from "lucide-react";
-import { useUser } from "@/contexts/user-context";
+import { Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ILink } from "../types/Link";
+import { ILink } from "../../../../types/Link";
+import { fetcher } from "../../../../lib/fetcher";
 
 interface ResourceCardProps {
-  resource: ILink;
+  data: ILink;
   isLoading: boolean;
 }
 
-export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
-  const { user, toggleFavorite } = useUser();
-  const isFavorite = user.favorites.includes(resource.id);
+export function Card({ data, isLoading }: ResourceCardProps) {
+  const handleCardClick = async () => {
+    let url = data.url || "#";
+
+    try {
+      await fetcher("user")(`/links/${data.id}/add-view`, { method: "PATCH" });
+    } catch {}
+
+    window.open(url, "_blank", "noopener noreferrer");
+  };
 
   return (
     <div
@@ -23,31 +30,31 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
         isLoading && "pointer-events-none"
       )}
     >
-      <Link
-        href={resource.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn("absolute inset-0 z-10", isLoading && "pointer-events-none")}
-        prefetch={false}
+      <div
+        className={cn(
+          "absolute inset-0 z-10",
+          isLoading && "pointer-events-none"
+        )}
+        onClick={() => {
+          handleCardClick();
+        }}
       >
-        <span className="sr-only">View {resource.title}</span>
-      </Link>
+        <span className="sr-only">View {data.title}</span>
+      </div>
 
       {/* Image Container with fixed aspect ratio - matching realestate cards */}
       <div className="card-media-container p-2 pb-1">
         <div className="card-media w-full bg-secondary rounded-md border border-gray-200 overflow-hidden">
-          {resource.image ? (
+          {data.image ? (
             <Image
-              src={resource.image?.url}
-              alt={`Screenshot of ${resource.title}`}
-              width={resource.image.width}
-              height={resource.image.height}
+              src={data.image?.url}
+              alt={`Screenshot of ${data.title}`}
+              width={data.image.width}
+              height={data.image.height}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
             />
           ) : (
-            <span className="text-sm font-medium uppercase">
-              {resource.title}
-            </span>
+            <span className="text-sm font-medium uppercase">{data.title}</span>
           )}
         </div>
       </div>
@@ -56,7 +63,7 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
       <div className="px-2 pb-2">
         {/* Title - matching realestate card styling */}
         <h3 className="card-price mb-1 font-bold text-[#002244] text-left text-sm leading-tight line-clamp-1">
-          {resource.title}
+          {data.title}
         </h3>
 
         {/* Description - NOW limited to 2 rows */}
@@ -71,7 +78,7 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
             maxHeight: "2.8em", // 2 lines * 1.4 line-height
           }}
         >
-          {resource.description}
+          {data.description}
         </p>
 
         {/* Tags - limited to one line only */}
@@ -79,7 +86,7 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
           className="flex flex-wrap gap-1 overflow-hidden"
           style={{ maxHeight: "1.5rem" }}
         >
-          {resource.tags.slice(0, 3).map((tag) => (
+          {data.tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
               className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
@@ -87,9 +94,9 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
               {tag.name}
             </span>
           ))}
-          {resource.tags.length > 3 && (
+          {data.tags.length > 3 && (
             <span className="inline-block text-gray-400 text-xs px-1 py-0.5 font-medium">
-              +{resource.tags.length - 3}
+              +{data.tags.length - 3}
             </span>
           )}
         </div>
@@ -101,15 +108,14 @@ export function ResourceCard({ resource, isLoading }: ResourceCardProps) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            toggleFavorite(resource.id);
           }}
           className="w-6 h-6 p-0 bg-white/90 hover:bg-gray-100 rounded-sm flex items-center justify-center"
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={false ? "Remove from favorites" : "Add to favorites"}
         >
           <Star
             className={cn(
               "w-3.5 h-3.5",
-              isFavorite && "fill-[#dc2626] text-[#dc2626]"
+              false && "fill-[#dc2626] text-[#dc2626]"
             )}
           />
         </button>

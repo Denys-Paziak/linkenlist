@@ -24,7 +24,7 @@ import { fetchImageAsIMultipartFile } from '../../../utils/fetch-image.util'
 import { MultipartOptions, validateFile } from '../../../utils/file.util'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
 import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
-import { GetAllLinksDto } from '../dtos/GetAllLinks.dto'
+import { GetAllLinksAdminDto } from '../dtos/GetAllLinks.admin.dto'
 import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
 import { LinkCommandService } from '../services/link-command.service'
 import { LinkQueryService } from '../services/link-query.service'
@@ -42,8 +42,8 @@ export class LinkAdminController {
 
 	@Authorization(ERoleNames.ADMIN)
 	@Get()
-	async getAllLinks(@Query() query: GetAllLinksDto) {
-		return this.linkQueryService.getAllLinks(query)
+	async getAllLinks(@Query() query: GetAllLinksAdminDto) {
+		return this.linkQueryService.getAllLinksAdmin(query)
 	}
 
 	@Authorization(ERoleNames.ADMIN)

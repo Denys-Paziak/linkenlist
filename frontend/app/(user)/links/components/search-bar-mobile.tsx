@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { X, Search, ChevronDown } from "lucide-react"
+import { useState, useEffect } from "react";
+import { X, Search, ChevronDown } from "lucide-react";
+import { branchesOptions, categories } from "../../../../lib/schemas/link-form-schema";
 
-interface LinksMobileFilterDrawerProps {
-  isOpen: boolean
-  onClose: () => void
-  searchQuery: string
-  onSearchChange: (value: string) => void
-  selectedBranch: string
-  onBranchChange: (branch: string) => void
-  selectedCategory: string
-  onCategoryChange: (category: string) => void
-  selectedAccess: string
-  onAccessChange: (access: string) => void
-  selectedSort: string
-  onSortChange: (sort: string) => void
+interface SearchBarMobileProps {
+  isOpen: boolean;
+  onClose: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  selectedBranch: string;
+  onBranchChange: (branch: string) => void;
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
+
+  selectedSort: string;
+  onSortChange: (sort: string) => void;
 }
 
-export function LinksMobileFilterDrawer({
+export function SearchBarMobile({
   isOpen,
   onClose,
   searchQuery,
@@ -27,63 +27,45 @@ export function LinksMobileFilterDrawer({
   onBranchChange,
   selectedCategory,
   onCategoryChange,
-  selectedAccess,
-  onAccessChange,
   selectedSort,
   onSortChange,
-}: LinksMobileFilterDrawerProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+}: SearchBarMobileProps) {
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  const branches = ["All", "Army", "Navy", "Air Force", "Marines", "Space Force", "Coast Guard", "DoD-wide"]
-  const categories = [
-    "All",
-    "Pay & Benefits",
-    "Medical/TRICARE",
-    "Education & Training",
-    "Housing/PCS",
-    "Travel/Finance",
-    "Personnel/Records",
-    "Legal",
-    "Family Support",
-    "Transition/Retirement",
-    "VA",
-  ]
-  const accessTypes = ["All", "No login", "CAC", "DS Logon", "ID.me", "Username/Password"]
   const sortOptions = [
     { value: "", label: "Default" },
-    { value: "most-used", label: "Most used (clicks last 30 days)" },
-    { value: "recently-verified", label: "Recently verified" },
+    { value: "most_used", label: "Most used (clicks last 30 days)" },
+    { value: "recently_verified", label: "Recently verified" },
     { value: "alphabetical", label: "Alphabetical" },
-    { value: "official-first", label: "Official first (.mil/.gov)" },
-  ]
+    { value: "official_first", label: "Official first (.mil/.gov)" },
+  ];
 
   const applyFilters = () => {
-    setActiveDropdown(null)
-    onClose()
-  }
+    setActiveDropdown(null);
+    onClose();
+  };
 
   const resetFilters = () => {
-    onBranchChange("")
-    onCategoryChange("")
-    onAccessChange("")
-    onSortChange("")
-    onSearchChange("")
-    setActiveDropdown(null)
-  }
+    onBranchChange("");
+    onCategoryChange("");
+    onSortChange("");
+    onSearchChange("");
+    setActiveDropdown(null);
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
@@ -96,7 +78,10 @@ export function LinksMobileFilterDrawer({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-lg font-semibold">Search & Filter</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -118,7 +103,11 @@ export function LinksMobileFilterDrawer({
             {/* Branch Filter */}
             <div className="relative">
               <button
-                onClick={() => setActiveDropdown(activeDropdown === "branch" ? null : "branch")}
+                onClick={() =>
+                  setActiveDropdown(
+                    activeDropdown === "branch" ? null : "branch"
+                  )
+                }
                 className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <span>{selectedBranch || "Branch"}</span>
@@ -126,15 +115,16 @@ export function LinksMobileFilterDrawer({
               </button>
               {activeDropdown === "branch" && (
                 <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {branches.map((branch) => (
+                  {["All", ...branchesOptions].map((branch) => (
                     <button
                       key={branch}
                       onClick={() => {
-                        onBranchChange(branch === "All" ? "" : branch)
-                        setActiveDropdown(null)
+                        onBranchChange(branch === "All" ? "" : branch);
+                        setActiveDropdown(null);
                       }}
                       className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedBranch === branch || (!selectedBranch && branch === "All")
+                        selectedBranch === branch ||
+                        (!selectedBranch && branch === "All")
                           ? "bg-primary/10 text-primary"
                           : ""
                       }`}
@@ -149,7 +139,11 @@ export function LinksMobileFilterDrawer({
             {/* Category Filter */}
             <div className="relative">
               <button
-                onClick={() => setActiveDropdown(activeDropdown === "category" ? null : "category")}
+                onClick={() =>
+                  setActiveDropdown(
+                    activeDropdown === "category" ? null : "category"
+                  )
+                }
                 className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <span>{selectedCategory || "Category"}</span>
@@ -157,15 +151,16 @@ export function LinksMobileFilterDrawer({
               </button>
               {activeDropdown === "category" && (
                 <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {categories.map((category) => (
+                  {["All", ...categories].map((category) => (
                     <button
                       key={category}
                       onClick={() => {
-                        onCategoryChange(category === "All" ? "" : category)
-                        setActiveDropdown(null)
+                        onCategoryChange(category === "All" ? "" : category);
+                        setActiveDropdown(null);
                       }}
                       className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedCategory === category || (!selectedCategory && category === "All")
+                        selectedCategory === category ||
+                        (!selectedCategory && category === "All")
                           ? "bg-primary/10 text-primary"
                           : ""
                       }`}
@@ -177,44 +172,18 @@ export function LinksMobileFilterDrawer({
               )}
             </div>
 
-            {/* Access Filter */}
-            <div className="relative">
-              <button
-                onClick={() => setActiveDropdown(activeDropdown === "access" ? null : "access")}
-                className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <span>{selectedAccess || "Access/Login"}</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {activeDropdown === "access" && (
-                <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {accessTypes.map((access) => (
-                    <button
-                      key={access}
-                      onClick={() => {
-                        onAccessChange(access === "All" ? "" : access)
-                        setActiveDropdown(null)
-                      }}
-                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedAccess === access || (!selectedAccess && access === "All")
-                          ? "bg-primary/10 text-primary"
-                          : ""
-                      }`}
-                    >
-                      {access}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Sort Filter */}
             <div className="relative">
               <button
-                onClick={() => setActiveDropdown(activeDropdown === "sort" ? null : "sort")}
+                onClick={() =>
+                  setActiveDropdown(activeDropdown === "sort" ? null : "sort")
+                }
                 className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <span>{sortOptions.find((opt) => opt.value === selectedSort)?.label || "Sort"}</span>
+                <span>
+                  {sortOptions.find((opt) => opt.value === selectedSort)
+                    ?.label || "Sort"}
+                </span>
                 <ChevronDown className="h-4 w-4" />
               </button>
               {activeDropdown === "sort" && (
@@ -223,11 +192,13 @@ export function LinksMobileFilterDrawer({
                     <button
                       key={option.value}
                       onClick={() => {
-                        onSortChange(option.value)
-                        setActiveDropdown(null)
+                        onSortChange(option.value);
+                        setActiveDropdown(null);
                       }}
                       className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedSort === option.value ? "bg-primary/10 text-primary" : ""
+                        selectedSort === option.value
+                          ? "bg-primary/10 text-primary"
+                          : ""
                       }`}
                     >
                       {option.label}
@@ -267,5 +238,5 @@ export function LinksMobileFilterDrawer({
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -23,6 +23,7 @@ import { ResourceModule } from './resource/resource.module'
 import { S3StorageModule } from './s3-storage/s3-storage.module'
 import { TokenModule } from './token/token.module'
 import { UserModule } from './user/user.module'
+import { ViewsModule } from './views/views.module';
 
 @Module({
 	imports: [
@@ -44,7 +45,8 @@ import { UserModule } from './user/user.module'
 		DealModule,
 		LinkModule,
 		S3StorageModule,
-		ImageQueueModule
+		ImageQueueModule,
+		ViewsModule
 	],
 	controllers: [AppController],
 	providers: [

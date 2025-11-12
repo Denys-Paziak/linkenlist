@@ -6,7 +6,7 @@ interface User {
   name: string
   email: string
   isLoggedIn: boolean
-  favorites: string[]
+  favorites: number[]
   showDisclaimer: boolean
   registrationDate: string
   notifications: number
@@ -17,7 +17,7 @@ interface UserContextType {
   setUser: (user: User) => void
   login: (email: string, name: string) => void
   logout: () => void
-  toggleFavorite: (resourceId: string) => void
+  toggleFavorite: (resourceId: number) => void
   updateSettings: (settings: Partial<User>) => void
 }
 
@@ -28,7 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     name: "John Doe",
     email: "john.doe@example.com",
     isLoggedIn: true, // Set to true for demo purposes
-    favorites: ["1", "3", "9"], // MyPay, SGLI, TRICARE
+    favorites: [1, 3, 9], // MyPay, SGLI, TRICARE
     showDisclaimer: true,
     registrationDate: "2024-01-15",
     notifications: 2,
@@ -53,7 +53,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }))
   }
 
-  const toggleFavorite = (resourceId: string) => {
+  const toggleFavorite = (resourceId: number) => {
     setUser((prev) => ({
       ...prev,
       favorites: prev.favorites.includes(resourceId)

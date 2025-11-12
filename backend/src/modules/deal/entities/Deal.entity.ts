@@ -13,15 +13,16 @@ import {
 	UpdateDateColumn
 } from 'typeorm'
 
+import { EDealCategory } from '../../../interfaces/EDealCategory'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EDealType } from '../../../interfaces/EDealType'
+import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 import { LinkImage } from '../../link/entities/LinkImage.entity'
 
 import { DealImage } from './DealImage.entity'
 import { DealRelated } from './DealRelated.entity'
 import { DealSection } from './DealSection.entity'
 import { DealTag } from './DealTag.entity'
-import { EDealCategory } from '../../../interfaces/EDealCategory'
 
 @Entity('deals')
 @Unique(['slug'])
@@ -57,10 +58,10 @@ export class Deal {
 	@JoinTable({ name: 'deal_tags_join' })
 	tags: DealTag[]
 
-	@Column({ type: 'text', name: "outbound_url", nullable: true })
+	@Column({ type: 'text', name: 'outbound_url', nullable: true })
 	outboundURL?: string | null
 
-	@Column({ type: 'text', name: "outbound_url_button_label", default: "Go to Deal" })
+	@Column({ type: 'text', name: 'outbound_url_button_label', default: 'Go to Deal' })
 	outboundURLButtonLabel: string
 
 	// Offer Details
@@ -107,8 +108,8 @@ export class Deal {
 	@Column({ type: 'text', nullable: true })
 	seoMetaDescription?: string | null
 
-	@Column({ type: 'text', nullable: true })
-	ogImageMode?: string | null // "use_hero" | "custom"
+	@Column({ type: 'enum', enum: EOgImageMode, default: EOgImageMode.USE_HERO })
+	ogImageMode: EOgImageMode
 	@Column({ type: 'text', nullable: true })
 	ogImageUrl?: string | null
 	@Column({ type: 'text', nullable: true })
