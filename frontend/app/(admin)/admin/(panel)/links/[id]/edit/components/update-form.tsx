@@ -113,7 +113,7 @@ export function EditForm({ linkId }: { linkId: string }) {
 
     const imageUrl = form.getValues("image")?.trim();
 
-    if (!imageUrl || !imageFile) {
+    if (!imageUrl && !imageFile) {
       form.setError("image", {
         message: "Use either image URL or file, not both.",
       });
