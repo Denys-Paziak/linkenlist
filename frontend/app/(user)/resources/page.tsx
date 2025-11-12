@@ -17,6 +17,10 @@ import {
 import { ChevronLeft, ChevronRight, Search, Plus, Star, Filter } from "lucide-react"
 
 export default function ResourcesPage() {
+  return null
+}
+
+function Resources() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedFormat, setSelectedFormat] = useState("All")
   const [sortBy, setSortBy] = useState("Newest")

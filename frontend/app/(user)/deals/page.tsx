@@ -19,6 +19,10 @@ import { useRouter } from "next/navigation"
 import { mockDeals } from "@/data/mock-deals"
 
 export default function DealsPage() {
+  return null
+}
+
+ function Deals() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
