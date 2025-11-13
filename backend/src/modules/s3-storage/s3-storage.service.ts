@@ -24,7 +24,7 @@ export class S3StorageService {
 		this.region = this.configService.getOrThrow<string>('S3_REGION')
 	}
 
-	private buildKey(path: string, entityId: number, originalName: string) {
+	private buildKey(path: string, originalName: string) {
 		const p = path.replace(/^\/+|\/+$/g, '')
 		const ext = (extname(originalName) || '').toLowerCase()
 		const slugName = generateSlug(basename(originalName, ext))
@@ -33,7 +33,7 @@ export class S3StorageService {
 		const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
 		const dd = String(d.getUTCDate()).padStart(2, '0')
 
-		return `${p}/${entityId}/${yyyy}-${mm}-${dd}-${slugName}-${generateRandomSuffix()}${ext}`
+		return `${p}/${yyyy}-${mm}-${dd}-${slugName}-${generateRandomSuffix()}${ext}`
 	}
 
 	private publicUrlForKey(key: string) {
@@ -54,10 +54,9 @@ export class S3StorageService {
 			| {
 					filename: string
 					path: string
-					entityId: number
 			  }
 	) {
-		const Key = typeof key === 'string' ? key : this.buildKey(key.path, key.entityId, key.filename)
+		const Key = typeof key === 'string' ? key : this.buildKey(key.path, key.filename)
 
 		try {
 			await this.s3.send(

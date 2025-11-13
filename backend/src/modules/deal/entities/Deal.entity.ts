@@ -103,10 +103,10 @@ export class Deal {
 
 	@Column({ type: 'text', nullable: true, name: 'promo_code' })
 	promoCode?: string | null
-	@Column({ type: 'text', nullable: true, name: 'where_to_enter_code' })
-	whereToEnterCode?: string | null
+	@Column({ type: 'text', name: 'where_to_enter_code', default: 'At checkout, in the promo code field' })
+	whereToEnterCode: string
 
-	@Column({ type: 'boolean', default: false, name: 'ongoing_offer' })
+	@Column({ type: 'boolean', default: true, name: 'ongoing_offer' })
 	ongoingOffer: boolean
 
 	@Column({ type: 'date', nullable: true, name: 'valid_from' })

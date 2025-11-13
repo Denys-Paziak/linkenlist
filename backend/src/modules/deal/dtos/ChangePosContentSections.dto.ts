@@ -14,5 +14,5 @@ class Items {
 export class ChangePosContentSectionsDto {
 	@ValidateNested({ each: true })
 	@Type(() => Items)
-	items: ChangePosContentSectionsDto[]
+	items: Items[]
 }

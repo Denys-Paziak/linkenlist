@@ -149,11 +149,11 @@ export function EditForm({ linkId }: { linkId: string }) {
       });
 
       setStatus("success");
-
+      globalMutate(`/admin/links/tags`);
+      globalMutate(`/admin/links/${linkId}`);
+      
       setTimeout(() => {
         setStatus("idle");
-        globalMutate(`/admin/links/tags`);
-        globalMutate(`/admin/links/${linkId}`);
       }, 2000);
     } catch (err: any) {
       setStatus("error");

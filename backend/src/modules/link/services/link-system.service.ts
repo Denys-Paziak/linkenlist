@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DeepPartial, Repository } from 'typeorm'
 
-import { EImageStatus } from '../../../interfaces/EImageStatus'
+import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { Link } from '../entities/Link.entity'
 import { LinkImage } from '../entities/LinkImage.entity'
 
@@ -15,15 +15,15 @@ export class LinkSystemService {
 		private readonly linkImageRepository: Repository<LinkImage>
 	) {}
 
-	async updateLink(id: number, link: DeepPartial<Link>) {
-		return await this.linkRepository.save({ id, ...link })
+	async updateLink(id: number, data: DeepPartial<Link>) {
+		return await this.linkRepository.save({ id, ...data })
 	}
 
-	async isImageStatus(id: number, status: EImageStatus) {
+	async isImageStatus(id: number, status: EFileStatus) {
 		return await this.linkImageRepository.exists({ where: { id, status } })
 	}
 
-	async updateImageStatus(id: number, status: EImageStatus) {
+	async updatImageStatus(id: number, status: EFileStatus) {
 		await this.linkImageRepository.update(id, { status })
 	}
 }

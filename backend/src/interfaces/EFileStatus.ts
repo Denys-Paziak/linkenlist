@@ -1,4 +1,4 @@
-export enum EImageStatus {
+export enum EFileStatus {
 	PROCESSING = 'processing',
 	READY = 'ready',
 	FAILED = 'failed',

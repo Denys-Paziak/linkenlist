@@ -2,15 +2,15 @@ import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, Upd
 
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 
-import { Deal } from './Deal.entity'
+import { DealSection } from './DealSection.entity'
 
-@Entity('deals_images')
-export class DealImage {
+@Entity('deal_sections_attachments')
+export class DealSectionAttachment {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@OneToOne(() => Deal, deal => deal.image)
-	deal: Deal
+	@OneToOne(() => DealSection, dealSection => dealSection.attachment)
+	dealSection: DealSection
 
 	@Column({ type: 'text' })
 	url: string
@@ -21,11 +21,11 @@ export class DealImage {
 	@Column({ type: 'text', name: 'processed_key', nullable: true, select: false })
 	processedKey?: string | null
 
-	@Column({ type: 'int' })
-	width: number
+	@Column({ type: 'text' })
+	name: string
 
-	@Column({ type: 'int' })
-	height: number
+	@Column({ type: 'text' })
+	ext: string
 
 	@Column({ type: 'enum', enum: EFileStatus, default: EFileStatus.QUEUED })
 	status: EFileStatus

@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
-import { EImageStatus } from '../../../interfaces/EImageStatus'
+import { EFileStatus } from '../../../interfaces/EFileStatus'
 
 import { Link } from './Link.entity'
 
@@ -27,8 +27,8 @@ export class LinkImage {
 	@Column({ type: 'int' })
 	height: number
 
-	@Column({ type: 'enum', enum: EImageStatus, default: EImageStatus.QUEUED })
-	status: EImageStatus
+	@Column({ type: 'enum', enum: EFileStatus, default: EFileStatus.QUEUED })
+	status: EFileStatus
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	createdAt: Date

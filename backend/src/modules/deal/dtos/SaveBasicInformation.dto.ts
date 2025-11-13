@@ -25,8 +25,8 @@ export class SaveBasicInformationDto {
 	@IsString()
 	@IsOptional()
 	@MaxLength(140)
-	@Matches(/^[a-z0-9-]+$/, {
-		message: 'Slug can only contain letters, numbers, and special characters'
+	@Matches(/^[a-z0-9-_]+$/, {
+		message: 'Slug can only contain lowercase letters, numbers, hyphens, and underscores.'
 	})
 	slug?: string
 

@@ -5,7 +5,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm'
 import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
-import { IUploadedImage } from '../../../interfaces/IUploadedImage'
+import { IUploadedImage } from '../../../interfaces/IUploadedFile'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ViewsSystemService } from '../../views/services/views-system.service'
@@ -30,16 +30,12 @@ export class LinkCommandService {
 	private async saveImage(file: IMultipartFile, linkId: number): Promise<IUploadedImage> {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
-			path: 'links',
-			entityId: linkId
+			path: 'links/heroes/' + linkId
 		})
 		return { key, url, width: file.width, height: file.height }
 	}
 
-	private async upsertTagsByNames(
-		names: string[] | undefined,
-		manager: EntityManager
-	): Promise<LinkTag[] | undefined> {
+	private async upsertTagsByNames(names: string[] | undefined, manager: EntityManager): Promise<LinkTag[] | undefined> {
 		if (names === undefined) return undefined
 		if (names === null) return []
 
@@ -91,11 +87,22 @@ export class LinkCommandService {
 			}
 		})
 
-		this.imageQueueService.enqueueLinkProcess({ entityId: link.id, entityImageId: image.id, srcKey: uploaded.key })
+		this.imageQueueService.enqueueLinkHeroProcess({ entityId: link.id, entityFileId: image.id, srcKey: uploaded.key })
 	}
 
 	async updateLink(linkId: number, dto: UpdateLinkDto, file?: IMultipartFile) {
-		const exists = await this.linkRepository.findOne({ where: { id: linkId }, relations: ['image'] })
+		const exists = await this.linkRepository.findOne({
+			where: { id: linkId },
+			relations: ['image'],
+			select: {
+				id: true,
+				image: {
+					id: true,
+					originalKey: true,
+					processedKey: true
+				}
+			}
+		})
 		if (!exists) throw new NotFoundException('Link not found.')
 
 		let newImage: IUploadedImage | undefined = undefined
@@ -113,7 +120,7 @@ export class LinkCommandService {
 			const tagsToSet = await this.upsertTagsByNames(dto.tags, manager)
 
 			if (newImage !== undefined && exists.image) {
-				await this.linkImageRepository.delete(exists.image.id)
+				await manager.getRepository(LinkImage).delete(exists.image.id)
 			}
 
 			const verified = dto.verified
@@ -155,9 +162,9 @@ export class LinkCommandService {
 		}
 
 		if (newImage && updated.image) {
-			this.imageQueueService.enqueueLinkProcess({
+			this.imageQueueService.enqueueLinkHeroProcess({
 				entityId: updated.id,
-				entityImageId: updated.image.id,
+				entityFileId: updated.image.id,
 				srcKey: newImage.key
 			})
 		}
