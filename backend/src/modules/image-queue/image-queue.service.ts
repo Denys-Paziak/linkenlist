@@ -36,6 +36,15 @@ export class ImageQueueService {
 		})
 	}
 
+	enqueueDealOgImageProcess(data: ImageJobData) {
+		this.queue.add('deal-og-image', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
+
 	enqueueDealAttachmentProcess(data: AttachmentJobData) {
 		this.queue.add('deal-attachment', data, {
 			attempts: 3,

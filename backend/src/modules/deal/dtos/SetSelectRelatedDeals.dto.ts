@@ -1,8 +1,8 @@
 import { IsArray, IsInt, Min } from 'class-validator'
 
-export class SelectRelatedDealsDto {
+export class SetSelectRelatedDealsDto {
 	@IsInt({ each: true })
-	@Min(1)
+	@Min(1, { each: true })
 	@IsArray()
-	dealId: number[]
+	dealIds: number[]
 }

@@ -3,7 +3,7 @@ import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedCol
 import { Deal } from './Deal.entity'
 
 @Entity('deal_related')
-@Index(['source', 'position'], { unique: true })
+@Index(['source'], { unique: true })
 export class DealRelated {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -13,9 +13,6 @@ export class DealRelated {
 
 	@ManyToOne(() => Deal, { onDelete: 'CASCADE' })
 	target: Deal
-
-	@Column({ type: 'int' }) 
-	position: number
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

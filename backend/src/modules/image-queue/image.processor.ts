@@ -43,6 +43,8 @@ export class ImageProcessor extends WorkerHost {
 				return this.linkHero(job)
 			case 'deal-hero':
 				return this.dealHero(job)
+			case 'deal-og-image':
+				return this.dealOgImage(job)
 			case 'deal-attachment':
 				return this.dealAttachment(job)
 			default:
@@ -224,6 +226,92 @@ export class ImageProcessor extends WorkerHost {
 		}
 
 		this.logger.log(`Completed job ${job.id}: dealImageId=${entityFileId} -> ${uploaded.url}`)
+	}
+
+	/** OG image для Deal */
+	private async dealOgImage(job: Job<ImageJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for dealId=${entityId}, dealImageId=${entityFileId}, srcKey=${srcKey}`)
+
+		// 0) Ідемпотентність та перехід у PROCESSING
+		try {
+			const alreadyQueued = await this.dealSystemService.isImageStatus(entityFileId, EFileStatus.QUEUED)
+			if (!alreadyQueued) {
+				this.logger.log(`Skip job ${job.id}: image already PROCESSED (dealImageId=${entityFileId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: DealOgImage ${entityFileId} not found before processing`)
+				throw new DiscardedError(`DealOgImage ${entityFileId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				try {
+					await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
+				} catch {}
+				this.logger.warn(`Original not found for dealImageId=${entityFileId}, key=${srcKey}`)
+				throw new DiscardedError('Original image not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Мінімальна оптимізація по типу файлу
+		const ext = getExtensionFromKey(srcKey)
+		const output = await optimizeFileMinimal(input, ext)
+
+		const meta = await sharp(output?.out).metadata()
+
+		// Тут не міняємо розширення, щоб лишити очікуваний тип файлу
+		const dstKey = srcKey
+
+		// 4) Запис до S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			if (output) {
+				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey)
+			}
+		} catch (e) {
+			throw e
+		}
+
+		// 5) Оновлення БД
+		try {
+			await this.dealSystemService.updateDeal(entityId, {
+				id: entityId,
+				ogImage: {
+					id: entityFileId,
+					processedKey: uploaded?.key,
+					url: uploaded?.url,
+					width: meta.width ?? 0,
+					height: meta.height ?? 0,
+					status: EFileStatus.READY
+				}
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Deal entity missing while saving result (dealId=${entityId}, dealImageId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Deal entity deleted during processing')
+			}
+			throw e
+		}
+
+		this.logger.log(`Completed job ${job.id}: dealOgImageId=${entityFileId} -> ${uploaded?.url}`)
 	}
 
 	/**

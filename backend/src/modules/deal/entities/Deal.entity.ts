@@ -18,7 +18,6 @@ import { EDealCategory } from '../../../interfaces/EDealCategory'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EDealType } from '../../../interfaces/EDealType'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
-import { LinkImage } from '../../link/entities/LinkImage.entity'
 
 import { DealImage } from './DealImage.entity'
 import { DealRelated } from './DealRelated.entity'
@@ -42,9 +41,9 @@ export class Deal {
 	@Column({ type: 'text', nullable: true })
 	teaser?: string | null
 
-	@OneToOne(() => DealImage, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+	@OneToOne(() => DealImage, { cascade: true,  nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'image_id' })
-	image?: LinkImage
+	image?: DealImage
 
 	@Column({ type: 'boolean', default: false, name: 'is_verified' })
 	isVerified: boolean
@@ -121,6 +120,9 @@ export class Deal {
 	@OneToMany(() => DealSection, b => b.deal, { cascade: true })
 	contentBlocks: DealSection[]
 
+	@Column({ type: 'boolean', default: true, name: 'related_auto_mode' })
+	relatedAutoMode: boolean 
+
 	// Surfacing & related (ручний порядок)
 	@OneToMany(() => DealRelated, r => r.source, { cascade: true })
 	relatedManual: DealRelated[]
@@ -134,8 +136,11 @@ export class Deal {
 
 	@Column({ type: 'enum', enum: EOgImageMode, default: EOgImageMode.USE_HERO, name: 'og_image_mode' })
 	ogImageMode: EOgImageMode
-	@Column({ type: 'text', nullable: true, name: 'og_image_url' })
-	ogImageUrl?: string | null
+
+	@OneToOne(() => DealImage, { cascade: true, nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'og_image_id' })
+	ogImage?: DealImage
+	
 	@Column({ type: 'text', nullable: true, name: 'canonical_url' })
 	canonicalUrl?: string | null
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Patch, Post, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UnprocessableEntityException, UseInterceptors } from '@nestjs/common'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
@@ -15,9 +15,11 @@ import { SaveBasicInformationDto } from '../dtos/SaveBasicInformation.dto'
 import { SaveContentSectionDto } from '../dtos/SaveContentSection.dto'
 import { SaveOfferDetailsDto } from '../dtos/SaveOfferDetails.dto'
 import { SaveSEODto } from '../dtos/SaveSEO.dto'
-import { SelectRelatedDealsDto } from '../dtos/SelectRelatedDeals.dto'
+import { SetSelectRelatedDealsDto } from '../dtos/SetSelectRelatedDeals.dto'
 import { SwitchShowOfferDetailsDto } from '../dtos/SwitchShowOfferDetails.dto'
 import { DealCommandService } from '../services/deal-command.service'
+import { SwitchRelatedDealsMode } from '../dtos/SwitchRelatedDealsMode.dto'
+import { GetSimplifiedDealsDto } from '../dtos/GetSimplifiedDeals.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -142,15 +144,35 @@ export class DealAdminController {
 		}
 	}
 
-	async switchRelatedDealsMode(@Param() params: ParamId) {}
+	@Authorization(ERoleNames.ADMIN)
+	@Patch(':id/surfacing/related-mode')
+	async switchRelatedDealsMode(@Param() params: ParamId, @Body() dto: SwitchRelatedDealsMode) {
+		await this.dealCommandService.switchRelatedDealsMode(params.id, dto)
+		
+		return {
+			ok: true
+		}
+	}
 
-	async getSimplifiedDeals() {
+	@Authorization(ERoleNames.ADMIN)
+	@Get('simplified')
+	async getSimplifiedDeals(@Query() query: GetSimplifiedDealsDto) {
 		// прийматиме рядок пошуку, та сторінку і ліміт для пагінації
 		// пагінація автоматична при доскролювані до кінця
 		// повертатиме id name slug isVerified
+
+		return await this.dealCommandService.getSimplifiedDeals(query)
 	}
 
-	async selectRelatedDeals(@Param() params: ParamId, @Body() dto: SelectRelatedDealsDto) {}
+	@Authorization(ERoleNames.ADMIN)
+	@Patch(':id/related-deals/select')
+	async setSelectRelatedDeals(@Param() params: ParamId, @Body() dto: SetSelectRelatedDealsDto) {
+		await this.dealCommandService.setSelectRelatedDeals(params.id, dto)
+
+		return {
+			ok: true
+		}
+	}
 
 	@UseInterceptors(
 		MultipartInterceptor({

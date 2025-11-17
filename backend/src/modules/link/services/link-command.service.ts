@@ -70,7 +70,7 @@ export class LinkCommandService {
 				verified: dto.verified ?? false,
 				verifiedAt: dto.verified ? new Date() : null,
 				verifiedBy: dto.verified ? 'admin' : null,
-				isOfficial: dto.url.split('/')[0].includes('.mil') || dto.url.split('/')[0].includes('.gov')
+				isOfficial: (dto.url && dto.url.includes('.mil')) || (dto.url && dto.url.includes('.gov')) || false
 			})
 		})
 
@@ -151,7 +151,9 @@ export class LinkCommandService {
 				verified: verified === undefined ? undefined : !!verified,
 				verifiedAt: verified === undefined ? undefined : verified ? new Date() : null,
 				verifiedBy: verified === undefined ? undefined : verified ? 'admin' : null,
-				isOfficial: dto.url ? dto.url.split('/')[0].includes('.mil') || dto.url.split('/')[0].includes('.gov') : undefined
+				isOfficial: dto.url
+					? (dto.url && dto.url.includes('.mil')) || (dto.url && dto.url.includes('.gov')) || false
+					: undefined
 			})
 		})
 

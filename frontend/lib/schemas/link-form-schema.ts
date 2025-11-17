@@ -54,33 +54,15 @@ export type UpdateLinkFormData = z.infer<typeof updateFormSchema>;
 export type CreateLinkFormData = z.infer<typeof createFormSchema>;
 
 export const categories = [
-  "Base/Installation",
-  "Benefits & DEERS",
-  "Career & Benefits",
-  "Education & Training",
-  "Family & Support",
-  "Finance & Pay",
-  "General Support",
-  "HR & Personnel",
-  "Health & Fitness",
-  "Housing & Relocation",
-  "ID/CAC & RAPIDS",
-  "Identity & Access",
-  "Leadership & Policy",
-  "Leadership & Strategy",
-  "Leave & Absence",
-  "Medical & Dental",
-  "Medical/TRICARE",
-  "Pay & Benefits",
-  "Personnel/Records",
-  "Portal & Access",
-  "Public Info",
-  "Reference",
-  "Resources",
-  "Resources & Tools",
-  "Security & Clearances",
-  "Transition/Retirement",
-  "Travel/Finance",
+  "Education & Childcare",
+  "Finance & Insurance",
+  "Health & Wellness",
+  "Home Services",
+  "Legal & Administrative",
+  "Moving & Relocation",
+  "Real Estate & Housing",
+  "Shopping, Dining & Lifestyle",
+  "Technology & Services"
 ] as const;
 
 export const branchesOptions = [
