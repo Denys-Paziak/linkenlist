@@ -5,7 +5,6 @@ import { CheckCircle, Paperclip, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Switch } from "../../../../../../../../../../components/ui/switch";
 import { Button } from "../../../../../../../../../../components/ui/button";
-import { Textarea } from "../../../../../../../../../../components/ui/textarea";
 import {
   ButtonSubitStatus,
   ButtonSubmit,
@@ -22,8 +21,17 @@ import { ErrorAlert } from "../../../../../../../../../../components/ui/error-al
 import { fetcherAdmin } from "../../../../../../../../../../lib/fetcher";
 import { useParams } from "next/navigation";
 import { mutate } from "swr";
-import { sectionFormSchema, SectionFormSchematype } from "../../../../../../../../../../lib/schemas/resources/section-form-schema";
-import { IResource, IResourceSection } from "../../../../../../../../../../types/Resource";
+import {
+  sectionFormSchema,
+  SectionFormSchematype,
+} from "../../../../../../../../../../lib/schemas/resources/section-form-schema";
+import {
+  IResource,
+  IResourceSection,
+} from "../../../../../../../../../../types/Resource";
+import MDEditor, { commands } from "@uiw/react-md-editor";
+import { MarkdownSection } from "../../../../../../../../../../components/markdown-section/markdown-section";
+import { insertIconCommand } from "../../../../../../../../../../components/markdown-section/insert-icon-command";
 
 interface IFileData {
   id?: number;
@@ -47,18 +55,17 @@ export function Section({
 
   const [attached, setAttached] = useState<IFileData[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [bodyMd, setBodyMd] = useState<string | undefined>(undefined);
 
   const form = useForm<SectionFormSchematype>({
     resolver: zodResolver(sectionFormSchema),
     values: section
       ? {
           title: section?.title || "",
-          bodyMd: section?.bodyMd || "",
           enabled: section?.enabled ?? true,
         }
       : {
           title: "",
-          bodyMd: "",
           enabled: true,
         },
     mode: "onBlur",
@@ -91,6 +98,7 @@ export function Section({
         }))
         .reverse()
     );
+    setBodyMd(section?.bodyMd || undefined);
   }, [section]);
 
   const submitForm = async () => {
@@ -113,6 +121,7 @@ export function Section({
         "payload",
         JSON.stringify({
           ...dirty,
+          bodyMd,
           remainedAttachments: attached
             .map((item) => item.id)
             .filter((id) => id),
@@ -197,17 +206,57 @@ export function Section({
             />
           </div>
 
-          <div>
-            <Textarea
-              {...form.register("bodyMd")}
-              placeholder={"Section content"}
-              rows={4}
+          <div data-color-mode="light" className="markdown">
+            <MDEditor
+              height={200}
+              value={bodyMd}
+              onChange={setBodyMd}
+              textareaProps={{
+                maxLength: 10_000,
+              }}
+              commands={[
+                commands.bold,
+                commands.italic,
+                commands.strikethrough,
+                commands.hr,
+                commands.group(
+                  [
+                    commands.heading1,
+                    commands.heading2,
+                    commands.heading3,
+                    commands.heading4,
+                    commands.heading5,
+                    commands.heading6,
+                  ],
+                  {
+                    name: "title",
+                    groupName: "title",
+                    buttonProps: { "aria-label": "Insert title" },
+                  }
+                ),
+                commands.divider,
+                commands.link,
+                commands.quote,
+                insertIconCommand,
+                commands.table,
+                commands.divider,
+                commands.orderedListCommand,
+                commands.unorderedListCommand,
+                commands.divider,
+                commands.help,
+              ]}
+              extraCommands={[
+                commands.codeEdit,
+                commands.codeLive,
+                commands.codePreview,
+                commands.divider,
+                commands.fullscreen,
+              ]}
+              components={{
+                preview: (source) => <MarkdownSection content={source} />,
+              }}
             />
-            {form.formState.errors.bodyMd ? (
-              <p className="mt-1 text-sm text-destructive">
-                {form.formState.errors.bodyMd.message}
-              </p>
-            ) : null}
+            <div></div>
           </div>
 
           <div className="space-y-3">
@@ -335,35 +384,38 @@ function Actions({
   const moveSectionUp = async () => {
     setStatusMoveUp("loading");
     try {
-      await fetcherAdmin(`/admin/resources/${resourceId}/content-section/positions`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items: allSections.map((item, position) => {
-            if (index === position) {
+      await fetcherAdmin(
+        `/admin/resources/${resourceId}/content-section/positions`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items: allSections.map((item, position) => {
+              if (index === position) {
+                return {
+                  sectionId: item.id,
+                  position: position - 1,
+                };
+              }
+
+              if (index - 1 === position) {
+                return {
+                  sectionId: item.id,
+                  position: position + 1,
+                };
+              }
+
               return {
                 sectionId: item.id,
-                position: position - 1,
+                position,
               };
-            }
-
-            if (index - 1 === position) {
-              return {
-                sectionId: item.id,
-                position: position + 1,
-              };
-            }
-
-            return {
-              sectionId: item.id,
-              position,
-            };
+            }),
           }),
-        }),
-      });
+        }
+      );
 
       setStatusMoveUp("success");
       mutate<IResource>(
@@ -394,35 +446,38 @@ function Actions({
   const moveSectionDown = async () => {
     setStatusMoveDown("loading");
     try {
-      await fetcherAdmin(`/admin/resources/${resourceId}/content-section/positions`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items: allSections.map((item, position) => {
-            if (index === position) {
+      await fetcherAdmin(
+        `/admin/resources/${resourceId}/content-section/positions`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items: allSections.map((item, position) => {
+              if (index === position) {
+                return {
+                  sectionId: item.id,
+                  position: position + 1,
+                };
+              }
+
+              if (index + 1 === position) {
+                return {
+                  sectionId: item.id,
+                  position: position - 1,
+                };
+              }
+
               return {
                 sectionId: item.id,
-                position: position + 1,
+                position,
               };
-            }
-
-            if (index + 1 === position) {
-              return {
-                sectionId: item.id,
-                position: position - 1,
-              };
-            }
-
-            return {
-              sectionId: item.id,
-              position,
-            };
+            }),
           }),
-        }),
-      });
+        }
+      );
 
       setStatusMoveDown("success");
       mutate<IResource>(

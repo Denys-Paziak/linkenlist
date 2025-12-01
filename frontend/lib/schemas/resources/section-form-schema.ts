@@ -8,12 +8,6 @@ export const sectionFormSchema = z.object({
     .optional(),
 
   enabled: z.boolean().optional(),
-
-  bodyMd: z
-    .string()
-    .max(10_000, "Content body must be no longer than 10 000 characters")
-    .optional()
-    .or(z.null()),
 });
 
 export type SectionFormSchematype = z.infer<typeof sectionFormSchema>;
