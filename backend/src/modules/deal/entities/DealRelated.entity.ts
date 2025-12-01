@@ -1,9 +1,9 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 import { Deal } from './Deal.entity'
 
 @Entity('deal_related')
-@Index(['source'], { unique: true })
+@Index(['source', 'target'], { unique: true })
 export class DealRelated {
 	@PrimaryGeneratedColumn()
 	id: number

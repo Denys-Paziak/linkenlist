@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { IsNull, Not } from 'typeorm'
 
-import { ETokenTypes } from '../../../interfaces/ETokenTypes'
+import { ETokenType } from '../../../interfaces/ETokenType'
 import { UserCommandService } from '../../../modules/user/services/user-command.service'
 import { UserSystemService } from '../../../modules/user/services/user-system.service'
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
@@ -21,7 +21,7 @@ import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
 import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 
 @Injectable()
 export class AuthService {
@@ -108,7 +108,7 @@ export class AuthService {
 
 	async confirmEmail(token: string) {
 		const tokenFromDB = await this.tokenService.findToken({
-			where: { tokenOrCode: token, type: ETokenTypes.CONFIRM_EMAIL },
+			where: { tokenOrCode: token, type: ETokenType.CONFIRM_EMAIL },
 			relations: {
 				user: true
 			}
@@ -194,7 +194,7 @@ export class AuthService {
 		}
 	}
 
-	async login(dto: LoginDto, role: ERoleNames) {
+	async login(dto: LoginDto, role: ERoleName) {
 		const userFromDB = await this.userSystemService.findOne({
 			where: {
 				privateEmail: dto.email,
@@ -272,7 +272,7 @@ export class AuthService {
 
 	async resetPassword(dto: ResetPasswordDto) {
 		const tokenFromDB = await this.tokenService.findToken({
-			where: { tokenOrCode: dto.token, type: ETokenTypes.RESET_PASSWORD },
+			where: { tokenOrCode: dto.token, type: ETokenType.RESET_PASSWORD },
 			relations: {
 				user: true
 			}

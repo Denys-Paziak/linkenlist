@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { User } from '../entities/User.entity'
 import { GetSelfResponse } from '../responses/GetSelf.response'
 
@@ -14,7 +14,7 @@ export class UserQueryService {
 		private readonly userRepository: Repository<User>
 	) {}
 
-	async getSelf(userId: number, userRole: ERoleNames): Promise<GetSelfResponse> {
+	async getSelf(userId: number, userRole: ERoleName): Promise<GetSelfResponse> {
 		const userFromDB = await this.userRepository.findOne({ where: { id: userId, role: userRole } })
 		if (!userFromDB) throw new NotFoundException('No such user found')
 

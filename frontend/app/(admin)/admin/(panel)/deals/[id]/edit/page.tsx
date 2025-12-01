@@ -1,35 +1,85 @@
-"use client"
+"use client";
 
-import { DealEditor } from "@/components/admin/deal-editor"
-import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
+import { BasicsForm } from "./components/basics-form/basics-form";
+import { OfferForm } from "./components/offer-form";
+import { ContentForm } from "./components/content-form/content-form";
+import { SurfacingForm } from "./components/surfacing-form/surfacing-form";
+import { SeoForm } from "./components/seo-form";
+import { PublishingForm } from "./components/publishing-form";
+import { useQueryState, parseAsString } from "nuqs";
+import { SafeLink } from "../../../../../../../components/admin/safe-link";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
+import { IDeal } from "../../../../../../../types/Deal";
 
-interface DealEditorPageProps {
-  params: { id: string }
-}
+export default function DealEditorPage() {
+  const { id: dealId } = useParams();
 
-export default function DealEditorPage({ params }: DealEditorPageProps) {
-  const router = useRouter()
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsString.withDefault("basics")
+  );
 
-  const handleSave = (data: any) => {
-    console.log("[v0] Saving deal:", data)
-    // TODO: Implement actual save logic
-    router.push("/admin/deals")
-  }
+  useSWR<IDeal>(dealId ? `/admin/deals/${dealId}` : null, {
+    revalidateOnMount: true,
+  });
 
-  const handleCancel = () => {
-    router.push("/admin/deals")
-  }
+  return (
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Deal Editor</h1>
+          <p className="text-gray-600 mt-1">
+            Create and edit deal articles with pricing and offer details
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <SafeLink href={"/admin/deals"}>
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Deals
+            </Button>
+          </SafeLink>
+        </div>
+      </div>
 
-  // TODO: Load existing deal data based on params.id
-  const existingContent =
-    params.id !== "new"
-      ? {
-          title: `Sample Deal ${params.id}`,
-          slug: `sample-deal-${params.id}`,
-          category: "software",
-          // ... other existing data would be loaded here
-        }
-      : undefined
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="basics">Basics</TabsTrigger>
+          <TabsTrigger value="offer">Offer Details</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="surfacing">Surfacing</TabsTrigger>
+          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="publishing">Publishing</TabsTrigger>
+        </TabsList>
 
-  return <DealEditor existingContent={existingContent} onSave={handleSave} onCancel={handleCancel} />
+        <TabsContent value="basics" className="space-y-6">
+          <BasicsForm />
+        </TabsContent>
+
+        <TabsContent value="offer" className="space-y-6">
+          <OfferForm />
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6">
+          <ContentForm />
+        </TabsContent>
+
+        <TabsContent value="surfacing" className="space-y-6">
+          <SurfacingForm />
+        </TabsContent>
+
+        <TabsContent value="seo" className="space-y-6">
+          <SeoForm />
+        </TabsContent>
+
+        <TabsContent value="publishing" className="space-y-6">
+          <PublishingForm />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }

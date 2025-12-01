@@ -1,9 +1,14 @@
+export enum ELinkStatus {
+    PUBLISHED = 'published',
+    DRAFT = 'draft',
+    ARCHIVED = 'archived'
+}
+
 export interface ILinkImage {
   id: number;
   url: string;
   width: number;
   height: number;
-  status: 'ready' | 'processing' | 'error' | 'queued';
   createdAt: string;
   updatedAt: string;
 }
@@ -13,6 +18,16 @@ export interface ILinksTag {
   name: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ILinkList {
+  id: number
+  title: string
+  image: ILinkImage | null
+  category: string;
+  status: ELinkStatus
+  verified: boolean;
+  updatedAt: string
 }
 
 export interface ILink {
@@ -25,7 +40,7 @@ export interface ILink {
   category: string;
   branches: string[];
   tags: ILinksTag[]
-  status: 'draft' | 'published' | 'archived';
+  status: ELinkStatus;
   verified: boolean;
   verifiedAt: string | null;
   verifiedBy: string | null;

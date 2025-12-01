@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID as uuid } from 'node:crypto'
 import { FindOneOptions, Repository } from 'typeorm'
 
-import { ETokenTypes } from '../../interfaces/ETokenTypes'
+import { ETokenType } from '../../interfaces/ETokenType'
 import { ITokenUser } from '../../interfaces/ITokenUser'
 
 import { Token } from './entities/Token.entity'
@@ -48,7 +48,7 @@ export class TokenService {
 			.into(Token)
 			.values({
 				tokenOrCode: token,
-				type: ETokenTypes.REFRESH_TOKEN,
+				type: ETokenType.REFRESH_TOKEN,
 				user: { id: payload.id },
 				expiresIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 			})
@@ -81,11 +81,11 @@ export class TokenService {
 		const token = uuid()
 		const expiresIn = new Date(new Date().getTime() + 5 * 60 * 1000)
 
-		await this.tokenRepository.delete({ type: ETokenTypes.RESET_PASSWORD, user: { id: userId } })
+		await this.tokenRepository.delete({ type: ETokenType.RESET_PASSWORD, user: { id: userId } })
 
 		await this.tokenRepository.save({
 			tokenOrCode: token,
-			type: ETokenTypes.RESET_PASSWORD,
+			type: ETokenType.RESET_PASSWORD,
 			user: { id: userId },
 			expiresIn
 		})
@@ -97,11 +97,11 @@ export class TokenService {
 		const token = uuid()
 		const expiresIn = new Date(new Date().getTime() + 5 * 60 * 1000)
 
-		await this.tokenRepository.delete({ type: ETokenTypes.CONFIRM_EMAIL, user: { id: userId } })
+		await this.tokenRepository.delete({ type: ETokenType.CONFIRM_EMAIL, user: { id: userId } })
 
 		await this.tokenRepository.save({
 			tokenOrCode: token,
-			type: ETokenTypes.CONFIRM_EMAIL,
+			type: ETokenType.CONFIRM_EMAIL,
 			user: { id: userId },
 			expiresIn
 		})

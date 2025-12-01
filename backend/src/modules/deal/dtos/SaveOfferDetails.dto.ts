@@ -86,13 +86,11 @@ export class SaveOfferDetailsDto {
 	@IsBoolean()
 	ongoingOffer?: boolean
 
-	@ValidateIf(o => o.ongoingOffer === false)
-	@IsDefined({ message: 'validUntil is required when ongoingOffer is false' })
+	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'validFrom must be a valid ISO date (YYYY-MM-DD)' })
 	validFrom?: string
 
-	@ValidateIf(o => o.ongoingOffer === false)
-	@IsDefined({ message: 'validUntil is required when ongoingOffer is false' })
+	@IsOptional()
 	@IsISO8601({ strict: true }, { message: 'validUntil must be a valid ISO date (YYYY-MM-DD)' })
 	@Validate(DatesOrder)
 	validUntil?: string

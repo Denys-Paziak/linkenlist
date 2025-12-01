@@ -23,6 +23,7 @@ import { DealImage } from './DealImage.entity'
 import { DealRelated } from './DealRelated.entity'
 import { DealSection } from './DealSection.entity'
 import { DealTag } from './DealTag.entity'
+import { Resource } from '../../resource/entities/Resource.entity'
 
 @Entity('deals')
 @Unique(['slug'])
@@ -41,15 +42,9 @@ export class Deal {
 	@Column({ type: 'text', nullable: true })
 	teaser?: string | null
 
-	@OneToOne(() => DealImage, { cascade: true,  nullable: true, onDelete: 'SET NULL' })
+	@OneToOne(() => DealImage, { cascade: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'image_id' })
 	image?: DealImage
-
-	@Column({ type: 'boolean', default: false, name: 'is_verified' })
-	isVerified: boolean
-
-	@Column({ type: 'boolean', default: false, name: 'is_featured' })
-	isFeatured: boolean
 
 	@Column({ type: 'enum', enum: EDealCategory, array: true, default: [] })
 	categories: EDealCategory[]
@@ -117,13 +112,13 @@ export class Deal {
 	providerDisplayName?: string | null
 
 	// Content (Markdown секції)
-	@OneToMany(() => DealSection, b => b.deal, { cascade: true })
-	contentBlocks: DealSection[]
-
-	@Column({ type: 'boolean', default: true, name: 'related_auto_mode' })
-	relatedAutoMode: boolean 
+	@OneToMany(() => DealSection, s => s.deal, { cascade: true })
+	sections: DealSection[]
 
 	// Surfacing & related (ручний порядок)
+	@Column({ type: 'boolean', default: true, name: 'related_auto_mode' })
+	relatedAutoMode: boolean
+
 	@OneToMany(() => DealRelated, r => r.source, { cascade: true })
 	relatedManual: DealRelated[]
 
@@ -140,7 +135,7 @@ export class Deal {
 	@OneToOne(() => DealImage, { cascade: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'og_image_id' })
 	ogImage?: DealImage
-	
+
 	@Column({ type: 'text', nullable: true, name: 'canonical_url' })
 	canonicalUrl?: string | null
 
@@ -164,6 +159,10 @@ export class Deal {
 	// Коментарі вмикаються глобально + локально
 	@Column({ type: 'boolean', default: true, name: 'comments_enabled' })
 	commentsEnabled: boolean
+
+	@OneToOne(() => Resource, { cascade: true, nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'featured_resource_id' })
+	featuredResource?: Resource | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

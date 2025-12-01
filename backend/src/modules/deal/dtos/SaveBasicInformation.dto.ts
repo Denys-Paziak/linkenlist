@@ -10,10 +10,12 @@ import {
 	IsUrl,
 	Length,
 	Matches,
-	MaxLength
+	MaxLength,
+	Min
 } from 'class-validator'
 
 import { EDealCategory } from '../../../interfaces/EDealCategory'
+import { Transform } from 'class-transformer'
 
 export class SaveBasicInformationDto {
 	@IsOptional()
@@ -22,16 +24,17 @@ export class SaveBasicInformationDto {
 	@IsNotEmpty()
 	title?: string
 
-	@IsString()
 	@IsOptional()
+	@Transform(({ value }) => value === '' ? null : value)
+	@IsString()
 	@MaxLength(140)
 	@Matches(/^[a-z0-9-_]+$/, {
 		message: 'Slug can only contain lowercase letters, numbers, hyphens, and underscores.'
 	})
 	slug?: string
 
-	@IsString()
 	@IsOptional()
+	@IsString()
 	@MaxLength(200)
 	teaser?: string
 
@@ -57,13 +60,14 @@ export class SaveBasicInformationDto {
 
 	@IsOptional()
 	@IsUrl()
-	imgUrl?: string
-
-	@IsOptional()
-	@IsUrl()
 	outboundUrl?: string
 
 	@IsOptional()
 	@IsString()
 	outboundUrlButtonLabel?: string
+
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	featuredResourceId: number
 }

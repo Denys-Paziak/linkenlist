@@ -43,6 +43,14 @@
   }
 }
 
+fieldset:disabled {
+  @apply pointer-events-none opacity-50 select-none
+}
+
+html, body {
+  overflow: visible;
+}
+
 /* Remove aspect ratio constraint and let cards size naturally */
 .resource-card {
   /* Removed aspect-ratio and min-height constraints */

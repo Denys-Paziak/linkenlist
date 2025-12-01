@@ -13,6 +13,7 @@ import { EFileStatus } from '../../interfaces/EFileStatus'
 import { replaceExt } from '../../utils/replace-ext.utils'
 import { DealSystemService } from '../deal/services/deal-system.service'
 import { LinkSystemService } from '../link/services/link-system.service'
+import { ResourceSystemService } from '../resource/services/resource-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 
 import { AttachmentJobData, ImageJobData } from './image-queue.service'
@@ -32,7 +33,8 @@ export class ImageProcessor extends WorkerHost {
 	constructor(
 		private readonly s3: S3StorageService,
 		private readonly linkSystemService: LinkSystemService,
-		private readonly dealSystemService: DealSystemService
+		private readonly dealSystemService: DealSystemService,
+		private readonly resourceSystemService: ResourceSystemService
 	) {
 		super()
 	}
@@ -47,6 +49,12 @@ export class ImageProcessor extends WorkerHost {
 				return this.dealOgImage(job)
 			case 'deal-attachment':
 				return this.dealAttachment(job)
+			case 'resource-hero':
+				return this.resourceHero(job)
+			case 'resource-og-image':
+				return this.resourceOgImage(job)
+			case 'resource-attachment':
+				return this.resourceAttachment(job)
 			default:
 				throw new Error(`Unknown job type: ${job.name}`)
 		}
@@ -139,6 +147,8 @@ export class ImageProcessor extends WorkerHost {
 
 		this.logger.log(`Completed job ${job.id}: linkImageId=${entityFileId} -> ${uploaded.url}`)
 	}
+
+	
 
 	/** HERO для Deal */
 	private async dealHero(job: Job<ImageJobData>) {
@@ -266,18 +276,43 @@ export class ImageProcessor extends WorkerHost {
 
 		// 2) Мінімальна оптимізація по типу файлу
 		const ext = getExtensionFromKey(srcKey)
-		const output = await optimizeFileMinimal(input, ext)
+		let contentType = ''
+		const pipeline = sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({ width: 1200, height: 630, fit: 'inside', withoutEnlargement: true })
+			.toColourspace('srgb')
 
-		const meta = await sharp(output?.out).metadata()
+		switch (ext) {
+			case 'jpg':
+			case 'jpeg':
+				pipeline.jpeg({
+					quality: 82,
+					mozjpeg: true,
+					chromaSubsampling: '4:2:0'
+				})
+				contentType = 'image/jpeg'
+				break
+			case 'png':
+				pipeline.png({
+					compressionLevel: 9,
+					palette: true
+				})
+				contentType = 'image/png'
+				break
+		}
+
+		const out = await pipeline.toBuffer()
+
+		const meta = await sharp(out).metadata()
 
 		// Тут не міняємо розширення, щоб лишити очікуваний тип файлу
-		const dstKey = srcKey
+		const dstKey = srcKey.replace(/\.([^\.]+)$/, '-OG.$1')
 
 		// 4) Запис до S3
 		let uploaded: { key: string; url: string } | null = null
 		try {
-			if (output) {
-				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey)
+			if (out) {
+				uploaded = await this.s3.uploadPublic(out, contentType, true, dstKey)
 			}
 		} catch (e) {
 			throw e
@@ -315,7 +350,7 @@ export class ImageProcessor extends WorkerHost {
 	}
 
 	/**
-	 * Мінімальна очистка/оптимізація для вкладених файлів:
+	 * Мінімальна очистка/оптимізація для вкладених файлів Deal:
 	 * PDF / DOC / DOCX / XLS / XLSX / PNG / JPG
 	 */
 	private async dealAttachment(job: Job<AttachmentJobData>) {
@@ -329,7 +364,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: attachment already PROCESSED (id=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.dealSystemService.updatAttachmentStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.dealSystemService.updateAttachmentStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: Deal attachment ${entityFileId} not found before processing`)
@@ -345,7 +380,7 @@ export class ImageProcessor extends WorkerHost {
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
 				try {
-					await this.dealSystemService.updatAttachmentStatus(entityFileId, EFileStatus.FAILED)
+					await this.dealSystemService.updateAttachmentStatus(entityFileId, EFileStatus.FAILED)
 				} catch {}
 				this.logger.warn(`Original not found for dealAttachmentId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original file not found in S3')
@@ -375,7 +410,8 @@ export class ImageProcessor extends WorkerHost {
 			await this.dealSystemService.updateDealSectionAttachment(entityFileId, {
 				processedKey: uploaded?.key,
 				url: uploaded?.url,
-				status: EFileStatus.READY
+				status: EFileStatus.READY,
+				sizeBytes: output?.out.byteLength
 			})
 		} catch (e) {
 			if (isNotFoundError(e)) {
@@ -388,6 +424,291 @@ export class ImageProcessor extends WorkerHost {
 					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
 				}
 				throw new DiscardedError('Deal attachment entity deleted during processing')
+			}
+			throw e
+		}
+
+		this.logger.log(`Completed attachment job ${job.id}: attachmentId=${entityFileId} -> ${uploaded?.url}`)
+	}
+
+
+
+	/** HERO для Resource */
+	private async resourceHero(job: Job<ImageJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for esourceId=${entityId}, resourceImageId=${entityFileId}, srcKey=${srcKey}`)
+
+		// 0) Ідемпотентність та перехід у PROCESSING
+		try {
+			const alreadyQueued = await this.resourceSystemService.isImageStatus(entityFileId, EFileStatus.QUEUED)
+			if (!alreadyQueued) {
+				this.logger.log(`Skip job ${job.id}: image already PROCESSED (resourceImageId=${entityFileId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: ResourceImage ${entityFileId} not found before processing`)
+				throw new DiscardedError(`ResourceImage ${entityFileId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				try {
+					await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
+				} catch {}
+				this.logger.warn(`Original not found for resourceImageId=${entityFileId}, key=${srcKey}`)
+				throw new DiscardedError('Original image not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Обробка зображення (великий hero)
+		const out = await sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({ width: 1200, height: 630, fit: 'inside', withoutEnlargement: true })
+			.toColourspace('srgb')
+			.webp({ quality: 82, effort: 5 })
+			.toBuffer()
+
+		const meta = await sharp(out).metadata()
+
+		// 3) Ключ призначення
+		const dstKey = replaceExt(srcKey, '.webp')
+
+		// 4) Запис до S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			uploaded = await this.s3.uploadPublic(out, 'image/webp', true, dstKey)
+		} catch (e) {
+			throw e
+		}
+
+		// 5) Оновлення БД
+		try {
+			await this.resourceSystemService.updateResource(entityId, {
+				id: entityId,
+				image: {
+					id: entityFileId,
+					processedKey: uploaded.key,
+					url: uploaded.url,
+					width: meta.width ?? 0,
+					height: meta.height ?? 0,
+					status: EFileStatus.READY
+				}
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Resource entity missing while saving result (resourceId=${entityId}, resourceImageId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Resource entity deleted during processing')
+			}
+			throw e
+		}
+
+		this.logger.log(`Completed job ${job.id}: resourceImageId=${entityFileId} -> ${uploaded.url}`)
+	}
+
+	/** OG image для Resource */
+	private async resourceOgImage(job: Job<ImageJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for resourceId=${entityId}, resourceImageId=${entityFileId}, srcKey=${srcKey}`)
+
+		// 0) Ідемпотентність та перехід у PROCESSING
+		try {
+			const alreadyQueued = await this.resourceSystemService.isImageStatus(entityFileId, EFileStatus.QUEUED)
+			if (!alreadyQueued) {
+				this.logger.log(`Skip job ${job.id}: image already PROCESSED (resourceImageId=${entityFileId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: ResourceOgImage ${entityFileId} not found before processing`)
+				throw new DiscardedError(`ResourceOgImage ${entityFileId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				try {
+					await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
+				} catch {}
+				this.logger.warn(`Original not found for resourceImageId=${entityFileId}, key=${srcKey}`)
+				throw new DiscardedError('Original image not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Мінімальна оптимізація по типу файлу
+		const ext = getExtensionFromKey(srcKey)
+		let contentType = ''
+		const pipeline = sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({ width: 1200, height: 630, fit: 'inside', withoutEnlargement: true })
+			.toColourspace('srgb')
+
+		switch (ext) {
+			case 'jpg':
+			case 'jpeg':
+				pipeline.jpeg({
+					quality: 82,
+					mozjpeg: true,
+					chromaSubsampling: '4:2:0'
+				})
+				contentType = 'image/jpeg'
+				break
+			case 'png':
+				pipeline.png({
+					compressionLevel: 9,
+					palette: true
+				})
+				contentType = 'image/png'
+				break
+		}
+
+		const out = await pipeline.toBuffer()
+
+		const meta = await sharp(out).metadata()
+
+		// Тут не міняємо розширення, щоб лишити очікуваний тип файлу
+		const dstKey = srcKey.replace(/\.([^\.]+)$/, '-OG.$1')
+
+		// 4) Запис до S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			if (out) {
+				uploaded = await this.s3.uploadPublic(out, contentType, true, dstKey)
+			}
+		} catch (e) {
+			throw e
+		}
+
+		// 5) Оновлення БД
+		try {
+			await this.resourceSystemService.updateResource(entityId, {
+				id: entityId,
+				ogImage: {
+					id: entityFileId,
+					processedKey: uploaded?.key,
+					url: uploaded?.url,
+					width: meta.width ?? 0,
+					height: meta.height ?? 0,
+					status: EFileStatus.READY
+				}
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Resource entity missing while saving result (resourceId=${entityId}, resourceImageId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Resource entity deleted during processing')
+			}
+			throw e
+		}
+
+		this.logger.log(`Completed job ${job.id}: resourceOgImageId=${entityFileId} -> ${uploaded?.url}`)
+	}
+
+	/**
+	 * Мінімальна очистка/оптимізація для вкладених файлів Resource:
+	 * PDF / DOC / DOCX / XLS / XLSX / PNG / JPG
+	 */
+	private async resourceAttachment(job: Job<AttachmentJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(
+			`Start attachment job ${job.id} for resourceId=${entityId}, attachmentId=${entityFileId}, srcKey=${srcKey}`
+		)
+
+		// 0) Ідемпотентність + статус
+		try {
+			const alreadyQueued = await this.resourceSystemService.isAttachmentStatus(entityFileId, EFileStatus.QUEUED)
+			if (!alreadyQueued) {
+				this.logger.log(`Skip job ${job.id}: attachment already PROCESSED (id=${entityFileId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.resourceSystemService.updateAttachmentStatus(entityFileId, EFileStatus.PROCESSING)
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: Resource attachment ${entityFileId} not found before processing`)
+				throw new DiscardedError(`Resource attachment ${entityFileId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				try {
+					await this.resourceSystemService.updateAttachmentStatus(entityFileId, EFileStatus.FAILED)
+				} catch {}
+				this.logger.warn(`Original not found for resourceAttachmentId=${entityFileId}, key=${srcKey}`)
+				throw new DiscardedError('Original file not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Мінімальна оптимізація по типу файлу
+		const ext = getExtensionFromKey(srcKey)
+		const output = await optimizeFileMinimal(input, ext)
+
+		// Тут не міняємо розширення, щоб лишити очікуваний тип файлу
+		const dstKey = srcKey
+
+		// 3) Запис у S3
+		let uploaded: { key: string; url: string } | null = null
+		if (output) {
+			try {
+				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey)
+			} catch (e) {
+				throw e
+			}
+		}
+
+		// 4) Оновлення БД
+		try {
+			await this.resourceSystemService.updateResourceSectionAttachment(entityFileId, {
+				processedKey: uploaded?.key,
+				url: uploaded?.url,
+				status: EFileStatus.READY,
+				sizeBytes: output?.out.byteLength
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Resource attachment entity missing while saving result (resourceId=${entityId}, attachmentId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Resource attachment entity deleted during processing')
 			}
 			throw e
 		}

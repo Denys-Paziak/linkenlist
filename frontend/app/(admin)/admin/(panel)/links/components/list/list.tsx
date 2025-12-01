@@ -4,8 +4,8 @@ import type React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Trash2, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ILink } from "../../../../../../../types/Link";
+import { useState } from "react";
+import { ILink, ILinkList } from "../../../../../../../types/Link";
 import Image from "next/image";
 import { DeleteDialog } from "./components/delete-dialog";
 import useSWR, { mutate as globalMutate } from "swr";
@@ -15,6 +15,7 @@ import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-qu
 import { parseAsInteger } from "nuqs";
 import { SafeLink } from "../../../../../../../components/admin/safe-link";
 import { Pagination } from "../../../../../../../components/ui/pagination";
+import { StatusChip } from "../../../../../../../components/ui/status-chip";
 
 export function List() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,11 +37,12 @@ export function List() {
     }
   );
 
-  const { data, mutate, isLoading, error, isValidating } = useSWR<
-    [ILink[], number]
-  >("/admin/links?" + `page=${page}` + "&" + `limit=${limit}`, {
-    revalidateIfStale: true,
-  });
+  const { data, mutate, isLoading, error } = useSWR<[ILinkList[], number]>(
+    "/admin/links?" + `page=${page}` + "&" + `limit=${limit}`,
+    {
+      revalidateIfStale: true,
+    }
+  );
 
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
@@ -93,10 +95,10 @@ export function List() {
                   key={item.id}
                   className={cn(
                     "card group  relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
-                    (isLoading || isValidating) && "pointer-events-none"
+                    isLoading && "pointer-events-none"
                   )}
                   onClick={() => {
-                    if (!(isLoading || isValidating)) {
+                    if (!isLoading) {
                       handleCardClick(item);
                     }
                   }}
@@ -141,7 +143,7 @@ export function List() {
                         maxHeight: "2.8em", // 2 lines * 1.4 line-height
                       }}
                     >
-                      {item.category} - {item.status} • {0} views • Updated{" "}
+                      {item.status} • {0} views • Updated{" "}
                       {item.updatedAt.split("T")[0]}
                     </p>
 
@@ -151,13 +153,9 @@ export function List() {
                       style={{ maxHeight: "1.5rem" }}
                     >
                       {item.verified && (
-                        <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                          Verified
-                        </span>
+                        <StatusChip text="Verified" status="published" />
                       )}
-                      <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                        {item.category}
-                      </span>
+                      <StatusChip text={item.category} status="draft" />
                     </div>
                   </div>
 
@@ -197,7 +195,7 @@ export function List() {
                     </button>
                   </div>
 
-                  {isLoading || isValidating ? (
+                  {isLoading ? (
                     <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
                       <Loader2 className="animate-spin w-11 h-11 text-white" />
                     </div>

@@ -19,10 +19,24 @@ export class LinkQueryService {
 
 	async getAllLinksAdmin(query: GetAllLinksAdminDto) {
 		return await this.linkRepository.findAndCount({
+			select: {
+				id: true,
+				title: true,
+				image: {
+					id: true,
+					url: true,
+					width: true,
+					height: true
+				},
+				verified: true,
+				category: true,
+				status: true,
+				updatedAt: true,
+				createdAt: true
+			},
 			skip: (query.page - 1) * query.limit,
 			take: query.limit,
-			order: { createdAt: 'DESC' },
-			relations: ['tags']
+			order: { createdAt: 'DESC' }
 		})
 	}
 

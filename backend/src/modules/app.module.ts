@@ -21,9 +21,11 @@ import { ListingModule } from './listing/listing.module'
 import { MailModule } from './mail/mail.module'
 import { ResourceModule } from './resource/resource.module'
 import { S3StorageModule } from './s3-storage/s3-storage.module'
+import { ScheduleQueueModule } from './schedule-queue/schedule-queue.module'
+import { ScheduleWorkerModule } from './schedule-queue/schedule-worker.module'
 import { TokenModule } from './token/token.module'
 import { UserModule } from './user/user.module'
-import { ViewsModule } from './views/views.module';
+import { ViewsModule } from './views/views.module'
 
 @Module({
 	imports: [
@@ -46,7 +48,9 @@ import { ViewsModule } from './views/views.module';
 		LinkModule,
 		S3StorageModule,
 		ImageQueueModule,
-		ViewsModule
+		ViewsModule,
+		ScheduleQueueModule,
+		ScheduleWorkerModule
 	],
 	controllers: [AppController],
 	providers: [

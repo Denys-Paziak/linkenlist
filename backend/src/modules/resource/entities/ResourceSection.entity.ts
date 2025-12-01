@@ -1,6 +1,17 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import {
+	Column,
+	CreateDateColumn,
+	Entity,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	OneToMany,
+	PrimaryGeneratedColumn,
+	UpdateDateColumn
+} from 'typeorm'
 
 import { Resource } from './Resource.entity'
+import { ResourceSectionAttachment } from './ResourceSectionAttachment.entity'
 
 @Entity('resource_sections')
 export class ResourceSection {
@@ -8,15 +19,27 @@ export class ResourceSection {
 	id: number
 
 	@ManyToOne(() => Resource, r => r.sections, { onDelete: 'CASCADE' })
-	resource!: Resource
+	@JoinColumn({ name: 'resource_id' })
+	resource: Resource
+
+	@OneToMany(() => ResourceSectionAttachment, s => s.resourceSection, {
+		cascade: true,
+		eager: true,
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	attachments?: ResourceSectionAttachment[]
 
 	@Index()
 	@Column({ type: 'int' })
 	position: number
 
-	@Column({ type: 'text' }) title: string
-	@Column({ type: 'boolean', default: true }) enabled: boolean
-	@Column({ type: 'text', nullable: true }) bodyMd?: string | null
+	@Column({ type: 'text', default: 'Section' })
+	title: string
+	@Column({ type: 'boolean', default: true })
+	enabled: boolean
+	@Column({ type: 'text', nullable: true, name: 'body_md' })
+	bodyMd?: string | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

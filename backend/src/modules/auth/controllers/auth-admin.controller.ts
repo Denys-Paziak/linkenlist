@@ -5,7 +5,7 @@ import { Throttle } from '@nestjs/throttler'
 import type { FastifyReply } from 'fastify'
 
 import { ThrottleMessage } from '../../../decorators/throttle-message.decorator'
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { LoginDto } from '../dtos/Login.dto'
 import { AuthService } from '../services/auth.service'
 
@@ -25,7 +25,7 @@ export class AuthAdminController {
 	@ApiResponse({ status: 200, description: 'Successful login' })
 	@ApiResponse({ status: 401, description: 'Invalid password or login' })
 	async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: FastifyReply) {
-		const data = await this.authService.login(dto, ERoleNames.ADMIN)
+		const data = await this.authService.login(dto, ERoleName.ADMIN)
 
 		response.setCookie('refresh_token', data.refreshToken, {
 			maxAge: 30 * 24 * 60 * 60,

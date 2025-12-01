@@ -5,7 +5,7 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	OneToOne,
+	OneToMany,
 	PrimaryGeneratedColumn,
 	UpdateDateColumn
 } from 'typeorm'
@@ -18,13 +18,12 @@ export class DealSection {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@ManyToOne(() => Deal, d => d.contentBlocks, { onDelete: 'CASCADE' })
+	@ManyToOne(() => Deal, d => d.sections, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'deal_id' })
 	deal: Deal
 
-	@OneToOne(() => DealSectionAttachment, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
-	@JoinColumn({ name: 'attachment_id' })
-	attachment?: DealSectionAttachment
+	@OneToMany(() => DealSectionAttachment, s => s.dealSection, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+	attachments?: DealSectionAttachment[]
 
 	@Index()
 	@Column({ type: 'int' })

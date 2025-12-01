@@ -29,7 +29,7 @@ export async function fetcherAdmin(url: string, options: RequestInit = {}) {
 
       if (data?.message) {
         if (Array.isArray(data.message)) {
-          message = data.message[0];
+          message = data.message;
         } else if (typeof data.message === "string") {
           message = data.message;
         }

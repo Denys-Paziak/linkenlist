@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
 
-import { ETokenTypes } from '../../../interfaces/ETokenTypes'
+import { ETokenType } from '../../../interfaces/ETokenType'
 import { User } from '../../../modules/user/entities/User.entity'
 
 @Unique('UQ_tokens_token_user', ['tokenOrCode', 'user'])
@@ -18,8 +18,8 @@ export class Token {
 	})
 	expiresIn: Date
 
-	@Column({ type: 'enum', enum: ETokenTypes })
-	type: ETokenTypes
+	@Column({ type: 'enum', enum: ETokenType })
+	type: ETokenType
 
 	@ManyToOne(() => User, user => user.tokens, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'user_id' })

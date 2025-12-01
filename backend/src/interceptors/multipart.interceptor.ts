@@ -1,9 +1,8 @@
 import { MultipartValue } from '@fastify/multipart'
 import {
+	BadRequestException,
 	CallHandler,
 	ExecutionContext,
-	HttpException,
-	HttpStatus,
 	Injectable,
 	mixin,
 	NestInterceptor,
@@ -34,7 +33,7 @@ export function MultipartInterceptor(opts: MultipartInterceptorOptions = {}): Ty
 		async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
 			const req = context.switchToHttp().getRequest() as fastify.FastifyRequest
 			if (!req.isMultipart?.()) {
-				throw new HttpException('The request should be a form-data', HttpStatus.BAD_REQUEST)
+				throw new BadRequestException('The request should be a form-data')
 			}
 
 			const files: Record<string, IMultipartFile[]> = {}

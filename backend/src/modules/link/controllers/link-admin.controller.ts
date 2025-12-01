@@ -12,13 +12,12 @@ import {
 	UnprocessableEntityException,
 	UseInterceptors
 } from '@nestjs/common'
-import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { MultipartInterceptor } from '../../../interceptors/multipart.interceptor'
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { fetchImageAsIMultipartFile } from '../../../utils/fetch-image.util'
 import { MultipartOptions, validateFile } from '../../../utils/file.util'
@@ -40,19 +39,19 @@ export class LinkAdminController {
 		private readonly linkQueryService: LinkQueryService
 	) {}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Get()
 	async getAllLinks(@Query() query: GetAllLinksAdminDto) {
 		return this.linkQueryService.getAllLinksAdmin(query)
 	}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Get(':id')
 	async getOneLink(@Param() param: ParamId) {
 		return this.linkQueryService.getOneLink(param.id)
 	}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Post()
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -85,7 +84,7 @@ export class LinkAdminController {
 		return { ok: true }
 	}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Patch(':id')
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -115,7 +114,7 @@ export class LinkAdminController {
 		return { ok: true }
 	}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Delete(':id')
 	async deleteLink(@Param() params: ParamId, @Body() dto: DeleteLinkDto) {
 		await this.linkCommandService.deleteLink(params.id, dto)
@@ -123,6 +122,7 @@ export class LinkAdminController {
 		return { ok: true }
 	}
 
+	@Authorization(ERoleName.ADMIN)
 	@Get('tags')
 	async getAllLinkTags() {
 		return await this.linkQueryService.getAllLinkTags()

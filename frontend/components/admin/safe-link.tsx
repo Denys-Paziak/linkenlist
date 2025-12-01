@@ -50,7 +50,7 @@ export const SafeLink = forwardRef<HTMLAnchorElement, SafeLinkProps>(
     };
 
     return (
-      <Link ref={ref} href={href} {...rest} onClick={handleClick}>
+      <Link ref={ref} href={href} scroll={false} {...rest} onClick={handleClick}>
         {children}
       </Link>
     );

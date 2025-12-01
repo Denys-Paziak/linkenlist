@@ -87,7 +87,7 @@ export class LinkCommandService {
 			}
 		})
 
-		this.imageQueueService.enqueueLinkHeroProcess({ entityId: link.id, entityFileId: image.id, srcKey: uploaded.key })
+		await this.imageQueueService.enqueueLinkHeroProcess({ entityId: link.id, entityFileId: image.id, srcKey: uploaded.key })
 	}
 
 	async updateLink(linkId: number, dto: UpdateLinkDto, file?: IMultipartFile) {
@@ -164,7 +164,7 @@ export class LinkCommandService {
 		}
 
 		if (newImage && updated.image) {
-			this.imageQueueService.enqueueLinkHeroProcess({
+			await this.imageQueueService.enqueueLinkHeroProcess({
 				entityId: updated.id,
 				entityFileId: updated.image.id,
 				srcKey: newImage.key

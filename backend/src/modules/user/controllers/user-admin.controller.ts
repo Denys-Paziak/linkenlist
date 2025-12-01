@@ -3,7 +3,7 @@ import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetSelfResponse } from '../responses/GetSelf.response'
 import { UserQueryService } from '../services/user-query.service'
@@ -14,7 +14,7 @@ import { UserQueryService } from '../services/user-query.service'
 export class AdminUserController {
 	constructor(private readonly userQueryService: UserQueryService) {}
 
-	@Authorization(ERoleNames.ADMIN)
+	@Authorization(ERoleName.ADMIN)
 	@Get('self')
 	@ApiOperation({ summary: 'Get self information' })
 	@ApiResponse({
@@ -25,7 +25,7 @@ export class AdminUserController {
 	async getSelf(@Req() request: FastifyRequest): Promise<GetSelfResponse> {
 		const userFromToken = request.user as ITokenUser
 
-		return await this.userQueryService.getSelf(userFromToken.id, ERoleNames.ADMIN)
+		return await this.userQueryService.getSelf(userFromToken.id, ERoleName.ADMIN)
 	}
 
 	async getAllUsers() {}

@@ -36,7 +36,7 @@ export class S3StorageService {
 		return `${p}/${yyyy}-${mm}-${dd}-${slugName}-${generateRandomSuffix()}${ext}`
 	}
 
-	private publicUrlForKey(key: string) {
+	publicUrlForKey(key: string) {
 		if (this.publicBase) {
 			const base = this.publicBase.replace(/\/$/, '')
 			return this.isPath ? `${base}/${this.bucket}/${key}` : `${base}/${key}`

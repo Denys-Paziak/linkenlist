@@ -1,22 +1,18 @@
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator'
-import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 
+import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 
 export class SaveSEODto {
 	@IsOptional()
 	@IsString()
 	@MaxLength(140)
 	@IsNotEmpty()
-	seoMetaTitle?: string
+	seoMetaTitle?: string | null
 
 	@IsOptional()
 	@IsString()
 	@MaxLength(200)
-	seoMetaDescription?: string
-
-	@IsOptional()
-	@IsUrl()
-	imgUrl?: string
+	seoMetaDescription?: string | null
 
 	@IsOptional()
 	@IsEnum(EOgImageMode)
@@ -24,7 +20,7 @@ export class SaveSEODto {
 
 	@IsOptional()
 	@IsUrl()
-	canonicalUrl?: string
+	canonicalUrl?: string | null
 
 	@IsOptional()
 	@IsBoolean()

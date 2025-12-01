@@ -1,13 +1,13 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Check, Loader2, TriangleAlert } from "lucide-react";
+import { Check, Loader2Icon, TriangleAlert } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 export type ButtonSubitStatus = "idle" | "loading" | "success" | "error";
 
 const buttonSubitVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed  disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:pointer-events-none  disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -87,17 +87,8 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
         error: statusText?.error,
         disabled: statusText?.disabled,
       };
-      const maybe = map[status];
-      return maybe ?? children;
-    };
 
-    const renderStatusIcon = () => {
-      if (!showStatusIcon) return null;
-      if (status === "loading")
-        return <Loader2 className="animate-spin" aria-hidden="true" />;
-      if (status === "success") return <Check aria-hidden="true" />;
-      if (status === "error") return <TriangleAlert aria-hidden="true" />;
-      return null;
+      return status === "idle" ? children : map[status];
     };
 
     return (
@@ -113,8 +104,8 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
         disabled={!!isDisabled}
         {...rest}
       >
-        {renderStatusIcon()}
-        <span className="inline-flex items-center">{renderText()}</span>
+        {showStatusIcon ? renderStatusIcon(status as ButtonSubitStatus) : null}
+        {renderText() ? <span className="inline-flex items-center">{renderText()}</span> : null}
         {status !== "idle" ? (
           <span className="sr-only">
             {status === "loading"
@@ -132,4 +123,12 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
 );
 ButtonSubmit.displayName = "ButtonSubmit";
 
-export { ButtonSubmit, buttonSubitVariants };
+function renderStatusIcon(status: ButtonSubitStatus) {
+  if (status === "loading")
+    return <Loader2Icon className="animate-spin" aria-hidden="true" />;
+  if (status === "success") return <Check aria-hidden="true" />;
+  if (status === "error") return <TriangleAlert aria-hidden="true" />;
+  return null;
+}
+
+export { ButtonSubmit, buttonSubitVariants, renderStatusIcon };

@@ -2,13 +2,13 @@ import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { Queue } from 'bullmq'
 
-export type ImageJobData = {
+export interface ImageJobData {
 	entityId: number
 	entityFileId: number
 	srcKey: string
 }
 
-export type AttachmentJobData = {
+export interface AttachmentJobData {
 	entityId: number
 	entityFileId: number
 	srcKey: string
@@ -18,8 +18,8 @@ export type AttachmentJobData = {
 export class ImageQueueService {
 	constructor(@InjectQueue('image') private readonly queue: Queue<ImageJobData>) {}
 
-	enqueueLinkHeroProcess(data: ImageJobData) {
-		this.queue.add('link-hero', data, {
+	async enqueueLinkHeroProcess(data: ImageJobData) {
+		return await this.queue.add('link-hero', data, {
 			attempts: 3,
 			backoff: { type: 'exponential', delay: 5_000 },
 			removeOnComplete: true,
@@ -27,8 +27,8 @@ export class ImageQueueService {
 		})
 	}
 
-	enqueueDealHeroProcess(data: ImageJobData) {
-		this.queue.add('deal-hero', data, {
+	async enqueueDealHeroProcess(data: ImageJobData) {
+		return await this.queue.add('deal-hero', data, {
 			attempts: 3,
 			backoff: { type: 'exponential', delay: 5_000 },
 			removeOnComplete: true,
@@ -36,8 +36,8 @@ export class ImageQueueService {
 		})
 	}
 
-	enqueueDealOgImageProcess(data: ImageJobData) {
-		this.queue.add('deal-og-image', data, {
+	async enqueueDealOgImageProcess(data: ImageJobData) {
+		return await this.queue.add('deal-og-image', data, {
 			attempts: 3,
 			backoff: { type: 'exponential', delay: 5_000 },
 			removeOnComplete: true,
@@ -45,8 +45,35 @@ export class ImageQueueService {
 		})
 	}
 
-	enqueueDealAttachmentProcess(data: AttachmentJobData) {
-		this.queue.add('deal-attachment', data, {
+	async enqueueDealAttachmentProcess(data: AttachmentJobData) {
+		return await this.queue.add('deal-attachment', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
+
+	async enqueueResourceHeroProcess(data: ImageJobData) {
+		return await this.queue.add('resource-hero', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
+
+	async enqueueResourceOgImageProcess(data: ImageJobData) {
+		return await this.queue.add('resource-og-image', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
+
+	async enqueueResourceAttachmentProcess(data: AttachmentJobData) {
+		return await this.queue.add('resource-attachment', data, {
 			attempts: 3,
 			backoff: { type: 'exponential', delay: 5_000 },
 			removeOnComplete: true,

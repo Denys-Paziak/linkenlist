@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 
@@ -9,7 +9,8 @@ export class DealSectionAttachment {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@OneToOne(() => DealSection, dealSection => dealSection.attachment)
+	@ManyToOne(() => DealSection, dealSection => dealSection.attachments)
+	@JoinColumn({ name: 'section_id' })
 	dealSection: DealSection
 
 	@Column({ type: 'text' })
@@ -26,6 +27,9 @@ export class DealSectionAttachment {
 
 	@Column({ type: 'text' })
 	ext: string
+
+	@Column({ type: 'int', name: "size_bytes" })
+	sizeBytes: number
 
 	@Column({ type: 'enum', enum: EFileStatus, default: EFileStatus.QUEUED })
 	status: EFileStatus

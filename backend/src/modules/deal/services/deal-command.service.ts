@@ -1,8 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
-import { DataSource, EntityManager, Like, Not, Repository } from 'typeorm'
+import { DataSource, EntityManager, Not, Repository } from 'typeorm'
 
+import { EDealStatus } from '../../../interfaces/EDealStatus'
+import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedFile, IUploadedImage } from '../../../interfaces/IUploadedFile'
@@ -10,13 +12,16 @@ import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
+import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
 import { ChangePosContentSectionsDto } from '../dtos/ChangePosContentSections.dto'
-import { GetSimplifiedDealsDto } from '../dtos/GetSimplifiedDeals.dto'
+import { ChangeStatusDto } from '../dtos/ChangeStatus.dto'
+import { DeleteDealDto } from '../dtos/DeleteDeal.dto'
 import { SaveBasicInformationDto } from '../dtos/SaveBasicInformation.dto'
 import { SaveContentSectionDto } from '../dtos/SaveContentSection.dto'
 import { SaveOfferDetailsDto } from '../dtos/SaveOfferDetails.dto'
-import { SetSelectRelatedDealsDto } from '../dtos/SetSelectRelatedDeals.dto'
-import { SwitchRelatedDealsMode } from '../dtos/SwitchRelatedDealsMode.dto'
+import { SaveSEODto } from '../dtos/SaveSEO.dto'
+import { SetSelectRelatedDto } from '../dtos/SetSelectRelatedDto.dto'
+import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { SwitchShowOfferDetailsDto } from '../dtos/SwitchShowOfferDetails.dto'
 import { Deal } from '../entities/Deal.entity'
 import { DealImage } from '../entities/DealImage.entity'
@@ -28,16 +33,17 @@ import { DealTag } from '../entities/DealTag.entity'
 @Injectable()
 export class DealCommandService {
 	constructor(
-		@InjectRepository(Deal) 
+		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
-		@InjectRepository(DealImage) 
+		@InjectRepository(DealImage)
 		private readonly dealImageRepository: Repository<DealImage>,
-		@InjectRepository(DealSection) 
+		@InjectRepository(DealSection)
 		private readonly dealSectionRepository: Repository<DealSection>,
 		@InjectRepository(DealRelated)
 		private readonly dealRelatedRepository: Repository<DealRelated>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
+		private readonly scheduleQueueService: ScheduleQueueService,
 		private readonly s3StorageService: S3StorageService
 	) {}
 
@@ -55,7 +61,7 @@ export class DealCommandService {
 			path: 'deals/attachments/' + dealId + '/' + sectionId
 		})
 
-		return { key, url, name: file.filename, ext: extname(file.filename).substring(1) }
+		return { key, url, name: file.filename, ext: extname(file.filename).substring(1), size: file.size }
 	}
 
 	private async generateSlugUnique(title: string) {
@@ -86,19 +92,22 @@ export class DealCommandService {
 	}
 
 	async initDeal() {
-		return await this.dealRepository.save({})
+		return (await this.dealRepository.save({})).id
 	}
 
 	async saveBasicInformation(dealId: number, dto: SaveBasicInformationDto, file?: IMultipartFile) {
 		const exists = await this.dealRepository.findOne({
 			where: { id: dealId },
-			relations: ['image', 'ogImage'],
+			relations: ['image', 'ogImage', 'featuredResource'],
 			select: {
 				id: true,
 				title: true,
 				categories: true,
 				outboundUrl: true,
 				ogImageMode: true,
+				featuredResource: {
+					id: true
+				},
 				image: {
 					id: true,
 					originalKey: true,
@@ -145,8 +154,30 @@ export class DealCommandService {
 				slug = dto.slug
 			}
 		} else {
-			if (dto.title) {
-				slug = await this.generateSlugUnique(dto.title)
+			if (dto.slug === null || !exists.slug) {
+				const titleForSlug = dto.title ?? exists.title
+
+				if (!titleForSlug) {
+					throw new BadRequestException('Title required.')
+				}
+
+				slug = await this.generateSlugUnique(titleForSlug)
+			}
+		}
+
+		const seoMetaTitle = () => {
+			if (!exists.seoMetaTitle || exists.seoMetaTitle === exists.title) {
+				return dto.title
+			} else {
+				return undefined
+			}
+		}
+
+		const seoMetaDescription = () => {
+			if (!exists.seoMetaDescription || exists.seoMetaTitle === exists.teaser) {
+				return dto.teaser === '' ? null : dto.teaser
+			} else {
+				return undefined
 			}
 		}
 
@@ -165,14 +196,15 @@ export class DealCommandService {
 			return repo.save({
 				id: dealId,
 				title: dto.title,
-				seoMetaTitle: dto.title,
-				slug: slug === '' ? undefined : slug,
+				seoMetaTitle: seoMetaTitle(),
+				slug: slug,
 				tags: tagsToSet,
 				teaser: dto.teaser === '' ? null : dto.teaser,
-				seoMetaDescription: dto.teaser === '' ? null : dto.teaser,
+				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				outboundUrl: dto.outboundUrl,
 				outboundUrlButtonLabel: dto.outboundUrlButtonLabel === '' ? 'Go to Deal' : dto.outboundUrlButtonLabel,
+				featuredResource: { id: dto.featuredResourceId },
 				image:
 					newImage !== undefined
 						? {
@@ -201,13 +233,13 @@ export class DealCommandService {
 		}
 
 		if (newImage && updated.image) {
-			this.imageQueueService.enqueueDealHeroProcess({
+			await this.imageQueueService.enqueueDealHeroProcess({
 				entityId: updated.id,
 				entityFileId: updated.image.id,
 				srcKey: newImage.key
 			})
 			if (updated.ogImage && exists.ogImageMode === EOgImageMode.USE_HERO) {
-				this.imageQueueService.enqueueDealOgImageProcess({
+				await this.imageQueueService.enqueueDealOgImageProcess({
 					entityId: updated.id,
 					entityFileId: updated.ogImage.id,
 					srcKey: newImage.key
@@ -223,8 +255,22 @@ export class DealCommandService {
 		const errorReqFields: string[] = []
 		if (!exists.dealType && !dto.dealType) errorReqFields.push('Deal type required.')
 		if (!exists.originalPrice && !dto.originalPrice) errorReqFields.push('Original price required.')
-		if (!exists.yourPrice && !dto.yourPrice) errorReqFields.push('Your price URL required.')
+		if (!exists.yourPrice && !dto.yourPrice) errorReqFields.push('Your price required.')
 		if (!exists.providerDisplayName && !dto.providerDisplayName) errorReqFields.push('Provider display name required.')
+		if (dto.ongoingOffer !== true) {
+			if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
+				if (!dto.validFrom && !exists.validFrom) {
+					errorReqFields.push('Valid from is required when Ongoing offer is false.')
+				}
+			}
+		}
+		if (dto.ongoingOffer !== true) {
+			if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
+				if (!dto.validUntil && !exists.validUntil) {
+					errorReqFields.push('Valid until is required when Ongoing offer is false.')
+				}
+			}
+		}
 
 		if (errorReqFields.length > 0) {
 			throw new BadRequestException(errorReqFields)
@@ -250,17 +296,19 @@ export class DealCommandService {
 	}
 
 	async createContentSection(dealId: number) {
-		const sections = await this.dealRepository.findOne({ where: { id: dealId }, relations: ['contentBlocks'] })
+		const sections = await this.dealRepository.findOne({ where: { id: dealId }, relations: ['sections'] })
 
 		let maxPost = 0
 
-		for (const block of sections?.contentBlocks || []) {
+		for (const block of sections?.sections || []) {
 			if (maxPost < block.position) {
 				maxPost = block.position
 			}
 		}
 
-		return await this.dealSectionRepository.save({ position: maxPost + 1, deal: { id: dealId } })
+		const newSection = await this.dealSectionRepository.save({ position: maxPost + 1, deal: { id: dealId } })
+
+		return await this.dealSectionRepository.findOne({ where: { id: newSection.id }, relations: ['attachments'] })
 	}
 
 	async deleteContentSection(dealId: number, sectionId: number) {
@@ -282,52 +330,70 @@ export class DealCommandService {
 		)
 	}
 
-	async saveContentSection(dealId: number, sectionId: number, dto: SaveContentSectionDto, file?: IMultipartFile) {
+	async saveContentSection(dealId: number, sectionId: number, dto: SaveContentSectionDto, files?: IMultipartFile[]) {
 		const exists = await this.dealSectionRepository.findOne({
-			where: { id: sectionId },
-			relations: ['attachment'],
+			where: { id: sectionId, deal: { id: dealId } },
+			relations: ['attachments'],
 			select: {
 				id: true,
-				attachment: {
+				attachments: {
 					id: true,
 					originalKey: true,
 					processedKey: true
 				}
 			}
 		})
-		if (!exists) throw new NotFoundException('Deal not found.')
+		if (!exists) throw new NotFoundException('Deal section not found.')
 
-		let newAttachment: IUploadedFile | undefined = undefined
+		const deleteAttachments: DealSectionAttachment[] = []
+		const remainedAttachments: DealSectionAttachment[] = []
+
+		exists.attachments?.forEach(item => {
+			if (dto.remainedAttachments?.includes(item.id)) {
+				remainedAttachments.push(item)
+			} else {
+				deleteAttachments.push(item)
+			}
+		})
+
+		const newAttachments: IUploadedFile[] = []
 		const oldKeys: string[] = []
 
-		if (file) {
-			newAttachment = await this.saveFile(file, dealId, sectionId)
-
-			if (exists.attachment?.originalKey) oldKeys.push(exists.attachment.originalKey)
-			if (exists.attachment?.processedKey) oldKeys.push(exists.attachment.processedKey)
+		if (files?.length) {
+			newAttachments.push(
+				...(await Promise.all(
+					files.map(file => {
+						return this.saveFile(file, dealId, sectionId)
+					})
+				))
+			)
 		}
 
-		const updated = await this.dataSource.transaction(async manager => {
-			const repo = manager.getRepository(DealSection)
+		deleteAttachments.forEach(attachment => {
+			if (attachment.originalKey) oldKeys.push(attachment.originalKey)
+			if (attachment.processedKey) oldKeys.push(attachment.processedKey)
+		})
 
-			if (newAttachment !== undefined && exists.attachment) {
-				await manager.getRepository(DealSectionAttachment).delete(exists.attachment.id)
+		const updated = await this.dataSource.transaction(async manager => {
+			if (deleteAttachments.length) {
+				await manager.getRepository(DealSectionAttachment).delete(deleteAttachments.map(a => a.id))
 			}
 
-			return await repo.save({
+			return await manager.getRepository(DealSection).save({
 				id: sectionId,
 				title: dto.title || 'Section',
 				bodyMd: dto.bodyMd,
 				enabled: dto.enabled,
-				attachment:
-					newAttachment === undefined
-						? undefined
-						: {
-								originalKey: newAttachment.key,
-								name: newAttachment.name,
-								ext: newAttachment.ext,
-								url: newAttachment.url
-							}
+				attachments: [
+					...remainedAttachments,
+					...newAttachments.map(newAttachment => ({
+						originalKey: newAttachment.key,
+						name: newAttachment.name,
+						ext: newAttachment.ext,
+						url: newAttachment.url,
+						sizeBytes: newAttachment.size
+					}))
+				]
 			})
 		})
 
@@ -337,37 +403,293 @@ export class DealCommandService {
 			} catch {}
 		}
 
-		if (newAttachment && updated.attachment) {
-			this.imageQueueService.enqueueDealAttachmentProcess({
-				entityId: updated.id,
-				entityFileId: updated.attachment.id,
-				srcKey: newAttachment.key
+		if (newAttachments.length && updated.attachments?.length) {
+			updated.attachments.forEach((item: DealSectionAttachment) => {
+				if (item.status === EFileStatus.QUEUED) {
+					this.imageQueueService.enqueueDealAttachmentProcess({
+						entityId: updated.id,
+						entityFileId: item.id,
+						srcKey: item.originalKey || ''
+					})
+				}
 			})
 		}
 	}
 
-	async switchRelatedDealsMode(dealId: number, dto: SwitchRelatedDealsMode) {
+	async switchRelatedMode(dealId: number, dto: SwitchRelatedMode) {
 		await this.dealRepository.update(dealId, {
 			relatedAutoMode: dto.relatedAutoMode
 		})
 	}
 
-	async getSimplifiedDeals(query: GetSimplifiedDealsDto) {
-		return await this.dealRepository.find({
-			where: query?.search ? { title: Like(query.search) } : {},
-			select: { id: true, title: true, slug: true, isVerified: true },
-			skip: (query.page - 1) * query.limit,
-			take: query.limit,
-			order: { id: 'ASC' }
-		})
-	}
-
-	async setSelectRelatedDeals(dealId: number, dto: SetSelectRelatedDealsDto) {
+	async addSelectRelated(dealId: number, dto: SetSelectRelatedDto) {
 		await this.dealRelatedRepository.insert(
 			dto.dealIds.map(relatedDealId => ({
 				source: { id: dealId },
 				target: { id: relatedDealId }
 			}))
 		)
+	}
+
+	async deleteSelectRelated(dealId: number, dto: SetSelectRelatedDto) {
+		await this.dealRelatedRepository.delete(
+			dto.dealIds.map(relatedDealId => ({
+				source: { id: dealId },
+				target: { id: relatedDealId }
+			}))
+		)
+	}
+
+	async saveSEO(dealId: number, dto: SaveSEODto, file?: IMultipartFile) {
+		if (dto.ogImageMode === EOgImageMode.CUSTOM && !file) {
+			throw new BadRequestException('Please upload an image for the custom OG mode')
+		}
+
+		if (dto.ogImageMode === EOgImageMode.USE_HERO && file) {
+			throw new BadRequestException('You selected "Use hero image", so no custom OG file should be uploaded')
+		}
+
+		const exists = await this.dealRepository.findOne({
+			where: { id: dealId },
+			relations: ['image', 'ogImage'],
+			select: {
+				id: true,
+				title: true,
+				teaser: true,
+				ogImageMode: true,
+				image: {
+					id: true,
+					originalKey: true,
+					processedKey: true,
+					width: true,
+					height: true
+				},
+				ogImage: {
+					id: true,
+					originalKey: true,
+					processedKey: true
+				}
+			}
+		})
+		if (!exists) throw new NotFoundException('Deal not found.')
+
+		let newImage: IUploadedImage | undefined = undefined
+		const oldKeys: string[] = []
+
+		if (dto.ogImageMode === EOgImageMode.USE_HERO && exists.ogImageMode === EOgImageMode.CUSTOM) {
+			if (!exists.image?.originalKey) {
+				throw new BadRequestException('Hero image is missing, cannot use it as OG image')
+			}
+
+			newImage = {
+				key: exists.image.originalKey,
+				url: this.s3StorageService.publicUrlForKey(exists.image.originalKey),
+				width: exists.image?.width,
+				height: exists.image?.height
+			}
+			if (exists.ogImage?.originalKey) oldKeys.push(exists.ogImage.originalKey)
+			if (exists.ogImage?.processedKey) oldKeys.push(exists.ogImage.processedKey)
+		}
+
+		if (file) {
+			newImage = await this.saveImage(file, exists.id)
+			if (exists.ogImage?.originalKey) oldKeys.push(exists.ogImage.originalKey)
+			if (exists.ogImage?.processedKey) oldKeys.push(exists.ogImage.processedKey)
+		}
+
+		const seoMetaTitle = () => {
+			if (dto.seoMetaTitle === undefined) {
+				return undefined
+			}
+
+			if (!dto.seoMetaTitle) {
+				return exists.title
+			} else {
+				return dto.seoMetaTitle
+			}
+		}
+
+		const seoMetaDescription = () => {
+			if (dto.seoMetaDescription === undefined) {
+				return undefined
+			}
+
+			if (!dto.seoMetaDescription) {
+				return exists.teaser
+			} else {
+				return dto.seoMetaDescription
+			}
+		}
+
+		const updated = await this.dataSource.transaction(async manager => {
+			const repo = manager.getRepository(Deal)
+
+			if (newImage !== undefined && exists.ogImage) {
+				await manager.getRepository(DealImage).delete(exists.ogImage.id)
+			}
+
+			return repo.save({
+				id: dealId,
+				seoMetaTitle: seoMetaTitle(),
+				seoMetaDescription: seoMetaDescription(),
+				ogImageMode: dto.ogImageMode,
+				canonicalUrl: dto.canonicalUrl,
+				allowIndexing: dto.allowIndexing,
+				ogImage:
+					newImage !== undefined
+						? {
+								originalKey: newImage.key,
+								height: newImage.height,
+								width: newImage.width,
+								url: newImage.url
+							}
+						: undefined
+			})
+		})
+
+		for (const key of oldKeys) {
+			try {
+				await this.s3StorageService.delete(key)
+			} catch {}
+		}
+
+		if (newImage && updated.ogImage) {
+			await this.imageQueueService.enqueueDealOgImageProcess({
+				entityId: updated.id,
+				entityFileId: updated.ogImage.id,
+				srcKey: newImage.key
+			})
+		}
+	}
+
+	async changeStatus(dealId: number, dto: ChangeStatusDto) {
+		const exists = await this.dealRepository.findOne({
+			where: { id: dealId },
+			relations: ['image']
+		})
+		if (!exists) throw new NotFoundException('Deal not found.')
+
+		if (dto.status !== EDealStatus.SCHEDULED && dto.schedulePublish) {
+			throw new BadRequestException('When specifying Schedule Publish, you must specify the Scheduled status.')
+		}
+
+		if (dto.status === EDealStatus.PUBLISHED || dto.status === EDealStatus.SCHEDULED) {
+			const errorReqFields: string[] = []
+			if (!exists.image) errorReqFields.push('Image required.')
+			if (!exists.title) errorReqFields.push('Title required.')
+			if (!exists.slug) errorReqFields.push('Slug required.')
+			if (!exists.categories.length) errorReqFields.push('Categories required.')
+			if (!exists.outboundUrl) errorReqFields.push('Outbound URL required.')
+			if (!exists.dealType) errorReqFields.push('Deal type required.')
+			if (!exists.originalPrice) errorReqFields.push('Original price required.')
+			if (!exists.yourPrice) errorReqFields.push('Your price required.')
+			if (!exists.providerDisplayName) errorReqFields.push('Provider display name required.')
+
+			if (errorReqFields.length > 0) {
+				throw new BadRequestException(errorReqFields)
+			}
+		}
+
+		let lastPublishedAt: Date | undefined
+		if (dto.status === EDealStatus.PUBLISHED) {
+			lastPublishedAt = new Date()
+		}
+
+		if (dto.schedulePublish) {
+			await this.scheduleQueueService.dealSchedulePublish({
+				entityId: dealId,
+				runAt: dto.schedulePublish
+			})
+		}
+
+		if (dto.scheduleExpire) {
+			await this.scheduleQueueService.dealScheduleExpired({
+				entityId: dealId,
+				runAt: dto.scheduleExpire
+			})
+		}
+
+		await this.dealRepository.save({
+			id: dealId,
+			status: dto.status,
+			publishAt: dto.schedulePublish,
+			expireAt: dto.scheduleExpire,
+			lastPublishedAt: lastPublishedAt,
+			commentsEnabled: dto.commentsEnabled
+		})
+	}
+
+	async deleteDeal(dealId: number, dto: DeleteDealDto) {
+		if (dto.method === 'soft') {
+			await this.dealRepository.update(dealId, { status: EDealStatus.ARCHIVED })
+			return
+		}
+
+		if (dto.method === 'hard') {
+			const deal = await this.dealRepository
+				.createQueryBuilder('deal')
+				.leftJoinAndSelect('deal.image', 'image')
+				.addSelect(['image.originalKey', 'image.processedKey'])
+				.leftJoinAndSelect('deal.ogImage', 'ogImage')
+				.addSelect(['ogImage.originalKey', 'ogImage.processedKey'])
+				.leftJoinAndSelect('deal.sections', 'section')
+				.leftJoinAndSelect('section.attachments', 'attachment')
+				.addSelect(['attachment.originalKey', 'attachment.processedKey'])
+				.where('deal.id = :id', { id: dealId })
+				.getOne()
+
+			if (!deal) return
+
+			const keysToDelete: string[] = []
+			const attachmentIds: number[] = []
+
+			const pushKey = (key?: string | null) => {
+				if (key) keysToDelete.push(key)
+			}
+
+			if (deal.image) {
+				pushKey(deal.image.originalKey)
+				pushKey(deal.image.processedKey)
+			}
+
+			if (deal.ogImage) {
+				pushKey(deal.ogImage.originalKey)
+				pushKey(deal.ogImage.processedKey)
+			}
+
+			for (const section of deal.sections ?? []) {
+				for (const attachment of section.attachments ?? []) {
+					attachmentIds.push(attachment.id)
+					pushKey(attachment.originalKey)
+					pushKey(attachment.processedKey)
+				}
+			}
+
+			await this.dataSource.transaction(async manager => {
+				const sectionAttachmentRepo = manager.getRepository(DealSectionAttachment)
+				const resourceImageRepo = manager.getRepository(DealImage)
+				const resourceRepo = manager.getRepository(Deal)
+
+				if (attachmentIds.length) {
+					await sectionAttachmentRepo.delete(attachmentIds)
+				}
+
+				if (deal.image) {
+					await resourceImageRepo.delete(deal.image.id)
+				}
+
+				if (deal.ogImage) {
+					await resourceImageRepo.delete(deal.ogImage.id)
+				}
+
+				await resourceRepo.delete(dealId)
+			})
+
+			for (const key of keysToDelete) {
+				try {
+					await this.s3StorageService.delete(key)
+				} catch {}
+			}
+		}
 	}
 }

@@ -4,6 +4,7 @@
 /build
 /minio-data
 /certs
+/frontend_old
 
 # Logs
 logs

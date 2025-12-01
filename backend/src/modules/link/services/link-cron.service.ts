@@ -5,7 +5,6 @@ import { Repository } from 'typeorm'
 
 import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
-import { ViewsSystemService } from '../../views/services/views-system.service'
 import { Link } from '../entities/Link.entity'
 
 const CONCURRENCY = 10

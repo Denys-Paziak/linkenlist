@@ -11,6 +11,7 @@ import { getPostgresConfig } from '../../configs/postgres.config'
 import { getThrottlerConfig } from '../../configs/throttler.config'
 import { DealModule } from '../deal/deal.module'
 import { LinkModule } from '../link/link.module'
+import { ResourceModule } from '../resource/resource.module'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 
 import { ImageProcessor } from './image.processor'
@@ -26,7 +27,8 @@ import { ImageProcessor } from './image.processor'
 		JwtModule.registerAsync(getJWTConfig()),
 		ThrottlerModule.forRootAsync(getThrottlerConfig()),
 		LinkModule,
-		DealModule
+		DealModule,
+		ResourceModule
 	],
 	providers: [ImageProcessor, S3StorageService]
 })

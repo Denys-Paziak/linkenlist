@@ -6,7 +6,6 @@ export class ResourceTag {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@Index()
 	@Column({ type: 'text' })
 	name: string
 

@@ -8,6 +8,7 @@ export interface IUploadedImage {
 export interface IUploadedFile {
 	key: string
 	url: string
-	name?: string,
+	name?: string
 	ext?: string
+	size?: number
 }

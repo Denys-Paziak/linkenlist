@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { mutate } from "swr";
@@ -22,7 +22,7 @@ import { ErrorAlert } from "@/components/ui/error-alert";
 import { FilePen, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcherAdmin } from "@/lib/fetcher";
-import { TagsField } from "./components/tags-field";
+import { TagsField } from "../../../../../../../components/admin/tags-field";
 import {
   CreateLinkFormData,
   createFormSchema,
@@ -63,7 +63,7 @@ export function CreateForm() {
 
     const isValid = await form.trigger();
     if (!isValid) {
-      setFormError("Please fix the errors above.");
+      setFormError("Please fix the errors below.");
     }
 
     const imageUrl = form.getValues("image");
@@ -71,7 +71,7 @@ export function CreateForm() {
       form.setError("image", {
         message: "Provide either an image URL or upload a file.",
       });
-      setFormError("Please fix the errors above.");
+      setFormError("Please fix the errors below.");
       return;
     }
 
@@ -79,7 +79,7 @@ export function CreateForm() {
       form.setError("image", {
         message: "Use either image URL or file, not both.",
       });
-      setFormError("Please fix the errors above.");
+      setFormError("Please fix the errors below.");
       return;
     }
 
@@ -118,218 +118,215 @@ export function CreateForm() {
       mutate(
         (key) => typeof key === "string" && key.startsWith("/admin/links")
       );
-    } catch (error: any) {
+    } catch (err: any) {
       setStatus("error");
-      setFormError(error.message);
-    } finally {
-      setTimeout(() => {
-        setStatus("idle");
-      }, 2000);
+      setFormError(err?.message ?? "Create failed");
     }
   };
+
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(() => setStatus("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   const publishBtnStatus: ButtonSubitStatus =
     statusMode === "publish" ? status : "idle";
   const draftBtnStatus: ButtonSubitStatus =
     statusMode === "draft" ? status : "idle";
 
-  const isLoading = status === "loading";
+  const loading = status === "loading";
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-4" noValidate>
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Create New Link Card</h2>
-        </CardHeader>
+      <fieldset disabled={loading}>
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold">Create New Link Card</h2>
+          </CardHeader>
 
-        <CardContent className="space-y-4">
-          {formError ? <ErrorAlert message={formError} /> : null}
+          <CardContent className="space-y-4">
+            {formError ? <ErrorAlert message={formError} /> : null}
 
-          {/* Image Upload */}
-          <ImageUploadField
-            form={form as any}
-            disabled={isLoading}
-            onFileChange={setImageFile}
-            imageFile={imageFile}
-          />
+            {/* Image Upload */}
+            <ImageUploadField
+              form={form as any}
+              onFileChange={setImageFile}
+              imageFile={imageFile}
+            />
 
-          {/* Title / Category / Branches */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Title
-              </label>
-              <input
-                placeholder="Enter card title"
-                {...form.register("title")}
-                disabled={isLoading}
-                className={cn(
-                  "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                  form.formState.errors.title
-                    ? "border-destructive focus:border-destructive"
-                    : "border-input"
-                )}
-              />
-              {form.formState.errors.title ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              ) : null}
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Category
-              </label>
-              <Select
-                value={form.watch("category")}
-                onValueChange={(value) =>
-                  form.setValue("category", value, { shouldValidate: true })
-                }
-                disabled={isLoading}
-              >
-                <SelectTrigger
+            {/* Title / Category / Branches */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Title
+                </label>
+                <input
+                  placeholder="Enter card title"
+                  {...form.register("title")}
                   className={cn(
-                    form.formState.errors.category
+                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
+                    form.formState.errors.title
+                      ? "border-destructive focus:border-destructive"
+                      : "border-input"
+                  )}
+                />
+                {form.formState.errors.title ? (
+                  <p className="mt-1 text-sm text-destructive">
+                    {form.formState.errors.title.message}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Category
+                </label>
+                <Select
+                  value={form.watch("category")}
+                  onValueChange={(value) =>
+                    form.setValue("category", value, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger
+                    className={cn(
+                      form.formState.errors.category
+                        ? "border-destructive focus:border-destructive"
+                        : ""
+                    )}
+                  >
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.category ? (
+                  <p className="mt-1 text-sm text-destructive">
+                    {form.formState.errors.category.message}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Branches */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Branches
+                </label>
+                <MultiSelect
+                  options={[...branchesOptions]}
+                  value={form.watch("branches")}
+                  onChange={(value) =>
+                    form.setValue("branches", value, { shouldValidate: true })
+                  }
+                  placeholder="Select branches"
+                  className={cn(
+                    form.formState.errors.branches
                       ? "border-destructive focus:border-destructive"
                       : ""
                   )}
-                >
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.category ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.category.message}
-                </p>
-              ) : null}
+                />
+                {form.formState.errors.branches ? (
+                  <p className="mt-1 text-sm text-destructive">
+                    {form.formState.errors.branches.message}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
-            {/* Branches */}
+            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Branches
+                Short Description
               </label>
-              <MultiSelect
-                options={[...branchesOptions]}
-                value={form.watch("branches")}
-                onChange={(value) =>
-                  form.setValue("branches", value, { shouldValidate: true })
-                }
-                placeholder="Select branches"
+              <Textarea
+                placeholder="Enter a brief description"
+                {...form.register("description")}
+                rows={3}
                 className={cn(
-                  form.formState.errors.branches
-                    ? "border-destructive focus:border-destructive"
-                    : ""
-                )}
-                disabled={isLoading}
-              />
-              {form.formState.errors.branches ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.branches.message}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Short Description
-            </label>
-            <Textarea
-              placeholder="Enter a brief description"
-              {...form.register("description")}
-              disabled={isLoading}
-              rows={3}
-              className={cn(
-                form.formState.errors.description ? "border-destructive" : ""
-              )}
-            />
-            {form.formState.errors.description ? (
-              <p className="mt-1 text-sm text-destructive">
-                {form.formState.errors.description.message}
-              </p>
-            ) : null}
-          </div>
-
-          {/* URL / Tags */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* URL */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                URL
-              </label>
-              <input
-                placeholder="https://example.com"
-                {...form.register("url")}
-                disabled={isLoading}
-                className={cn(
-                  "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                  form.formState.errors.url
-                    ? "border-destructive focus:border-destructive"
-                    : "border-input"
+                  form.formState.errors.description ? "border-destructive" : ""
                 )}
               />
-              {form.formState.errors.url ? (
+              {form.formState.errors.description ? (
                 <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.url.message}
+                  {form.formState.errors.description.message}
                 </p>
               ) : null}
             </div>
 
-            {/* Tags */}
-            <TagsField form={form as any} />
-          </div>
+            {/* URL / Tags */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* URL */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  URL
+                </label>
+                <input
+                  placeholder="https://example.com"
+                  {...form.register("url")}
+                  className={cn(
+                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
+                    form.formState.errors.url
+                      ? "border-destructive focus:border-destructive"
+                      : "border-input"
+                  )}
+                />
+                {form.formState.errors.url ? (
+                  <p className="mt-1 text-sm text-destructive">
+                    {form.formState.errors.url.message}
+                  </p>
+                ) : null}
+              </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 items-center">
-            <ButtonSubmit
-              type="button"
-              onClick={() => submitForm("publish")}
-              status={publishBtnStatus}
-              statusText={{
-                loading: "Publishing...",
-                success: "Published",
-                error: "Try again",
-                disabled: "Disabled",
-              }}
-              className="font-semibold"
-              disabled={isLoading}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-              Save and publish
-            </ButtonSubmit>
+              {/* Tags */}
+              <TagsField form={form as any} url="/admin/links/tags" />
+            </div>
 
-            <ButtonSubmit
-              type="button"
-              variant="secondary"
-              onClick={() => submitForm("draft")}
-              status={draftBtnStatus}
-              statusText={{
-                loading: "Saving...",
-                success: "Saved",
-                error: "Try again",
-                disabled: "Disabled",
-              }}
-              className="font-semibold"
-              disabled={isLoading}
-            >
-              <FilePen className="h-4 w-4 mr-2" aria-hidden="true" />
-              Save as draft
-            </ButtonSubmit>
-          </div>
-        </CardContent>
-      </Card>
+            {/* Actions */}
+            <div className="flex gap-2 items-center">
+              <ButtonSubmit
+                type="button"
+                onClick={() => submitForm("publish")}
+                status={publishBtnStatus}
+                statusText={{
+                  loading: "Publishing...",
+                  success: "Published",
+                  error: "Try again",
+                  disabled: "Disabled",
+                }}
+                className="font-semibold"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+                Save and publish
+              </ButtonSubmit>
+
+              <ButtonSubmit
+                type="button"
+                variant="secondary"
+                onClick={() => submitForm("draft")}
+                status={draftBtnStatus}
+                statusText={{
+                  loading: "Saving...",
+                  success: "Saved",
+                  error: "Try again",
+                  disabled: "Disabled",
+                }}
+                className="font-semibold"
+              >
+                <FilePen className="h-4 w-4 mr-2" aria-hidden="true" />
+                Save as draft
+              </ButtonSubmit>
+            </div>
+          </CardContent>
+        </Card>
+      </fieldset>
     </form>
   );
 }

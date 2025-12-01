@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
-import { ERoleNames } from '../../../interfaces/ERoleNames'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { EUserStatus } from '../../../interfaces/EUserStatus'
 import { AuditLog } from '../../audit/entities/AuditLog.entity'
 import { Listing } from '../../listing/entities/Listing.entity'
@@ -59,8 +59,8 @@ export class User {
 	@Column({ name: 'free_listing_credit', type: 'int', default: 1 })
 	freeListingCredit: number
 
-	@Column({ type: 'enum', enum: ERoleNames, default: ERoleNames.USER })
-	role: ERoleNames
+	@Column({ type: 'enum', enum: ERoleName, default: ERoleName.USER })
+	role: ERoleName
 
 	@Column({ name: 'ban_expiration_date', type: 'timestamptz', nullable: true })
 	banExpirationDate: Date | null

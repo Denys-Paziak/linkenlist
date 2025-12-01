@@ -1,0 +1,54 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { fetcherAdmin } from "../../../../../../lib/fetcher";
+import {
+  ButtonSubitStatus,
+  ButtonSubmit,
+} from "../../../../../../components/ui/button-submit";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+export function CreateButton() {
+  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const router = useRouter();
+
+  const createResource = async () => {
+    setStatus("loading");
+    try {
+      const data = await fetcherAdmin(`/admin/resources/init`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      router.push(`/admin/resources/${data.id}/edit`);
+    } catch (err: any) {
+      setStatus("error");
+    }
+  };
+
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(() => setStatus("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
+  return (
+    <ButtonSubmit
+      type="button"
+      onClick={createResource}
+      status={status}
+      statusText={{
+        loading: "Creation...",
+        success: "Created",
+        error: "Try again",
+        disabled: "Disabled",
+      }}
+      disabled={status === "loading"}
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Create Resource
+    </ButtonSubmit>
+  );
+}

@@ -1,49 +1,78 @@
-"use client"
+"use client";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
+import { BasicsForm } from "./components/basics-form/basics-form";
+import { ContentForm } from "./components/content-form/content-form";
+import { SurfacingForm } from "./components/surfacing-form/surfacing-form";
+import { SeoForm } from "./components/seo-form";
+import { PublishingForm } from "./components/publishing-form";
+import { useQueryState, parseAsString } from "nuqs";
+import { SafeLink } from "../../../../../../../components/admin/safe-link";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
+import { IResource } from "../../../../../../../types/Resource";
 
-import { ResourceEditor } from "@/components/admin/resource-editor"
-import { useRouter, useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+export default function ResourceEditorPage() {
+  const { id: resourceId } = useParams();
 
-export default function EditResourcePage() {
-  const router = useRouter()
-  const params = useParams()
-  const [existingResource, setExistingResource] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsString.withDefault("basics")
+  );
 
-  useEffect(() => {
-    // TODO: Fetch the actual resource data by ID
-    // For now, using mock data
-    const mockResource = {
-      id: params.id,
-      title: "Complete PCS Checklist: Your 90-Day Moving Guide",
-      category: "PCS",
-      status: "published",
-      views: 15420,
-      lastUpdated: "2024-01-15",
-      isVerified: true,
-      isFeatured: true,
-      content: "Sample resource content...",
-      description: "A comprehensive guide for military families preparing for PCS moves.",
-      tags: ["PCS", "Moving", "Military", "Guide"],
-    }
+  useSWR<IResource>(resourceId ? `/admin/resources/${resourceId}` : null, {
+    revalidateOnMount: true,
+  });
 
-    setExistingResource(mockResource)
-    setLoading(false)
-  }, [params.id])
+  return (
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Resource Editor</h1>
+          <p className="text-gray-600 mt-1">
+            Create and edit educational resources and guides
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <SafeLink href={"/admin/deals"}>
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Resources
+            </Button>
+          </SafeLink>
+        </div>
+      </div>
 
-  const handleSave = (data: any) => {
-    console.log("[v0] Updating resource:", data)
-    // TODO: Implement actual save logic
-    router.push("/admin/resources")
-  }
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="basics">Basics</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="surfacing">Surfacing</TabsTrigger>
+          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="publishing">Publishing</TabsTrigger>
+        </TabsList>
 
-  const handleCancel = () => {
-    router.push("/admin/resources")
-  }
+        <TabsContent value="basics" className="space-y-6">
+          <BasicsForm />
+        </TabsContent>
 
-  if (loading) {
-    return <div>Loading resource...</div>
-  }
+        <TabsContent value="content" className="space-y-6">
+          <ContentForm />
+        </TabsContent>
 
-  return <ResourceEditor existingContent={existingResource} onSave={handleSave} onCancel={handleCancel} />
+        <TabsContent value="surfacing" className="space-y-6">
+          <SurfacingForm />
+        </TabsContent>
+
+        <TabsContent value="seo" className="space-y-6">
+          <SeoForm />
+        </TabsContent>
+
+        <TabsContent value="publishing" className="space-y-6">
+          <PublishingForm />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
