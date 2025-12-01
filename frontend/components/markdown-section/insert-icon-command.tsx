@@ -109,8 +109,6 @@ export const insertIconCommand = commands.group([], {
   icon: <Image className="w-3 h-3" strokeWidth={3} />,
 
   children: ({ close, textApi }) => {
-    console.log(MD_ICONS);
-
     return (
       <div className="rounded-md border bg-popover shadow-md p-1 flex flex-wrap gap-2 max-w-[180px] bg-white">
         {Object.values(MD_ICONS).map((Icon) => (

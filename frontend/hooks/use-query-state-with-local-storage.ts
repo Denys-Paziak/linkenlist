@@ -17,7 +17,13 @@ export const useQueryStateWithLocalStorage = <T>(
   // localStorageState defaults to null
   const [localStorageState, setLocalStorageState] = useLocalStorage<
     ReturnType<UseQueryStateOptions<T>["parse"]>
-  >(key, queryState);
+  >(key, null);
+
+  useEffect(() => {
+    if (!localStorageState) {
+      setLocalStorageState(options.defaultValue)
+    }
+  }, [])
 
   useEffect(() => {
     // If queryState is the same as localStorageState, do nothing
@@ -34,6 +40,7 @@ export const useQueryStateWithLocalStorage = <T>(
 
       return;
     }
+
   }, [
     queryState,
     localStorageState,
