@@ -1,4 +1,4 @@
-import { CreateForm } from "./components/create-form/create-form";
+import { CreateForm } from "./components/create-form";
 import { List } from "./components/list/list";
 
 export default function LinksPage() {

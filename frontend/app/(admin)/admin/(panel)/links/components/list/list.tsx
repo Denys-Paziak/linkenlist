@@ -5,22 +5,34 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { ILink, ILinkList } from "../../../../../../../types/Link";
+import { ILinkList } from "../../../../../../../types/Link";
 import Image from "next/image";
 import { DeleteDialog } from "./components/delete-dialog";
-import useSWR, { mutate as globalMutate } from "swr";
+import useSWR from "swr";
 import { cn } from "../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
 import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-query-state-with-local-storage";
-import { parseAsInteger } from "nuqs";
+import { parseAsInteger, parseAsString } from "nuqs";
 import { SafeLink } from "../../../../../../../components/admin/safe-link";
 import { Pagination } from "../../../../../../../components/ui/pagination";
 import { StatusChip } from "../../../../../../../components/ui/status-chip";
+import { useDebounce } from "use-debounce";
 
 export function List() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
+
+  const [searchQuery, setSearchQuery] = useQueryStateWithLocalStorage(
+    "/admin/links?search",
+    {
+      defaultValue: "",
+      parse: (v) => parseAsString.parse(v),
+      sync: true,
+    }
+  );
+  const [debouncedSearch] = useDebounce(searchQuery, 700, {
+    leading: true,
+  });
 
   const [page, setPage] = useQueryStateWithLocalStorage("/admin/links?page", {
     defaultValue: 1,
@@ -37,12 +49,14 @@ export function List() {
     }
   );
 
-  const { data, mutate, isLoading, error } = useSWR<[ILinkList[], number]>(
-    "/admin/links?" + `page=${page}` + "&" + `limit=${limit}`,
-    {
-      revalidateIfStale: true,
-    }
-  );
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (debouncedSearch) params.set("search", debouncedSearch);
+  const key = `/admin/links?${params.toString()}`;
+  const { data, mutate, isLoading, error } = useSWR<[ILinkList[], number]>(key);
 
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
@@ -63,12 +77,16 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    setPage(1);
-    globalMutate(
-      (key) =>
-        typeof key === "string" &&
-        (key.startsWith("/admin/links?") || key === "/admin/links")
-    );
+    if (page !== 1) {
+      setPage(1);
+    }
+  };
+
+  const handleChangeSearch = (search: string) => {
+    setSearchQuery(search);
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
   return (
@@ -80,15 +98,20 @@ export function List() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder={`Search links...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => handleChangeSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
         </CardHeader>
+        {error ? (
+          <div className="p-6 pt-0">
+            <ErrorAlert message="Failed to load data" />
+          </div>
+        ) : null}
         <CardContent>
-          {data ? (
+          {data && data[0].length !== 0 ? (
             <div className="grid-container-links">
               {data[0].map((item) => (
                 <div
@@ -203,17 +226,12 @@ export function List() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : isLoading ? (
             <div className="w-full max-h-full py-5 h-full flex-grow flex items-center justify-center">
               <Loader2 className="animate-spin w-14 h-14" />
             </div>
-          )}
+          ) : null}
         </CardContent>
-        {error ? (
-          <div className="p-6 pt-0">
-            <ErrorAlert message="Failed to load data" />
-          </div>
-        ) : null}
         <Pagination
           handlePageChange={handlePageChange}
           handleLimitPageChange={handleLimitPageChange}

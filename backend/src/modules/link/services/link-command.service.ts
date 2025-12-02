@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 
@@ -55,7 +55,9 @@ export class LinkCommandService {
 			.getMany()
 	}
 
-	async createLink(dto: CreateLinkDto, file: IMultipartFile) {
+	async createLink(dto: CreateLinkDto, file?: IMultipartFile) {
+		if (!file) throw new BadRequestException('Image required.')
+
 		const link = await this.dataSource.transaction(async manager => {
 			const tags = await this.upsertTagsByNames(dto.tags ?? [], manager)
 
@@ -65,6 +67,7 @@ export class LinkCommandService {
 				branches: dto.branches,
 				category: dto.category,
 				tags: tags ?? [],
+				tagsText: dto.tags?.join(" "),
 				status: dto.status,
 				url: dto.url,
 				verified: dto.verified ?? false,
@@ -134,6 +137,7 @@ export class LinkCommandService {
 				category: dto.category,
 
 				tags: tagsToSet,
+				tagsText: dto.tags?.join(" "),
 
 				status: dto.status,
 				url: dto.url,

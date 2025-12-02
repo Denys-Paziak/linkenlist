@@ -1,65 +1,79 @@
-import * as React from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+"use client";
 
-import { cn } from '@/lib/utils'
-import { Button, ButtonProps, buttonVariants } from '@/components/ui/button'
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import * as React from "react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+} from "lucide-react";
 
-const PaginationContainer = ({ className, ...props }: React.ComponentProps<'nav'>) => (
+import { cn } from "@/lib/utils";
+import {
+  Button,
+  type ButtonProps,
+  buttonVariants,
+} from "@/components/ui/button";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
+const PaginationContainer = ({
+  className,
+  ...props
+}: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
     aria-label="pagination"
-    className={cn('mx-auto flex w-full justify-center', className)}
+    className={cn("mx-auto flex w-full justify-center", className)}
     {...props}
   />
-)
-PaginationContainer.displayName = 'PaginationContainer'
+);
+PaginationContainer.displayName = "PaginationContainer";
 
 const PaginationContent = React.forwardRef<
   HTMLUListElement,
-  React.ComponentProps<'ul'>
+  React.ComponentProps<"ul">
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn('flex flex-row items-center gap-1', className)}
+    className={cn("flex flex-row items-center gap-0.5 sm:gap-1", className)}
     {...props}
   />
-))
-PaginationContent.displayName = 'PaginationContent'
+));
+PaginationContent.displayName = "PaginationContent";
 
 const PaginationItem = React.forwardRef<
   HTMLLIElement,
-  React.ComponentProps<'li'>
+  React.ComponentProps<"li">
 >(({ className, ...props }, ref) => (
-  <li ref={ref} className={cn('', className)} {...props} />
-))
-PaginationItem.displayName = 'PaginationItem'
+  <li ref={ref} className={cn("", className)} {...props} />
+));
+PaginationItem.displayName = "PaginationItem";
 
 type PaginationLinkProps = {
-  isActive?: boolean
-} & Pick<ButtonProps, 'size'> &
-  React.ComponentProps<'a'>
+  isActive?: boolean;
+} & Pick<ButtonProps, "size"> &
+  React.ComponentProps<"a">;
 
 const PaginationLink = ({
   className,
   isActive,
-  size = 'icon',
+  size = "icon",
   ...props
 }: PaginationLinkProps) => (
   <a
-    aria-current={isActive ? 'page' : undefined}
+    aria-current={isActive ? "page" : undefined}
     className={cn(
-      'cursor-pointer',
+      "cursor-pointer",
       buttonVariants({
-        variant: isActive ? 'outline' : 'ghost',
+        variant: isActive ? "outline" : "ghost",
         size,
       }),
-      className,
+      className
     )}
     {...props}
   />
-)
-PaginationLink.displayName = 'PaginationLink'
+);
+PaginationLink.displayName = "PaginationLink";
 
 const PaginationPrevious = ({
   className,
@@ -68,14 +82,17 @@ const PaginationPrevious = ({
   <PaginationLink
     aria-label="Go to previous page"
     size="default"
-    className={cn('gap-1 pl-2.5 cursor-pointer', className)}
+    className={cn(
+      "gap-1 pl-1.5 sm:pl-2.5 cursor-pointer h-9 w-9 sm:w-auto p-0 sm:px-4",
+      className
+    )}
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span>Previous</span>
+    <span className="hidden sm:inline">Previous</span>
   </PaginationLink>
-)
-PaginationPrevious.displayName = 'PaginationPrevious'
+);
+PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = ({
   className,
@@ -84,53 +101,62 @@ const PaginationNext = ({
   <PaginationLink
     aria-label="Go to next page"
     size="default"
-    className={cn('gap-1 pr-2.5 cursor-pointer', className)}
+    className={cn(
+      "gap-1 pr-1.5 sm:pr-2.5 cursor-pointer h-9 w-9 sm:w-auto p-0 sm:px-4",
+      className
+    )}
     {...props}
   >
-    <span>Next</span>
+    <span className="hidden sm:inline">Next</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
-)
-PaginationNext.displayName = 'PaginationNext'
+);
+PaginationNext.displayName = "PaginationNext";
 
 const PaginationEllipsis = ({
   className,
   ...props
-}: React.ComponentProps<'span'>) => (
+}: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn('flex h-9 w-9 items-center justify-center', className)}
+    className={cn("flex h-9 w-7 sm:w-10 items-center justify-center", className)}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
     <span className="sr-only">More pages</span>
   </span>
-)
-PaginationEllipsis.displayName = 'PaginationEllipsis'
+);
+PaginationEllipsis.displayName = "PaginationEllipsis";
 
 type PaginationPageSizeProps = {
-  value: number
-  onChange: (next: number) => void
-  options?: number[]
-  label?: string
-  className?: string
-}
+  value: number;
+  onChange: (next: number) => void;
+  options?: number[];
+  label?: string;
+  className?: string;
+};
 
 const PaginationPageSize = ({
   value,
   onChange,
   options = [10, 20, 50, 100],
-  label = 'Rows per page',
+  label = "Rows per page",
   className,
 }: PaginationPageSizeProps) => {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <span className="text-sm text-muted-foreground">{label}:</span>
+    <div className={cn("flex items-center gap-1.5 sm:gap-2", className)}>
+      <span className="text-xs sm:text-sm text-muted-foreground hidden min-[400px]:inline">
+        {label}:
+      </span>
       <DropdownMenu.Root modal={false}>
         <DropdownMenu.Trigger asChild>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1 h-9 text-xs sm:text-sm bg-transparent"
+          >
             {value}
-            <ChevronDown className="h-4 w-4 opacity-50" />
+            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
           </Button>
         </DropdownMenu.Trigger>
 
@@ -139,7 +165,7 @@ const PaginationPageSize = ({
             align="end"
             sideOffset={5}
             className={cn(
-              'z-50 min-w-[6rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
+              "z-50 min-w-[6rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
             )}
           >
             {options.map((opt) => (
@@ -147,9 +173,9 @@ const PaginationPageSize = ({
                 key={opt}
                 onSelect={() => onChange(opt)}
                 className={cn(
-                  'cursor-pointer select-none rounded-sm px-2 py-1.5 text-sm outline-none transition-colors',
-                  'focus:bg-accent focus:text-accent-foreground',
-                  value === opt && 'bg-accent text-accent-foreground',
+                  "cursor-pointer select-none rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+                  "focus:bg-accent focus:text-accent-foreground",
+                  value === opt && "bg-accent text-accent-foreground"
                 )}
               >
                 {opt}
@@ -159,9 +185,9 @@ const PaginationPageSize = ({
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     </div>
-  )
-}
-PaginationPageSize.displayName = 'PaginationPageSize'
+  );
+};
+PaginationPageSize.displayName = "PaginationPageSize";
 
 function Pagination({
   handlePageChange,
@@ -169,7 +195,7 @@ function Pagination({
   pagination,
   totalPages,
   pageSizeOptions = [9, 18, 48, 99],
-  className
+  className,
 }: {
   handlePageChange: (page: number) => void;
   handleLimitPageChange: (limit: number) => void;
@@ -178,13 +204,65 @@ function Pagination({
     limit: number;
   };
   totalPages: number;
-  pageSizeOptions?: number[]
-  className?: string
+  pageSizeOptions?: number[];
+  className?: string;
 }) {
+  if (!pagination || totalPages <= 0) {
+    return null;
+  }
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+
+    const current = pagination.page;
+
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, 5, "ellipsis-end", totalPages);
+    }
+    else if (current >= totalPages - 2) {
+      pages.push(
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages
+      );
+    }
+    else {
+      pages.push(
+        1,
+        "ellipsis-start",
+        current - 1,
+        current,
+        current + 1,
+        "ellipsis-end",
+        totalPages
+      );
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
-    <div className={cn("grid grid-cols-3 justify-center", className)}>
-      <div></div>
-      <PaginationContainer>
+    <div
+      className={cn(
+        "flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-0 items-center justify-center w-full",
+        className
+      )}
+    >
+      <div className="hidden sm:block"></div>
+      <PaginationContainer className="order-1 sm:order-none">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -198,34 +276,22 @@ function Pagination({
             />
           </PaginationItem>
 
-          {pagination.page > 3 && (
-            <>
-              <PaginationItem>
-                <PaginationLink
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(1);
-                  }}
-                >
-                  1
-                </PaginationLink>
-              </PaginationItem>
-              {pagination.page > 4 && (
-                <PaginationItem>
+          {pageNumbers.map((page, index) => {
+            if (page === "ellipsis-start") {
+              return (
+                <PaginationItem key="ellipsis-start">
                   <PaginationEllipsis />
                 </PaginationItem>
-              )}
-            </>
-          )}
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((page) => {
-              return (
-                page >= Math.max(1, pagination.page - 2) &&
-                page <= Math.min(totalPages, pagination.page + 2)
               );
-            })
-            .map((page) => (
+            }
+            if (page === "ellipsis-end") {
+              return (
+                <PaginationItem key="ellipsis-end">
+                  <PaginationEllipsis />
+                </PaginationItem>
+              );
+            }
+            return (
               <PaginationItem key={page}>
                 <PaginationLink
                   onClick={(e) => {
@@ -237,27 +303,8 @@ function Pagination({
                   {page}
                 </PaginationLink>
               </PaginationItem>
-            ))}
-
-          {pagination.page < totalPages - 2 && (
-            <>
-              {pagination.page < totalPages - 3 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-              <PaginationItem>
-                <PaginationLink
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(totalPages);
-                  }}
-                >
-                  {totalPages}
-                </PaginationLink>
-              </PaginationItem>
-            </>
-          )}
+            );
+          })}
 
           <PaginationItem>
             <PaginationNext
@@ -279,7 +326,7 @@ function Pagination({
         value={pagination.limit}
         onChange={(limit) => handleLimitPageChange(limit)}
         label="Items per page"
-        className="justify-self-end"
+        className="justify-self-center sm:justify-self-end order-2 sm:order-none"
         options={pageSizeOptions}
       />
     </div>
@@ -295,5 +342,5 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationPageSize
-}
+  PaginationPageSize,
+};

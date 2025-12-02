@@ -7,7 +7,7 @@ import { Search, Edit, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { DeleteDialog } from "./components/delete-dialog";
-import useSWR, { mutate as globalMutate } from "swr";
+import useSWR from "swr";
 import { cn } from "../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
 import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-query-state-with-local-storage";
@@ -64,12 +64,9 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    setPage(1);
-    globalMutate(
-      (key) =>
-        typeof key === "string" &&
-        (key.startsWith("/admin/resources?") || key === "/admin/resources")
-    );
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
   return (
@@ -88,8 +85,13 @@ export function List() {
             </div>
           </div>
         </CardHeader>
+        {error ? (
+          <div className="p-6 pt-0">
+            <ErrorAlert message="Failed to load data" />
+          </div>
+        ) : null}
         <CardContent>
-          {data ? (
+          {data && data[0].length !== 0  ? (
             <div className="grid-container-resources">
               {data[0].map((item) => (
                 <div
@@ -209,11 +211,6 @@ export function List() {
             </div>
           ) : null}
         </CardContent>
-        {error ? (
-          <div className="p-6 pt-0">
-            <ErrorAlert message="Failed to load data" />
-          </div>
-        ) : null}
         <Pagination
           handlePageChange={handlePageChange}
           handleLimitPageChange={handleLimitPageChange}

@@ -28,11 +28,11 @@ import {
   branchesOptions,
   categories,
 } from "../../../../../../../../lib/schemas/link-form-schema";
-import { ImageUploadField } from "../../../components/create-form/components/image-upload-field";
 import { TagsField } from "../../../../../../../../components/admin/tags-field";
 import { ILink } from "../../../../../../../../types/Link";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { UploadImage } from "../../../../../../../../components/ui/upload-image";
 
 export function EditForm({ linkId }: { linkId: string }) {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
@@ -70,6 +70,19 @@ export function EditForm({ linkId }: { linkId: string }) {
     mode: "onBlur",
   });
 
+  useEffect(() => {
+    if (imageFile && imageFile.type.startsWith("image/")) {
+      const objectUrl = URL.createObjectURL(imageFile);
+
+      form.setValue("image", objectUrl, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+  }, [imageFile]);
+
   const submitForm = async (mode: "publish" | "draft") => {
     setFormError(null);
     setStatusMode(mode);
@@ -81,10 +94,9 @@ export function EditForm({ linkId }: { linkId: string }) {
     }
 
     const imageUrl = form.getValues("image")?.trim();
-
     if (!imageUrl && !imageFile) {
       form.setError("image", {
-        message: "Use either image URL or file, not both.",
+        message: "Image is required.",
       });
       setFormError("Please fix the errors below.");
       return;
@@ -103,7 +115,6 @@ export function EditForm({ linkId }: { linkId: string }) {
         "payload",
         JSON.stringify({
           ...dirty,
-          imgUrl: dirty.image || undefined,
           status: mode === "publish" ? "published" : "draft",
         })
       );
@@ -160,19 +171,36 @@ export function EditForm({ linkId }: { linkId: string }) {
             {formError ? <ErrorAlert message={formError} /> : null}
 
             {/* Image Upload */}
-            <ImageUploadField
-              form={form as any}
-              disabled={loading || !!loadError || !data}
-              onFileChange={setImageFile}
-              imageFile={imageFile}
-            />
+            <div className="w-[400px] h-[300px]">
+              <UploadImage
+                value={form.watch("image")}
+                setFile={(value) => {
+                  setImageFile(value);
+                }}
+                deleteFile={() => {
+                  setImageFile(null);
+                  form.setValue("image", "", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+                error={
+                  form.formState.errors.image
+                    ? form.formState.errors.image.message
+                    : undefined
+                }
+                label="Image *"
+                recommendedLabel="Recommended: 400x300px, PNG/JPG/WEBP up to 5MB"
+                acceptFiles="image/png,image/jpeg,image/webp"
+              />
+            </div>
 
             {/* Title / Category / Branches */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Title
+                  Title *
                 </label>
                 <input
                   placeholder="Enter card title"
@@ -194,12 +222,15 @@ export function EditForm({ linkId }: { linkId: string }) {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Category
+                  Category *
                 </label>
                 <Select
                   value={form.watch("category")}
                   onValueChange={(value) =>
-                    form.setValue("category", value, { shouldValidate: true, shouldDirty: true })
+                    form.setValue("category", value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
                   }
                 >
                   <SelectTrigger
@@ -227,7 +258,7 @@ export function EditForm({ linkId }: { linkId: string }) {
               {/* Branches */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Branches
+                  Branches *
                 </label>
                 <MultiSelect
                   options={[...branchesOptions]}
@@ -280,7 +311,7 @@ export function EditForm({ linkId }: { linkId: string }) {
               {/* URL */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  URL
+                  URL *
                 </label>
                 <input
                   placeholder="https://example.com"
@@ -305,6 +336,7 @@ export function EditForm({ linkId }: { linkId: string }) {
                 form={form as any}
                 disabled={loading || !data}
                 url="/admin/links/tags"
+                label="Tags *"
               />
             </div>
 

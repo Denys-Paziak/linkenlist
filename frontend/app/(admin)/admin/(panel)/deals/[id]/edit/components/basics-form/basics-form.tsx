@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, FileText, ImageIcon, Upload } from "lucide-react";
+import { CheckCircle, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "../../../../../../../../../components/ui/button";
 import {
@@ -33,6 +33,7 @@ import { ResourcesBrowser } from "./components/resources-browser";
 import { useParams } from "next/navigation";
 import { StatusChip } from "../../../../../../../../../components/ui/status-chip";
 import { IResourceSimple } from "../../../../../../../../../types/Resource";
+import { UploadImage } from "../../../../../../../../../components/ui/upload-image";
 
 export function BasicsForm() {
   const { id: dealId } = useParams();
@@ -48,7 +49,6 @@ export function BasicsForm() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [showResourcesBrowser, setShowResourcesBrowser] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
 
   const form = useForm<BasicFormSchemaType>({
     resolver: zodResolver(basicFormSchema),
@@ -112,7 +112,6 @@ export function BasicsForm() {
     }
 
     const imageUrl = form.getValues("image")?.trim();
-
     if (!imageUrl && !imageFile) {
       form.setError("image", {
         message: "Image is required.",
@@ -135,6 +134,7 @@ export function BasicsForm() {
           slug: dirty.slug === "" ? null : dirty.slug,
         })
       );
+      
       if (!!imageFile) {
         formData.append("imageFile", imageFile as File);
       }
@@ -147,7 +147,7 @@ export function BasicsForm() {
 
       mutate().then(() => {
         setStatus("success");
-        setImageFile(null)
+        setImageFile(null);
         form.reset();
       });
     } catch (err: any) {
@@ -181,107 +181,25 @@ export function BasicsForm() {
             {formError ? <ErrorAlert message={formError} /> : null}
 
             {/* Hero Image Upload */}
-            <div>
-              <Label>Hero Image *</Label>
-              <div className="space-y-4">
-                <div
-                  className={` rounded-lg text-center transition-colors ${
-                    isDragging
-                      ? "border-blue-400 bg-blue-50"
-                      : "border-gray-300"
-                  } ${
-                    form.watch("image") ? "" : "border-2 p-8 border-dashed "
-                  }`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-
-                    const files = e.dataTransfer.files;
-                    if (files && files[0]) {
-                      setImageFile(files[0]);
-                    }
-                  }}
-                >
-                  {form.watch("image") ? (
-                    <div
-                      className="relative w-full h-[231px] bg-cover bg-center bg-no-repeat rounded-lg overflow-hidden"
-                      style={{ backgroundImage: `url(${form.watch("image")})` }}
-                    >
-                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                        <div className="text-center space-y-3">
-                          <p className="text-white font-medium">
-                            Hero Image Preview
-                          </p>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => {
-                              setImageFile(null);
-                              form.setValue("image", "", {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              });
-                            }}
-                            className="bg-white text-gray-900 hover:bg-gray-100"
-                          >
-                            Remove Image
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-sm text-gray-600 mb-2">
-                        {isDragging ? "Drop image here" : "Upload hero image"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Recommended: 1200x630px, PNG/JPG up to 5MB
-                      </p>
-                      <label htmlFor="heroImageUpload">
-                        <Button
-                          variant="outline"
-                          className="mt-4 bg-transparent cursor-pointer"
-                          asChild
-                        >
-                          <span>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Choose File
-                          </span>
-                        </Button>
-                      </label>
-                      <input
-                        id="heroImageUpload"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) setImageFile(file);
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-                {form.formState.errors.image ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.image.message}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            <UploadImage
+              value={form.watch("image")}
+              setFile={(value) => {
+                setImageFile(value);
+              }}
+              deleteFile={() => {
+                setImageFile(null);
+                form.setValue("image", "", {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              }}
+              error={
+                form.formState.errors.image
+                  ? form.formState.errors.image.message
+                  : undefined
+              }
+              label="Hero Image *"
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}

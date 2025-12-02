@@ -46,6 +46,9 @@ export class Link {
 	@JoinTable({ name: 'link_tags_join' })
 	tags: LinkTag[]
 
+	@Column({ type: 'text', name: 'tags_text', default: '' })
+	tagsText: string
+
 	@Column({ type: 'enum', enum: ELinkBranch, array: true })
 	branches: ELinkBranch[]
 
@@ -70,7 +73,7 @@ export class Link {
 	@Column({ type: 'int', default: 1, name: 'popular_score' })
 	popularScore: number
 
-	@Column({ type: 'boolean', default: false, name: "is_official" })
+	@Column({ type: 'boolean', default: false, name: 'is_official' })
 	isOfficial: boolean
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
@@ -79,4 +82,7 @@ export class Link {
 
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
+
+	@Column({ type: 'tsvector', select: false, nullable: true,  })
+	search_document: any
 }

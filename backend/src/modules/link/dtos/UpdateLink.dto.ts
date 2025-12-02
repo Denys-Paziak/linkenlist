@@ -19,10 +19,6 @@ import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 
 export class UpdateLinkDto {
 	@IsOptional()
-	@IsUrl()
-	imgUrl?: string
-
-	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
 	@MaxLength(40)

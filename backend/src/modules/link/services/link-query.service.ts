@@ -18,31 +18,67 @@ export class LinkQueryService {
 	) {}
 
 	async getAllLinksAdmin(query: GetAllLinksAdminDto) {
-		return await this.linkRepository.findAndCount({
-			select: {
-				id: true,
-				title: true,
-				image: {
-					id: true,
-					url: true,
-					width: true,
-					height: true
-				},
-				verified: true,
-				category: true,
-				status: true,
-				updatedAt: true,
-				createdAt: true
-			},
-			skip: (query.page - 1) * query.limit,
-			take: query.limit,
-			order: { createdAt: 'DESC' }
-		})
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(9, Number(query.limit ?? 9))
+		const offset = (page - 1) * limit
+
+		const qb = this.linkRepository
+			.createQueryBuilder('l')
+			.leftJoinAndSelect('l.image', 'img')
+			.select([
+				'l.id',
+				'l.title',
+				'l.verified',
+				'l.category',
+				'l.status',
+				'l.updatedAt',
+				'l.createdAt',
+				'img.id',
+				'img.url',
+				'img.width',
+				'img.height'
+			])
+
+		if (query.status) {
+			qb.andWhere('l.status = :status', { status: query.status })
+		}
+		if (query.category) {
+			qb.andWhere('l.category = :category', { category: query.category })
+		}
+
+		if (query.search && query.search.trim() !== '') {
+			qb.andWhere(
+				`(
+					l.search_document @@ plainto_tsquery('simple', :q)
+					OR similarity(l.title, :q) > 0.2
+					OR similarity(l.tags_text, :q) > 0.2
+				)`,
+				{ q: query.search }
+			)
+
+			qb.addSelect(
+				`GREATEST(
+					ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+					similarity(l.title, :q),
+					similarity(l.tags_text, :q)
+				)`,
+				'relevance'
+			)
+
+			qb.orderBy('relevance', 'DESC').addOrderBy('l.createdAt', 'DESC')
+		} else {
+			qb.orderBy('l.createdAt', 'DESC')
+		}
+
+		qb.skip(offset).take(limit)
+
+		const [items, total] = await qb.getManyAndCount()
+		return [items, total] as const
 	}
 
 	async getAllLinks(query: GetAllLinksDto) {
 		const page = Math.max(1, Number(query.page ?? 1))
-		const limit = Math.max(1, Number(query.limit ?? 9))
+		const limit = Math.max(16, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
 		const qb = this.linkRepository
@@ -51,13 +87,17 @@ export class LinkQueryService {
 			.leftJoinAndSelect('l.tags', 't')
 			.where('l.status = :status', { status: ELinkStatus.PUBLISHED })
 
+		// CATEGORY
 		if (query.category) {
 			qb.andWhere('l.category = :category', { category: query.category })
 		}
+
+		// BRANCH
 		if (query.branch) {
 			qb.andWhere(':branch = ANY(l.branches)', { branch: query.branch })
 		}
 
+		// SELECT LIST
 		qb.select([
 			'l.id',
 			'l.title',
@@ -76,31 +116,60 @@ export class LinkQueryService {
 			't.name'
 		])
 
-		switch (query.sort) {
-			case 'recently_verified':
-				qb.orderBy('l.verifiedAt', 'DESC', 'NULLS LAST')
-				break
+		// 🔍 SEARCH (FTS + trigram)
+		if (query.search && query.search.trim() !== '') {
+			qb.andWhere(
+				`(
+					l.search_document @@ plainto_tsquery('simple', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
+				)`,
+				{ q: query.search }
+			)
 
-			case 'alphabetical':
-				qb.addSelect('LOWER(l.title)', 'title_lower');
-				qb.orderBy('title_lower', 'ASC');
-				break
+			qb.addSelect(
+				`
+					GREATEST(
+						ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+						similarity(l.title, :q),
+						similarity(l.tags_text, :q)
+					)
+				`,
+				'relevance'
+			)
 
-			case 'official_first':
-				qb.orderBy('l.isOfficial', 'DESC').addOrderBy('l.popularScore', 'DESC')
-				break
+			qb.orderBy('relevance', 'DESC')
+		}
 
-			case 'most_used':
-				qb.orderBy('l.views30d', 'DESC')
-				break
+		// СОРТУВАННЯ (лише якщо не search)
+		if (!query.search) {
+			switch (query.sort) {
+				case 'recently_verified':
+					qb.orderBy('l.verifiedAt', 'DESC', 'NULLS LAST')
+					break
 
-			default:
-				qb.orderBy('l.popularScore', 'DESC')
-				break
+				case 'alphabetical':
+					qb.addSelect('LOWER(l.title)', 'title_lower')
+					qb.orderBy('title_lower', 'ASC')
+					break
+
+				case 'official_first':
+					qb.orderBy('l.isOfficial', 'DESC').addOrderBy('l.popularScore', 'DESC')
+					break
+
+				case 'most_used':
+					qb.orderBy('l.views30d', 'DESC')
+					break
+
+				default:
+					qb.orderBy('l.popularScore', 'DESC')
+					break
+			}
 		}
 
 		qb.skip(offset).take(limit)
 
+		// COUNT BUILDER
 		const countQb = this.linkRepository
 			.createQueryBuilder('l')
 			.leftJoin('l.tags', 't')
@@ -109,8 +178,20 @@ export class LinkQueryService {
 		if (query.category) {
 			countQb.andWhere('l.category = :category', { category: query.category })
 		}
+
 		if (query.branch) {
 			countQb.andWhere(':branch = ANY(l.branches)', { branch: query.branch })
+		}
+
+		if (query.search && query.search.trim() !== '') {
+			countQb.andWhere(
+				`(
+					l.search_document @@ plainto_tsquery('simple', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
+				)`,
+				{ q: query.search }
+			)
 		}
 
 		const cnt = await countQb.select('COUNT(DISTINCT l.id)', 'cnt').getRawOne<{ cnt: string }>()

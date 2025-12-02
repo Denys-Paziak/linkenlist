@@ -25,7 +25,7 @@ import { DeleteDealDto } from '../dtos/DeleteDeal.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
-const ACCEPT_IMAGES = /(image\/(jpeg|png|webp))$/
+const ACCEPT_IMAGES = /(image\/(jpeg|png))$/
 
 const SECTION_FILE_MAX_MB = 10
 const SECTION_FILE_MAX_BYTES = SECTION_FILE_MAX_MB * 1024 * 1024

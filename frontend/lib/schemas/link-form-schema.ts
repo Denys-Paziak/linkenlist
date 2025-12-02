@@ -1,15 +1,7 @@
 import { z } from "zod";
 
 export const updateFormSchema = z.object({
-  image: z
-    .string()
-    .url("Enter a valid URL")
-    .regex(
-      /\.(png|jpe?g|webp)(\?|#|$)/i,
-      "Image URL must end with .png, .jpg, .jpeg or .webp"
-    )
-    .optional()
-    .or(z.literal("")),
+  image: z.string().min(1, "Image is required"),
 
   title: z
     .string()
@@ -62,7 +54,7 @@ export const categories = [
   "Moving & Relocation",
   "Real Estate & Housing",
   "Shopping, Dining & Lifestyle",
-  "Technology & Services"
+  "Technology & Services",
 ] as const;
 
 export const branchesOptions = [

@@ -22,14 +22,14 @@ import { ErrorAlert } from "@/components/ui/error-alert";
 import { FilePen, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcherAdmin } from "@/lib/fetcher";
-import { TagsField } from "../../../../../../../components/admin/tags-field";
+import { TagsField } from "../../../../../../components/admin/tags-field";
 import {
   CreateLinkFormData,
   createFormSchema,
   branchesOptions,
   categories,
-} from "../../../../../../../lib/schemas/link-form-schema";
-import { ImageUploadField } from "./components/image-upload-field";
+} from "../../../../../../lib/schemas/link-form-schema";
+import { UploadImage } from "../../../../../../components/ui/upload-image";
 
 export function CreateForm() {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
@@ -51,11 +51,18 @@ export function CreateForm() {
     mode: "onBlur",
   });
 
-  const resetForm = () => {
-    form.reset();
-    setImageFile(null);
-    setFormError(null);
-  };
+  useEffect(() => {
+    if (imageFile && imageFile.type.startsWith("image/")) {
+      const objectUrl = URL.createObjectURL(imageFile);
+
+      form.setValue("image", objectUrl, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+  }, [imageFile]);
 
   const submitForm = async (mode: "publish" | "draft") => {
     setFormError(null);
@@ -64,26 +71,15 @@ export function CreateForm() {
     const isValid = await form.trigger();
     if (!isValid) {
       setFormError("Please fix the errors below.");
+      return;
     }
 
-    const imageUrl = form.getValues("image");
+    const imageUrl = form.getValues("image")?.trim();
     if (!imageUrl && !imageFile) {
       form.setError("image", {
-        message: "Provide either an image URL or upload a file.",
+        message: "Image is required.",
       });
       setFormError("Please fix the errors below.");
-      return;
-    }
-
-    if (imageUrl && imageFile) {
-      form.setError("image", {
-        message: "Use either image URL or file, not both.",
-      });
-      setFormError("Please fix the errors below.");
-      return;
-    }
-
-    if (!isValid) {
       return;
     }
 
@@ -96,8 +92,6 @@ export function CreateForm() {
         "payload",
         JSON.stringify({
           ...values,
-          image: undefined,
-          imgUrl: values.image || undefined,
           status: mode === "publish" ? "published" : "draft",
           verified: mode === "publish" ? true : false,
         })
@@ -114,7 +108,9 @@ export function CreateForm() {
       });
 
       setStatus("success");
-      resetForm();
+      form.reset();
+      setImageFile(null);
+      setFormError(null);
       mutate(
         (key) => typeof key === "string" && key.startsWith("/admin/links")
       );
@@ -150,18 +146,36 @@ export function CreateForm() {
             {formError ? <ErrorAlert message={formError} /> : null}
 
             {/* Image Upload */}
-            <ImageUploadField
-              form={form as any}
-              onFileChange={setImageFile}
-              imageFile={imageFile}
-            />
+            <div className="w-[400px]">
+              <UploadImage
+                value={form.watch("image")}
+                setFile={(value) => {
+                  setImageFile(value);
+                }}
+                deleteFile={() => {
+                  setImageFile(null);
+                  form.setValue("image", "", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+                error={
+                  form.formState.errors.image
+                    ? form.formState.errors.image.message
+                    : undefined
+                }
+                label="Image *"
+                recommendedLabel="Recommended: 400x300px, PNG/JPG/WEBP up to 5MB"
+                acceptFiles="image/png,image/jpeg,image/webp"
+              />
+            </div>
 
             {/* Title / Category / Branches */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Title
+                  Title *
                 </label>
                 <input
                   placeholder="Enter card title"
@@ -183,7 +197,7 @@ export function CreateForm() {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Category
+                  Category *
                 </label>
                 <Select
                   value={form.watch("category")}
@@ -218,7 +232,7 @@ export function CreateForm() {
               {/* Branches */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Branches
+                  Branches *
                 </label>
                 <MultiSelect
                   options={[...branchesOptions]}
@@ -266,7 +280,7 @@ export function CreateForm() {
               {/* URL */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  URL
+                  URL *
                 </label>
                 <input
                   placeholder="https://example.com"
@@ -286,7 +300,7 @@ export function CreateForm() {
               </div>
 
               {/* Tags */}
-              <TagsField form={form as any} url="/admin/links/tags" />
+              <TagsField form={form as any} url="/admin/links/tags" label="Tags *" />
             </div>
 
             {/* Actions */}

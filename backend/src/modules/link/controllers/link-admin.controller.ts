@@ -1,17 +1,4 @@
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Delete,
-	Get,
-	Param,
-	Patch,
-	Post,
-	Query,
-	Req,
-	UnprocessableEntityException,
-	UseInterceptors
-} from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
@@ -19,8 +6,7 @@ import { ParamId } from '../../../dtos/ParamId.dto'
 import { MultipartInterceptor } from '../../../interceptors/multipart.interceptor'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
-import { fetchImageAsIMultipartFile } from '../../../utils/fetch-image.util'
-import { MultipartOptions, validateFile } from '../../../utils/file.util'
+import { MultipartOptions } from '../../../utils/file.util'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
 import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
 import { GetAllLinksAdminDto } from '../dtos/GetAllLinks.admin.dto'
@@ -61,23 +47,7 @@ export class LinkAdminController {
 		})
 	)
 	async createLink(@Files() files: Record<string, IMultipartFile[]>, @Body() dto: CreateLinkDto) {
-		let file: IMultipartFile | undefined
-
-		const firstField = files && Object.keys(files)[0]
-
-		if (firstField && files![firstField]?.length) {
-			file = files![firstField][0]
-		} else if (dto.imgUrl) {
-			const fetched = await fetchImageAsIMultipartFile(dto.imgUrl, MAX_BYTES)
-
-			const err = await validateFile(fetched, new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES))
-			if (err) {
-				throw new UnprocessableEntityException(err)
-			}
-			file = fetched
-		}
-
-		if (!file) throw new BadRequestException('No image available')
+		const file = Object.values(files)?.[0]?.[0]
 
 		await this.linkCommandService.createLink(dto, file)
 
@@ -94,20 +64,7 @@ export class LinkAdminController {
 		})
 	)
 	async updateLink(@Files() files: Record<string, IMultipartFile[]>, @Param() params: ParamId, @Body() dto: UpdateLinkDto) {
-		let file: IMultipartFile | undefined
-		const firstField = files && Object.keys(files)[0]
-
-		if (firstField && files![firstField]?.length) {
-			file = files![firstField][0]
-		} else if (dto.imgUrl) {
-			const fetched = await fetchImageAsIMultipartFile(dto.imgUrl, MAX_BYTES)
-
-			const err = await validateFile(fetched, new MultipartOptions(MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES))
-			if (err) {
-				throw new UnprocessableEntityException(err)
-			}
-			file = fetched
-		}
+		const file = Object.values(files)?.[0]?.[0]
 
 		await this.linkCommandService.updateLink(params.id, dto, file)
 

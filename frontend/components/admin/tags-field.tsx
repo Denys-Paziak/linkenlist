@@ -2,11 +2,7 @@
 
 import useSWR from "swr";
 import { InputMultiSelect } from "@/components/ui/input-multi-select";
-import {
-  Controller,
-  FieldValues,
-  UseFormReturn,
-} from "react-hook-form";
+import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { ILinksTag } from "../../types/Link";
 
 type AnyWithTags = FieldValues & { image?: string };
@@ -14,16 +10,22 @@ type AnyWithTags = FieldValues & { image?: string };
 interface TagsFieldProps {
   form: UseFormReturn<AnyWithTags>;
   disabled?: boolean;
-  url: string
+  url: string;
+  label?: string;
 }
 
-export function TagsField({ form, disabled, url }: TagsFieldProps) {
+export function TagsField({
+  form,
+  disabled,
+  url,
+  label = "Tags",
+}: TagsFieldProps) {
   const { data } = useSWR<ILinksTag[]>(url);
 
   return (
     <div>
       <label className="block text-sm font-medium text-foreground mb-2">
-        Tags
+        {label}
       </label>
       <Controller
         name={"tags"}

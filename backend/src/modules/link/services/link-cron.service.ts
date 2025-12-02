@@ -90,7 +90,7 @@ export class LinkCronService {
 		const sql = `
 			WITH agg AS (
 			SELECT
-				dv.entity_id::uuid AS link_id,
+				dv.entity_id AS link_id,
 				SUM(dv.count)      AS total_views,
 				SUM(
 				CASE WHEN dv.day >= CURRENT_DATE - INTERVAL '30 days'

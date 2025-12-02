@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Globe, ImageIcon, Upload } from "lucide-react";
+import { CheckCircle, Globe } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,7 +9,6 @@ import {
 } from "../../../../../../../../components/ui/card";
 import { Label } from "../../../../../../../../components/ui/label";
 import { Textarea } from "../../../../../../../../components/ui/textarea";
-import { Button } from "../../../../../../../../components/ui/button";
 import { Switch } from "../../../../../../../../components/ui/switch";
 import { useEffect, useState } from "react";
 import { cn, pickDirty } from "../../../../../../../../lib/utils";
@@ -26,6 +25,7 @@ import {
 import { EOgImageMode } from "../../../../../../../../types/shared";
 import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
 import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
+import { UploadImage } from "../../../../../../../../components/ui/upload-image";
 
 export function SeoForm() {
   const { id: dealId } = useParams();
@@ -38,13 +38,14 @@ export function SeoForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [isDragging, setIsDragging] = useState(false);
-
   const form = useForm({
     resolver: zodResolver(seoFormSchema),
     values: data
       ? {
-          image: data.ogImageMode === EOgImageMode.CUSTOM ? data.ogImage?.url || "" : "",
+          image:
+            data.ogImageMode === EOgImageMode.CUSTOM
+              ? data.ogImage?.url || ""
+              : "",
           seoMetaTitle: data.seoMetaTitle || "",
           seoMetaDescription: data.seoMetaDescription || "",
           canonicalUrl: data.canonicalUrl || "",
@@ -86,7 +87,10 @@ export function SeoForm() {
 
     const imageMode = form.getValues("ogImageMode");
 
-    if (imageMode === EOgImageMode.CUSTOM && data?.ogImageMode === EOgImageMode.USE_HERO) {
+    if (
+      imageMode === EOgImageMode.CUSTOM &&
+      data?.ogImageMode === EOgImageMode.USE_HERO
+    ) {
       if (!imageFile) {
         form.setError("image", {
           message: "Image is required.",
@@ -116,7 +120,7 @@ export function SeoForm() {
 
       mutate().then(() => {
         setStatus("success");
-        setImageFile(null)
+        setImageFile(null);
         form.reset();
       });
     } catch (err: any) {
@@ -249,106 +253,24 @@ export function SeoForm() {
                 </div>
                 {form.watch("ogImageMode") === EOgImageMode.CUSTOM && (
                   <div className="ml-6 space-y-3">
-                    <div
-                      className={` rounded-lg text-center transition-colors ${
-                        isDragging
-                          ? "border-blue-400 bg-blue-50"
-                          : "border-gray-300"
-                      } ${
-                        form.watch("image") ? "" : "border-2 p-8 border-dashed "
-                      }`}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
+                    <UploadImage
+                      value={form.watch("image")}
+                      setFile={(value) => {
+                        setImageFile(value);
                       }}
-                      onDragEnter={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
+                      deleteFile={() => {
+                        setImageFile(null);
+                        form.setValue("image", "", {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-
-                        const files = e.dataTransfer.files;
-                        if (files && files[0]) {
-                          setImageFile(files[0]);
-                        }
-                      }}
-                    >
-                      {form.watch("image") ? (
-                        <div
-                          className="relative w-full h-[231px] bg-cover bg-center bg-no-repeat rounded-lg overflow-hidden"
-                          style={{
-                            backgroundImage: `url(${form.watch("image")})`,
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                            <div className="text-center space-y-3">
-                              <p className="text-white font-medium">
-                                Hero Image Preview
-                              </p>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => {
-                                  setImageFile(null);
-                                  form.setValue("image", "", {
-                                    shouldValidate: true,
-                                    shouldDirty: true,
-                                  });
-                                }}
-                                className="bg-white text-gray-900 hover:bg-gray-100"
-                              >
-                                Remove Image
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                          <p className="text-sm text-gray-600 mb-2">
-                            {isDragging
-                              ? "Drop image here"
-                              : "Upload hero image"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Recommended: 1200x630px, PNG/JPG up to 5MB
-                          </p>
-                          <label htmlFor="heroImageUpload">
-                            <Button
-                              variant="outline"
-                              className="mt-4 bg-transparent cursor-pointer"
-                              asChild
-                            >
-                              <span>
-                                <Upload className="h-4 w-4 mr-2" />
-                                Choose File
-                              </span>
-                            </Button>
-                          </label>
-                          <input
-                            id="heroImageUpload"
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) setImageFile(file);
-                            }}
-                          />
-                        </>
-                      )}
-                    </div>
-                    {form.formState.errors.image ? (
-                      <p className="mt-1 text-sm text-destructive">
-                        {form.formState.errors.image.message}
-                      </p>
-                    ) : null}
+                      error={
+                        form.formState.errors.image
+                          ? form.formState.errors.image.message
+                          : undefined
+                      }
+                    />
                   </div>
                 )}
               </div>
@@ -388,7 +310,10 @@ export function SeoForm() {
                       checked={field.value}
                       onCheckedChange={(checked) => field.onChange(checked)}
                     />
-                    <label htmlFor="allowIndexing" className="text-sm text-gray-600">
+                    <label
+                      htmlFor="allowIndexing"
+                      className="text-sm text-gray-600"
+                    >
                       Allow search engine indexing
                     </label>
                   </>

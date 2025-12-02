@@ -19,10 +19,6 @@ import { ELinkCategory } from '../../../interfaces/ELinkCategory'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 
 export class CreateLinkDto {
-	@IsOptional()
-	@IsUrl()
-	imgUrl?: string
-
 	@IsString()
 	@IsNotEmpty()
 	@MaxLength(40)

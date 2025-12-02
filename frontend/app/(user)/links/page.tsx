@@ -13,9 +13,21 @@ import { ILink } from "../../../types/Link";
 import { Pagination } from "../../../components/ui/pagination";
 import { ErrorAlert } from "../../../components/ui/error-alert";
 import { Card } from "./components/card";
+import { useDebounce } from "use-debounce";
 
 export default function LinksPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useQueryStateWithLocalStorage(
+    "/links?search",
+    {
+      defaultValue: "",
+      parse: (v) => parseAsString.parse(v),
+      sync: true,
+    }
+  );
+  const [debouncedSearch] = useDebounce(searchQuery, 700, {
+    leading: true,
+  });
+
   const [selectedBranch, setSelectedBranch] = useQueryStateWithLocalStorage(
     "/links?branch",
     {
@@ -67,14 +79,13 @@ export default function LinksPage() {
     limit: String(limit),
   });
 
+  if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
   if (selectedBranch) params.set("branch", selectedBranch);
   if (selectedCategory) params.set("category", selectedCategory);
   if (selectedSort) params.set("sort", selectedSort);
 
   const key = `/links?${params.toString()}`;
-  const { data, mutate, isLoading, error } = useSWR<[ILink[], number]>(key, {
-    revalidateIfStale: true,
-  });
+  const { data, isLoading, error } = useSWR<[ILink[], number]>(key);
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -83,12 +94,24 @@ export default function LinksPage() {
 
   const handlePageChange = (page: number) => {
     setPage(page);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    setPage(1);
-    mutate();
+    if (page !== 1) {
+      setPage(1);
+    }
+  };
+
+  const handleChangeSearch = (search: string) => {
+    setSearchQuery(search);
+    if (page !== 1) {
+      setPage(1);
+    }
   };
 
   return (
@@ -141,7 +164,7 @@ export default function LinksPage() {
             <div className="hidden lg:block">
               <SearchBar
                 value={searchQuery}
-                onChange={setSearchQuery}
+                onChange={handleChangeSearch}
                 selectedBranch={selectedBranch}
                 onBranchChange={setSelectedBranch}
                 selectedCategory={selectedCategory}
@@ -154,6 +177,12 @@ export default function LinksPage() {
               />
             </div>
           </div>
+
+          {error ? (
+            <div className="py-6 pt-0">
+              <ErrorAlert message="Failed to load data" />
+            </div>
+          ) : null}
 
           {showFavoritesOnly && (
             <div className="mb-6 px-2">
@@ -176,7 +205,7 @@ export default function LinksPage() {
             </div>
           )}
 
-          {(searchQuery ||
+          {(debouncedSearch.length >= 2 ||
             selectedBranch ||
             selectedCategory ||
             selectedSort ||
@@ -192,19 +221,19 @@ export default function LinksPage() {
               </p>
             </div>
           )}
-          {data ? (
+          {data && data[0].length !== 0 ? (
             <div className="grid-container-links">
               {data[0].map((resource) => (
                 <Card key={resource.id} data={resource} isLoading={isLoading} />
               ))}
             </div>
-          ) : (
+          ) : isLoading ? (
             <div className="w-full max-h-full h-full flex-grow flex items-center justify-center">
               <Loader2 className="animate-spin w-14 h-14" />
             </div>
-          )}
+          ) : null}
 
-          {data?.[1] === 0 && (
+          {data?.[0].length === 0 && !isLoading && (
             <div className="text-center py-8">
               <p className="text-muted-foreground text-base">
                 {showFavoritesOnly
@@ -219,11 +248,7 @@ export default function LinksPage() {
             </div>
           )}
         </div>
-        {error ? (
-          <div className="p-6 pt-0">
-            <ErrorAlert message="Failed to load data" />
-          </div>
-        ) : null}
+
         <Pagination
           handlePageChange={handlePageChange}
           handleLimitPageChange={handleLimitPageChange}

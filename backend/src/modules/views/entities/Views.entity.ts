@@ -8,7 +8,7 @@ import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
 @Index('ix_daily_views_day', ['day'])
 export class DailyView {
 	@PrimaryGeneratedColumn()
-	id: string
+	id: number
 
 	@Column({ type: 'enum', enum: EDailyViewEntityType, name: 'entity_type' })
 	entityType: EDailyViewEntityType

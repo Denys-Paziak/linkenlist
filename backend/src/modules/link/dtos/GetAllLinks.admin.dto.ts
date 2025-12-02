@@ -1,8 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { Type } from 'class-transformer'
-import { IsInt, Min } from 'class-validator'
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator'
+
+import { ELinkCategory } from '../../../interfaces/ELinkCategory'
+import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 
 export class GetAllLinksAdminDto {
+	@IsOptional()
+	@IsString()
+	search?: string
+
+	@IsOptional()
+	@IsEnum(ELinkCategory)
+	category?: ELinkCategory
+
+	@IsOptional()
+	@IsEnum(ELinkStatus)
+	status?: ELinkStatus
+
 	@Type(() => Number)
 	@IsInt()
 	@Min(1)
