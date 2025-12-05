@@ -152,7 +152,7 @@ export function FilterBar({
 
           {activeDropdown === "format" && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-              {["All Categories", ...resourceFormats].map((format) => (
+              {["All Formats", ...resourceFormats].map((format) => (
                 <button
                   key={format}
                   onClick={() => {

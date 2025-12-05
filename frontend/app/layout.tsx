@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: "LinkEnlist.com - Military Resources Directory",
   description:
     "Find direct links to your military websites faster. Your trusted directory for official military and Department of Defense resources.",
-  generator: "v0.app",
 };
 
 export default function RootLayout({
