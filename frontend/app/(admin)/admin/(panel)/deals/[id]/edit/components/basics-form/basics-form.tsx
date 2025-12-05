@@ -54,7 +54,7 @@ export function BasicsForm() {
     resolver: zodResolver(basicFormSchema),
     values: data
       ? {
-          featuredResource: data.featuredResource?.id || null,
+          featuredResourceId: data.featuredResource?.id || null,
           image: data.image?.url || "",
           title: data?.title || "",
           slug: data?.slug || "",
@@ -65,7 +65,7 @@ export function BasicsForm() {
           outboundUrlButtonLabel: data?.outboundUrlButtonLabel || "",
         }
       : {
-          featuredResource: null,
+          featuredResourceId: null,
           image: "",
           title: "",
           slug: "",
@@ -394,7 +394,7 @@ export function BasicsForm() {
                       size="sm"
                       variant="destructive"
                       onClick={() => {
-                        form.setValue("featuredResource", null);
+                        form.setValue("featuredResourceId", null);
                         setFeaturedResource(null);
                       }}
                     >
@@ -409,9 +409,9 @@ export function BasicsForm() {
                   closeBrowser={() => {
                     setShowResourcesBrowser(false);
                   }}
-                  selected={form.watch("featuredResource") || null}
+                  selected={form.watch("featuredResourceId") || null}
                   setSelected={(newValue: IResourceSimple) => {
-                    form.setValue("featuredResource", newValue.id);
+                    form.setValue("featuredResourceId", newValue.id);
                     setFeaturedResource(newValue);
                   }}
                 />

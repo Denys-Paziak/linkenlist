@@ -52,11 +52,6 @@ export function SearchBarMobile({
     { value: "official_first", label: "Official first (.mil/.gov)" },
   ];
 
-  const applyFilters = () => {
-    setActiveDropdown(null);
-    onClose();
-  };
-
   const resetFilters = () => {
     onBranchChange("");
     onCategoryChange("");
@@ -212,12 +207,6 @@ export function SearchBarMobile({
           {/* Footer Buttons */}
           <div className="p-4 border-t space-y-3">
             <div className="flex gap-3">
-              <button
-                onClick={applyFilters}
-                className="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 font-medium text-sm"
-              >
-                Apply Filters
-              </button>
               <button
                 onClick={resetFilters}
                 className="flex-1 bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 font-medium text-sm"

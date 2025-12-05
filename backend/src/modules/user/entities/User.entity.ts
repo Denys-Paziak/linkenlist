@@ -2,9 +2,9 @@ import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedCol
 
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { EUserStatus } from '../../../interfaces/EUserStatus'
-import { AuditLog } from '../../audit/entities/AuditLog.entity'
 import { Listing } from '../../listing/entities/Listing.entity'
 import { Token } from '../../token/entities/Token.entity'
+import { DailyMetric } from '../../metrics/entities/Metrics.entity'
 
 @Entity({ name: 'users' })
 export class User {
@@ -74,8 +74,8 @@ export class User {
 	@OneToMany(() => Token, token => token.user)
 	tokens: Token[]
 
-	@OneToMany(() => AuditLog, a => a.user)
-	auditLogs: AuditLog[]
+	@OneToMany(() => DailyMetric, a => a.user)
+	dailyMetric: DailyMetric[]
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

@@ -4,6 +4,8 @@ import { UserProvider } from "@/contexts/user-context";
 import ScrollToTop from "@/components/scroll-to-top";
 import { Footer } from "../../components/footer";
 import { Header } from "../../components/header";
+import { UserCheck } from "../../components/user-check";
+import { LoginModal } from "../../components/login-modal";
 
 export default function RootLayout({
   children,
@@ -12,10 +14,15 @@ export default function RootLayout({
 }) {
   return (
     <UserProvider>
-      <Header />
-      <ScrollToTop />
-      {children}
-      <Footer />
+      <UserCheck>
+        <>
+          <Header />
+          <ScrollToTop />
+          {children}
+          <Footer />
+          <LoginModal />
+        </>
+      </UserCheck>
     </UserProvider>
   );
 }

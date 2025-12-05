@@ -34,6 +34,21 @@ export interface IResourceSimple {
   status: EResourceStatus;
 }
 
+export interface IResourceListExtended {
+  id: number;
+  title: string;
+  slug: string;
+  teaser: string | null;
+  image: IResourceImage;
+  categories: EResourceCategory[];
+  tags: IResourceTag[];
+  status: EResourceStatus;
+  totalHelpful: number;
+  popularScore: number;
+  updatedAt: string;
+  isFeatured: boolean;
+}
+
 export interface IResourceTag {
   id: number;
   name: string;
@@ -73,8 +88,8 @@ export interface IResourceRelated {
 
 export interface IResourceList {
   id: number;
-  title: string | null;
-  image: IResourceImage | null;
+  title: string;
+  image: IResourceImage;
   categories: EResourceCategory[];
   status: EResourceStatus;
   updatedAt: string;
@@ -83,18 +98,17 @@ export interface IResourceList {
 export interface IResource {
   id: number;
 
-  title: string | null;
-  slug: string | null;
+  title: string;
+  slug: string;
   teaser: string | null;
 
-  image: IResourceImage | null;
+  image: IResourceImage;
 
   format: EResourceFormat;
   categories: EResourceCategory[];
   tags: IResourceTag[];
 
   // Статуси/бейджі
-  isVerified: boolean;
   isFeatured: boolean;
 
   // Content (Markdown секції)
@@ -105,10 +119,10 @@ export interface IResource {
   relatedManual: IResourceRelated[];
 
   // SEO & indexation
-  seoMetaTitle: string | null;
-  seoMetaDescription: string | null;
+  seoMetaTitle: string;
+  seoMetaDescription: string;
   ogImageMode: EOgImageMode;
-  ogImage: IResourceImage | null;
+  ogImage: IResourceImage;
   canonicalUrl: string | null;
   allowIndexing: boolean;
 
@@ -120,7 +134,15 @@ export interface IResource {
 
   commentsEnabled: boolean;
 
-  featuredDeal: IDeal;
+  featuredDeal: IDeal | null;
+
+  totalHelpful: number;
+  helpful30d: number;
+  totalViews: number;
+  views30d: number;
+  popularScore: number;
+
+  helpful: number[];
 
   createdAt: string;
   updatedAt: string;

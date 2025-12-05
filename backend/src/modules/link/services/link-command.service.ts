@@ -2,13 +2,13 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 
-import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedImage } from '../../../interfaces/IUploadedFile'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
-import { ViewsSystemService } from '../../views/services/views-system.service'
+import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
 import { CreateLinkDto } from '../dtos/CreateLink.dto'
 import { DeleteLinkDto } from '../dtos/DeleteLink.dto'
 import { UpdateLinkDto } from '../dtos/UpdateLink.dto'
@@ -24,7 +24,7 @@ export class LinkCommandService {
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly s3StorageService: S3StorageService,
-		private readonly viewsSystemService: ViewsSystemService
+		private readonly metricsSystemService: MetricsSystemService
 	) {}
 
 	private async saveImage(file: IMultipartFile, linkId: number): Promise<IUploadedImage> {
@@ -204,6 +204,6 @@ export class LinkCommandService {
 	}
 
 	async addView(linkId: number) {
-		this.viewsSystemService.incrementDailyView(EDailyViewEntityType.LINK, linkId)
+		await this.metricsSystemService.addView(EDailyMetricType.LINK_VIEW, linkId)
 	}
 }

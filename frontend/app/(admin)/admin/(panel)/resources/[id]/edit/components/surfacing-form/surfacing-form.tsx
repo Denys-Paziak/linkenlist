@@ -32,11 +32,11 @@ export function SurfacingForm() {
 
   const [statusSwitchMode, setStatusSwitchMode] =
     useState<ButtonSubitStatus>("idle");
+  const [statusFeatured, setStatusFeatured] =
+    useState<ButtonSubitStatus>("idle");
 
   const [showBrowser, setShowBrowser] = useState(false);
-  const [selected, setSelected] = useState<number[]>(
-    []
-  );
+  const [selected, setSelected] = useState<number[]>([]);
 
   useEffect(() => {
     if (data) {
@@ -47,16 +47,19 @@ export function SurfacingForm() {
   const switchMode = async () => {
     setStatusSwitchMode("loading");
     try {
-      await fetcherAdmin(`/admin/resources/${resourceId}/surfacing/related-mode`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          relatedAutoMode: !data?.relatedAutoMode,
-        }),
-      });
+      await fetcherAdmin(
+        `/admin/resources/${resourceId}/surfacing/related-mode`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            relatedAutoMode: !data?.relatedAutoMode,
+          }),
+        }
+      );
 
       setStatusSwitchMode("success");
       mutate(
@@ -74,14 +77,51 @@ export function SurfacingForm() {
     }
   };
 
+  const switchFeatured = async () => {
+    setStatusFeatured("loading");
+    try {
+      await fetcherAdmin(`/admin/resources/${resourceId}/surfacing/featured`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isFeatured: !data?.isFeatured,
+        }),
+      });
+
+      setStatusFeatured("success");
+      mutate(
+        (draft) =>
+          draft
+            ? {
+                ...draft,
+                isFeatured: !draft.isFeatured,
+              }
+            : undefined,
+        { revalidate: false }
+      );
+    } catch (err: any) {
+      setStatusFeatured("error");
+    }
+  };
+
   useEffect(() => {
     if (statusSwitchMode === "success" || statusSwitchMode === "error") {
       const timer = setTimeout(() => setStatusSwitchMode("idle"), 2000);
       return () => clearTimeout(timer);
     }
-  }, [statusSwitchMode]);
+    if (statusFeatured === "success" || statusFeatured === "error") {
+      const timer = setTimeout(() => setStatusFeatured("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusSwitchMode, statusFeatured]);
 
-  const loading = isValidating || statusSwitchMode === "loading";
+  const loading =
+    isValidating ||
+    statusSwitchMode === "loading" ||
+    statusFeatured === "loading";
   const loadError = error ? (error as any)?.message ?? "Failed to load" : null;
 
   return (
@@ -95,54 +135,69 @@ export function SurfacingForm() {
       <CardContent className="space-y-6">
         {loadError ? <ErrorAlert message={loadError} /> : null}
         <fieldset disabled={loading || !data}>
-          <div className="space-y-4">
-            <Label>Related Resources</Label>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Related Resources</Label>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="autoRelated"
+                    checked={data?.relatedAutoMode}
+                    onCheckedChange={switchMode}
+                  />
+                  <Label htmlFor="autoRelated" className="text-sm">
+                    Auto-select
+                  </Label>
+                  {renderStatusIcon(statusSwitchMode)}
+                </div>
+              </div>
+              {!data?.relatedAutoMode && (
+                <>
+                  <div className="space-y-4">
+                    {data?.relatedManual.map((item) => (
+                      <RelatedManual key={item.target.id} data={item.target} />
+                    ))}
+                  </div>
+                  <div className="space-y-4">
+                    {!showBrowser ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <Search className="h-6 w-6 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600">
+                          Search and select related resources
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="mt-2 bg-transparent"
+                          onClick={() => setShowBrowser(true)}
+                        >
+                          Browse Resources
+                        </Button>
+                      </div>
+                    ) : (
+                      <ResourcesBrowser
+                        closeBrowser={() => {
+                          setShowBrowser(false);
+                        }}
+                        selected={selected}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="autoRelated"
-                  checked={data?.relatedAutoMode}
-                  onCheckedChange={switchMode}
+                  id="isFeatured"
+                  checked={data?.isFeatured}
+                  onCheckedChange={switchFeatured}
                 />
                 <Label htmlFor="autoRelated" className="text-sm">
-                  Auto-select
+                  Featured
                 </Label>
-                {renderStatusIcon(statusSwitchMode)}
+                {renderStatusIcon(statusFeatured)}
               </div>
             </div>
-            {!data?.relatedAutoMode && (
-              <>
-                <div className="space-y-4">
-                  {data?.relatedManual.map((item) => (
-                    <RelatedManual key={item.target.id} data={item.target} />
-                  ))}
-                </div>
-                <div className="space-y-4">
-                  {!showBrowser ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <Search className="h-6 w-6 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600">
-                        Search and select related resources
-                      </p>
-                      <Button
-                        variant="outline"
-                        className="mt-2 bg-transparent"
-                        onClick={() => setShowBrowser(true)}
-                      >
-                        Browse Resources
-                      </Button>
-                    </div>
-                  ) : (
-                    <ResourcesBrowser
-                      closeBrowser={() => {
-                        setShowBrowser(false);
-                      }}
-                      selected={selected}
-                    />
-                  )}
-                </div>
-              </>
-            )}
           </div>
         </fieldset>
       </CardContent>

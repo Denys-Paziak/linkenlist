@@ -3,9 +3,12 @@
 import React, { forwardRef } from "react";
 import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
-import { useAdminContext } from "@/contexts/admin-context";
+import { useAdmin } from "@/contexts/admin-context";
 
-type AnchorProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "onClick">
+type AnchorProps = Omit<
+  React.AnchorHTMLAttributes<HTMLAnchorElement>,
+  "href" | "onClick"
+>;
 
 interface SafeLinkProps extends LinkProps, AnchorProps {
   confirmMessage?: string;
@@ -23,10 +26,7 @@ export const SafeLink = forwardRef<HTMLAnchorElement, SafeLinkProps>(
     ref
   ) => {
     const pathname = usePathname();
-    const {
-      hasUnsavedChanges,
-      setShowModalUnsavedChanges,
-    } = useAdminContext();
+    const { hasUnsavedChanges, setShowModalUnsavedChanges } = useAdmin();
 
     const isModifiedClick = (e: React.MouseEvent<HTMLAnchorElement>) =>
       e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1;
@@ -45,12 +45,18 @@ export const SafeLink = forwardRef<HTMLAnchorElement, SafeLinkProps>(
       if (isSamePath()) return;
 
       if (hasUnsavedChanges) {
-        setShowModalUnsavedChanges(true)
+        setShowModalUnsavedChanges(true);
       }
     };
 
     return (
-      <Link ref={ref} href={href} scroll={false} {...rest} onClick={handleClick}>
+      <Link
+        ref={ref}
+        href={href}
+        scroll={false}
+        {...rest}
+        onClick={handleClick}
+      >
         {children}
       </Link>
     );

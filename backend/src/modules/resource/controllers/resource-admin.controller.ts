@@ -20,6 +20,7 @@ import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { ResourceCommandService } from '../services/resource-command.service'
 import { ResourceQueryService } from '../services/resource-query.service'
 import { GetAllResourcesAdminDto } from '../dtos/GetAllResourcesAdmin.dto'
+import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -46,7 +47,7 @@ export class ResourceAdminController {
 	@Authorization(ERoleName.ADMIN)
 	@Get(':id')
 	async getOneResource(@Param() params: ParamId) {
-		return await this.resourceQueryService.getOneResource(params.id)
+		return await this.resourceQueryService.getOneResourceAdmin(params.id)
 	}
 
 	@Authorization(ERoleName.ADMIN)
@@ -129,6 +130,16 @@ export class ResourceAdminController {
 	@Patch(':id/surfacing/related-mode')
 	async switchRelatedMode(@Param() params: ParamId, @Body() dto: SwitchRelatedMode) {
 		await this.resourceCommandService.switchRelatedMode(params.id, dto)
+
+		return {
+			ok: true
+		}
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Patch(':id/surfacing/featured')
+	async switchFeatured(@Param() params: ParamId, @Body() dto: SwitchFeaturedDto) {
+		await this.resourceCommandService.switchFeatured(params.id, dto)
 
 		return {
 			ok: true

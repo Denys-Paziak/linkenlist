@@ -6,20 +6,18 @@ import { cn } from "@/lib/utils";
 import { ILink } from "../../../../types/Link";
 import { fetcherUser } from "../../../../lib/fetcher";
 
-interface ResourceCardProps {
+interface CardProps {
   data: ILink;
   isLoading: boolean;
 }
 
-export function Card({ data, isLoading }: ResourceCardProps) {
+export function Card({ data, isLoading }: CardProps) {
   const handleCardClick = async () => {
-    let url = data.url || "#";
-
     try {
       await fetcherUser(`/links/${data.id}/add-view`, { method: "PATCH" });
     } catch {}
 
-    window.open(url, "_blank", "noopener noreferrer");
+    window.open(data.url, "_blank", "noopener noreferrer");
   };
 
   return (

@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
-import { EDailyViewEntityType } from '../../../interfaces/EDailyViewEntityType'
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
 import { Link } from '../entities/Link.entity'
 
@@ -89,62 +89,61 @@ export class LinkCronService {
 
 		const sql = `
 			WITH agg AS (
-			SELECT
-				dv.entity_id AS link_id,
-				SUM(dv.count)      AS total_views,
-				SUM(
-				CASE WHEN dv.day >= CURRENT_DATE - INTERVAL '30 days'
-					THEN dv.count ELSE 0 END
-				) AS views_30d
-			FROM daily_views dv
-			WHERE dv.entity_type = $1
-			GROUP BY dv.entity_id
+				SELECT
+					dv.entity_id AS link_id,
+					COUNT(*) AS total_views,
+					COUNT(*) FILTER (
+						WHERE dv.day >= CURRENT_DATE - INTERVAL '30 days'
+					) AS views_30d
+				FROM daily_metrics dv
+				WHERE dv.metric_type = $1
+				GROUP BY dv.entity_id
 			),
 			pub AS (
-			SELECT id, verified_at
-			FROM links
-			WHERE status = $2
+				SELECT id, verified_at
+				FROM links
+				WHERE status = $2
 			),
 			joined AS (
-			SELECT
-				p.id,
-				COALESCE(a.total_views, 0) AS total_views,
-				COALESCE(a.views_30d, 0)   AS views_30d,
-				p.verified_at
-			FROM pub p
-			LEFT JOIN agg a ON a.link_id = p.id
+				SELECT
+					p.id,
+					COALESCE(a.total_views, 0) AS total_views,
+					COALESCE(a.views_30d, 0)   AS views_30d,
+					p.verified_at
+				FROM pub p
+				LEFT JOIN agg a ON a.link_id = p.id
 			),
 			mx AS (
-			SELECT GREATEST(MAX(views_30d), 1) AS max_30d
-			FROM joined
+				SELECT GREATEST(MAX(views_30d), 1) AS max_30d
+				FROM joined
 			),
 			scored AS (
-			SELECT
-				j.id,
-				j.total_views,
-				j.views_30d,
-				GREATEST(
-				0.0,
-				LEAST(
-					1.0,
-					1.0 - (COALESCE((CURRENT_DATE - j.verified_at::date), 9999)) / 30.0
-				)
-				) AS freshness,                          -- [0..1]
-				(j.views_30d / mx.max_30d)::numeric AS popularity -- [0..1]
-			FROM joined j
-			CROSS JOIN mx
+				SELECT
+					j.id,
+					j.total_views,
+					j.views_30d,
+					GREATEST(
+						0.0,
+						LEAST(
+							1.0,
+							1.0 - (COALESCE((CURRENT_DATE - j.verified_at::date), 9999)) / 30.0
+						)
+					) AS freshness,                          -- [0..1]
+					(j.views_30d::numeric / mx.max_30d) AS popularity -- [0..1]
+				FROM joined j
+				CROSS JOIN mx
 			)
 			UPDATE links AS l
 			SET
-			total_views   = s.total_views,
-			views_30d     = s.views_30d,
-			popular_score = ROUND( (s.freshness * 0.6 + s.popularity * 0.4) * 100 )::int,
-			updated_at    = NOW()
+				total_views   = s.total_views,
+				views_30d     = s.views_30d,
+				popular_score = ROUND( (s.freshness * 0.6 + s.popularity * 0.4) * 100 )::int,
+				updated_at    = NOW()
 			FROM scored s
 			WHERE s.id = l.id
 		`
 
-		await this.linkRepository.query(sql, [EDailyViewEntityType.LINK, ELinkStatus.PUBLISHED])
+		await this.linkRepository.query(sql, [EDailyMetricType.LINK_VIEW, ELinkStatus.PUBLISHED])
 
 		this.logger.log('✅ Bulk stats updated.')
 	}

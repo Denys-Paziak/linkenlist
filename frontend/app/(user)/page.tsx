@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { FloatingCommentCards } from "@/components/floating-comment-cards"
 import { PropertyCard } from "@/components/property-card"
-import { DealCard } from "@/components/deal-card"
-import { EnhancedResourceCard } from "@/components/enhanced-resource-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -31,6 +29,8 @@ import {
   BookOpen,
   LinkIcon,
 } from "lucide-react"
+import { Card as DealCard } from "./deals/components/card"
+import { EnhancedResourceCard } from "../../components/enhanced-resource-card"
 
 interface LocationData {
   city: string
@@ -740,7 +740,7 @@ export default function HomePage() {
               >
                 {mockDeals.slice(0, 6).map((deal) => (
                   <div key={deal.id} className="flex-shrink-0 w-64 md:w-72 snap-start">
-                    <DealCard deal={deal} onClick={() => router.push(`/deals/${deal.id}`)} />
+                    <DealCard data={deal as any} isLoading={false} />
                   </div>
                 ))}
               </div>

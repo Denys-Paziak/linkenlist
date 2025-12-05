@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -27,7 +26,7 @@ export default function SignInPage() {
       console.log("Registration attempt:", formData);
     } else {
       // Handle login
-      console.log("Login attempt:", formData, "Remember:", rememberMe);
+      console.log("Login attempt:", formData);
     }
     // Redirect to home page after successful login/registration
     window.location.href = "/";
@@ -197,25 +196,6 @@ export default function SignInPage() {
                     )}
                   </button>
                 </div>
-              </div>
-            )}
-
-            {/* Remember Me - only for sign in */}
-            {!isRegistering && (
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="remember"
-                  className="ml-2 text-sm text-foreground"
-                >
-                  Remember me
-                </label>
               </div>
             )}
 

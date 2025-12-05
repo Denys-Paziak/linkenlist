@@ -18,12 +18,12 @@ import { EDealCategory } from '../../../interfaces/EDealCategory'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EDealType } from '../../../interfaces/EDealType'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
+import { Resource } from '../../resource/entities/Resource.entity'
 
 import { DealImage } from './DealImage.entity'
 import { DealRelated } from './DealRelated.entity'
 import { DealSection } from './DealSection.entity'
 import { DealTag } from './DealTag.entity'
-import { Resource } from '../../resource/entities/Resource.entity'
 
 @Entity('deals')
 @Unique(['slug'])
@@ -52,6 +52,9 @@ export class Deal {
 	@ManyToMany(() => DealTag, { cascade: ['insert'] })
 	@JoinTable({ name: 'deal_tags_join' })
 	tags: DealTag[]
+
+	@Column({ type: 'text', name: 'tags_text', default: '' })
+	tagsText: string
 
 	@Column({ type: 'text', name: 'outbound_url', nullable: true })
 	outboundUrl?: string | null
@@ -164,10 +167,28 @@ export class Deal {
 	@JoinColumn({ name: 'featured_resource_id' })
 	featuredResource?: Resource | null
 
+	@Column({ type: 'int', default: 0, name: 'total_helpful' })
+	totalHelpful: number
+
+	@Column({ type: 'int', default: 0, name: 'helpful_30d' })
+	helpful30d: number
+
+	@Column({ type: 'int', default: 0, name: 'total_views' })
+	totalViews: number
+
+	@Column({ type: 'int', default: 0, name: 'views_30d' })
+	views30d: number
+
+	@Column({ type: 'int', default: 1, name: 'popular_score' })
+	popularScore: number
+
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()
 	createdAt: Date
 
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
+
+	@Column({ type: 'tsvector', select: false, nullable: true })
+	search_document: any
 }

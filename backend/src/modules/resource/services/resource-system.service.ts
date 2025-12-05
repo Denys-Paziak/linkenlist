@@ -32,11 +32,17 @@ export class ResourceSystemService {
 
 	async updateResourceStatus(id: number, status: EResourceStatus) {
 		let lastPublishedAt: Date | undefined
+		let publishAt: Date | undefined | null
+		let expireAt: Date | undefined | null
 		if (status === EResourceStatus.PUBLISHED) {
 			lastPublishedAt = new Date()
+			publishAt = null
+		}
+		if (status === EResourceStatus.EXPIRED) {
+			expireAt = null
 		}
 
-		await this.resourceRepository.update(id, { status, lastPublishedAt })
+		await this.resourceRepository.update(id, { status, lastPublishedAt, publishAt, expireAt })
 	}
 
 	async isImageStatus(id: number, status: EFileStatus) {

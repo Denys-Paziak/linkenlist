@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { ImageQueueModule } from '../image-queue/image-queue.module'
+import { MetricsModule } from '../metrics/metrics.module'
 import { S3StorageModule } from '../s3-storage/s3-storage.module'
-import { ViewsModule } from '../views/views.module'
 
 import { LinkAdminController } from './controllers/link-admin.controller'
 import { LinkController } from './controllers/link.controller'
@@ -16,7 +16,7 @@ import { LinkQueryService } from './services/link-query.service'
 import { LinkSystemService } from './services/link-system.service'
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Link, LinkImage, LinkTag]), S3StorageModule, ImageQueueModule, ViewsModule],
+	imports: [TypeOrmModule.forFeature([Link, LinkImage, LinkTag]), S3StorageModule, ImageQueueModule, MetricsModule],
 	controllers: [LinkController, LinkAdminController],
 	providers: [LinkCommandService, LinkQueryService, LinkCronService, LinkSystemService],
 	exports: [LinkSystemService]

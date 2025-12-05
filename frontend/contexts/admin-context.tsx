@@ -44,10 +44,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAdminContext() {
+export function useAdmin() {
   const context = useContext(AdminContext);
   if (context === undefined) {
-    throw new Error("useAdminContext must be used within an AdminProvider");
+    throw new Error("useAdmin must be used within an AdminProvider");
   }
   return context;
 }

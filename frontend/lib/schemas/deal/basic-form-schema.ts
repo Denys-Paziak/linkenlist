@@ -13,7 +13,7 @@ export const dealCategories = [
 
 export const basicFormSchema = z.object({
   image: z.string().min(1, "Image is required"),
-  featuredResource: z.number().optional().or(z.literal(null)),
+  featuredResourceId: z.number().optional().or(z.literal(null)),
 
   title: z
     .string()

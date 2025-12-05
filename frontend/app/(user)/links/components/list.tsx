@@ -160,7 +160,6 @@ export function List() {
                 onCategoryChange={setSelectedCategory}
                 selectedSort={selectedSort}
                 onSortChange={setSelectedSort}
-                placeholder="Search 400+ official DoD websites"
                 showFavoritesOnly={showFavoritesOnly}
                 onFavoritesToggle={setShowFavoritesOnly}
               />
@@ -197,7 +196,6 @@ export function List() {
           {(debouncedSearch.length >= 2 ||
             selectedBranch ||
             selectedCategory ||
-            selectedSort ||
             showFavoritesOnly) && (
             <div className="mb-4 px-2">
               <p className="text-sm text-muted-foreground">
@@ -212,8 +210,8 @@ export function List() {
           )}
           {data && data[0].length !== 0 ? (
             <div className="grid-container-links">
-              {data[0].map((resource) => (
-                <Card key={resource.id} data={resource} isLoading={isLoading} />
+              {data[0].map((link) => (
+                <Card key={link.id} data={link} isLoading={isLoading} />
               ))}
             </div>
           ) : isLoading ? (
@@ -226,12 +224,12 @@ export function List() {
             <div className="text-center py-8">
               <p className="text-muted-foreground text-base">
                 {showFavoritesOnly
-                  ? "No favorite resources found"
-                  : "No resources found"}
+                  ? "No favorite links found"
+                  : "No links found"}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
                 {showFavoritesOnly
-                  ? "Start adding resources to your favorites by clicking the star icon on any card."
+                  ? "Start adding links to your favorites by clicking the star icon on any card."
                   : "Try adjusting your search terms or filters."}
               </p>
             </div>
@@ -250,8 +248,6 @@ export function List() {
           className="pt-6 px-8"
         />
       </main>
-
-      <ScrollButtons />
 
       <ProposalLinkModal
         isOpen={isProposalModalOpen}

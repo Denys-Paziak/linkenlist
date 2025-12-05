@@ -11,7 +11,6 @@ interface FooterProps {
 
 export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }: FooterProps) {
   const [isFooterVisible, setIsFooterVisible] = useState(false)
-  const { user } = useUser()
   const footerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -44,7 +43,7 @@ export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }
     </>
   )
 
-  const shouldShowDisclaimer = !hideDisclaimer && (user.isLoggedIn ? user.showDisclaimer : true)
+  const shouldShowDisclaimer = true
 
   return (
     <>

@@ -63,5 +63,5 @@ export class SaveBasicInformationDto {
 	@IsOptional()
 	@IsInt()
 	@Min(1)
-	featuredDealId: number
+	featuredDealId: number | null
 }

@@ -48,7 +48,7 @@ export class DealAdminController {
 	@Authorization(ERoleName.ADMIN)
 	@Get(':id')
 	async getOneDeal(@Param() params: ParamId) {
-		return await this.dealQueryService.getOneDeal(params.id)
+		return await this.dealQueryService.getOneDealAdmin(params.id)
 	}
 
 	@Authorization(ERoleName.ADMIN)

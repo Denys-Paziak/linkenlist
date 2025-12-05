@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
@@ -6,12 +7,12 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
+import { getCacheConfig } from '../configs/cache.config'
 import { getJWTConfig } from '../configs/jwt.config'
 import { getPostgresConfig } from '../configs/postgres.config'
 import { getThrottlerConfig } from '../configs/throttler.config'
 
 import { AppController } from './app.controller'
-import { AuditModule } from './audit/audit.module'
 import { AuthModule } from './auth/auth.module'
 import { DealModule } from './deal/deal.module'
 import { FavoriteModule } from './favorite/favorite.module'
@@ -25,7 +26,7 @@ import { ScheduleQueueModule } from './schedule-queue/schedule-queue.module'
 import { ScheduleWorkerModule } from './schedule-queue/schedule-worker.module'
 import { TokenModule } from './token/token.module'
 import { UserModule } from './user/user.module'
-import { ViewsModule } from './views/views.module'
+import { MetricsModule } from './metrics/metrics.module'
 
 @Module({
 	imports: [
@@ -36,11 +37,11 @@ import { ViewsModule } from './views/views.module'
 		TypeOrmModule.forRootAsync(getPostgresConfig()),
 		JwtModule.registerAsync(getJWTConfig()),
 		ThrottlerModule.forRootAsync(getThrottlerConfig()),
+		CacheModule.registerAsync(getCacheConfig()),
 		UserModule,
 		AuthModule,
 		TokenModule,
 		MailModule,
-		AuditModule,
 		ListingModule,
 		FavoriteModule,
 		ResourceModule,
@@ -48,7 +49,7 @@ import { ViewsModule } from './views/views.module'
 		LinkModule,
 		S3StorageModule,
 		ImageQueueModule,
-		ViewsModule,
+		MetricsModule,
 		ScheduleQueueModule,
 		ScheduleWorkerModule
 	],

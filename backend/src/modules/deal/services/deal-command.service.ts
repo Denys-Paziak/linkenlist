@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
 import { DataSource, EntityManager, Not, Repository } from 'typeorm'
 
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
@@ -11,6 +12,7 @@ import { IUploadedFile, IUploadedImage } from '../../../interfaces/IUploadedFile
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
 import { ChangePosContentSectionsDto } from '../dtos/ChangePosContentSections.dto'
@@ -44,7 +46,8 @@ export class DealCommandService {
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
-		private readonly s3StorageService: S3StorageService
+		private readonly s3StorageService: S3StorageService,
+		private readonly metricsSystemService: MetricsSystemService
 	) {}
 
 	private async saveImage(file: IMultipartFile, dealId: number): Promise<IUploadedImage> {
@@ -56,10 +59,18 @@ export class DealCommandService {
 	}
 
 	private async saveFile(file: IMultipartFile, dealId: number, sectionId: number): Promise<IUploadedFile> {
-		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
-			filename: file.filename,
-			path: 'deals/attachments/' + dealId + '/' + sectionId
-		})
+		const { url, key } = await this.s3StorageService.uploadPublic(
+			file.buffer,
+			file.mimetype,
+			false,
+			{
+				filename: file.filename,
+				path: 'deals/attachments/' + dealId + '/' + sectionId
+			},
+			{
+				download: true
+			}
+		)
 
 		return { key, url, name: file.filename, ext: extname(file.filename).substring(1), size: file.size }
 	}
@@ -199,12 +210,13 @@ export class DealCommandService {
 				seoMetaTitle: seoMetaTitle(),
 				slug: slug,
 				tags: tagsToSet,
+				tagsText: dto.tags?.join(" "),
 				teaser: dto.teaser === '' ? null : dto.teaser,
 				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				outboundUrl: dto.outboundUrl,
 				outboundUrlButtonLabel: dto.outboundUrlButtonLabel === '' ? 'Go to Deal' : dto.outboundUrlButtonLabel,
-				featuredResource: { id: dto.featuredResourceId },
+				featuredResource: dto.featuredResourceId ? { id: dto.featuredResourceId } : null,
 				image:
 					newImage !== undefined
 						? {
@@ -691,5 +703,15 @@ export class DealCommandService {
 				} catch {}
 			}
 		}
+	}
+
+	async addView(dealId: number) {
+		await this.metricsSystemService.addView(EDailyMetricType.DEAL_VIEW, dealId)
+	}
+
+	async addHelpful(dealId: number, userId: number) {
+		await this.metricsSystemService.addHelpful(EDailyMetricType.DEAL_HELPFUL, dealId, userId)
+
+		await this.dealRepository.increment({id: dealId}, "totalHelpful", 1)
 	}
 }

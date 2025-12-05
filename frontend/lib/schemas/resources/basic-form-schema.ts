@@ -15,7 +15,7 @@ export const resourceFormats = ["guide", "checklist", "tool", "pdf"];
 
 export const basicFormSchema = z.object({
   image: z.string().min(1, "Image is required"),
-  featuredDeal: z.number().optional().or(z.literal(null)),
+  featuredDealId: z.number().optional().or(z.literal(null)),
 
   title: z
     .string()

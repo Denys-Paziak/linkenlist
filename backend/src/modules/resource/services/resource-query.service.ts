@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ILike, IsNull, Repository } from 'typeorm'
 
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
+import { EDealStatus } from '../../../interfaces/EDealStatus'
+import { EResourceStatus } from '../../../interfaces/EResourceStatus'
+import { GetAllResourcesDto } from '../dtos/GetAllResources.dto'
 import { GetAllResourcesAdminDto } from '../dtos/GetAllResourcesAdmin.dto'
 import { GetSimplifiedResourceDto } from '../dtos/GetSimplifiedResource.dto'
 import { Resource } from '../entities/Resource.entity'
@@ -13,7 +18,9 @@ export class ResourceQueryService {
 		@InjectRepository(Resource)
 		private readonly resourceRepository: Repository<Resource>,
 		@InjectRepository(ResourceTag)
-		private readonly resourceTagRepository: Repository<ResourceTag>
+		private readonly resourceTagRepository: Repository<ResourceTag>,
+		@Inject(CACHE_MANAGER)
+		private readonly cacheManager: Cache
 	) {}
 
 	async getAllResourcesAdmin(query: GetAllResourcesAdminDto) {
@@ -37,6 +44,125 @@ export class ResourceQueryService {
 			order: { createdAt: 'DESC' },
 			relations: ['image']
 		})
+	}
+
+	async getAllResources(query: GetAllResourcesDto) {
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(16, Number(query.limit ?? 16))
+		const offset = (page - 1) * limit
+
+		const cacheKey =
+			'resources:list|' +
+			`page:${page}|` +
+			`limit:${limit}|` +
+			`cat:${query.category ?? 'all'}` +
+			`format:${query.format ?? 'all'}`
+
+		if (!query.search) {
+			const cached = await this.cacheManager.get<[Resource[], number]>(cacheKey)
+			if (cached) return cached
+		}
+
+		const qb = this.resourceRepository
+			.createQueryBuilder('l')
+			.leftJoinAndSelect('l.image', 'img')
+			.leftJoinAndSelect('l.tags', 't')
+			.where('l.status = :status', { status: EResourceStatus.PUBLISHED })
+
+		// CATEGORY
+		if (query.category) {
+			qb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		// FORMAT
+		if (query.format) {
+			qb.andWhere('l.format = :format', { format: query.format })
+		}
+
+		// SELECT LIST
+		qb.select([
+			'l.id',
+			'l.title',
+			'l.slug',
+			'l.teaser',
+			'l.categories',
+			'l.format',
+			'l.status',
+			'l.popularScore',
+			'l.totalHelpful',
+			'l.isFeatured',
+			'img',
+			't.id',
+			't.name'
+		])
+
+		// 🔍 SEARCH (FTS + trigram)
+		if (query.search && query.search.trim() !== '') {
+			qb.andWhere(
+				`(
+						l.search_document @@ plainto_tsquery('simple', :q)
+						OR similarity(l.title, :q) > 0.15
+						OR similarity(l.tags_text, :q) > 0.15
+					)`,
+				{ q: query.search }
+			)
+
+			qb.addSelect(
+				`
+						GREATEST(
+							ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+							similarity(l.title, :q),
+							similarity(l.tags_text, :q)
+						)
+					`,
+				'relevance'
+			)
+
+			qb.orderBy('relevance', 'DESC')
+		}
+
+		// СОРТУВАННЯ (лише якщо не search)
+		if (!query.search) {
+			qb.orderBy('l.popularScore', 'DESC')
+		}
+
+		qb.skip(offset).take(limit)
+
+		// COUNT BUILDER
+		const countQb = this.resourceRepository
+			.createQueryBuilder('l')
+			.leftJoin('l.tags', 't')
+			.where('l.status = :status', { status: EResourceStatus.PUBLISHED })
+
+		if (query.category) {
+			countQb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		if (query.format) {
+			qb.andWhere('l.format = :format', { format: query.format })
+		}
+
+		if (query.search && query.search.trim() !== '') {
+			countQb.andWhere(
+				`(
+						l.search_document @@ plainto_tsquery('simple', :q)
+						OR similarity(l.title, :q) > 0.15
+						OR similarity(l.tags_text, :q) > 0.15
+					)`,
+				{ q: query.search }
+			)
+		}
+
+		const cnt = await countQb.select('COUNT(DISTINCT l.id)', 'cnt').getRawOne<{ cnt: string }>()
+
+		const items = await qb.getMany()
+		const result: [Resource[], number] = [items, Number(cnt?.cnt || 0)]
+
+		if (!query.search) {
+			await this.cacheManager.set(cacheKey, result, 60000)
+		}
+
+		return result
 	}
 
 	async getSimplifiedResources(query: GetSimplifiedResourceDto) {
@@ -77,7 +203,7 @@ export class ResourceQueryService {
 			.getRawMany<{ id: number; name: string; count: string }>()
 	}
 
-	async getOneResource(resourceId: number) {
+	async getOneResourceAdmin(resourceId: number) {
 		const resource = await this.resourceRepository
 			.createQueryBuilder('resource')
 			.leftJoinAndSelect('resource.image', 'image')
@@ -101,5 +227,59 @@ export class ResourceQueryService {
 		}
 
 		return resource
+	}
+
+	async getOneResource(resourceSlug: string) {
+		const qb = this.resourceRepository
+			.createQueryBuilder('resource')
+			.leftJoinAndSelect('resource.image', 'image')
+			.leftJoinAndSelect('resource.ogImage', 'ogImage')
+
+			.leftJoinAndSelect('resource.featuredDeal', 'featuredDeal', 'featuredDeal.status = :publishedDeal', {
+				publishedDeal: EDealStatus.PUBLISHED
+			})
+
+			.leftJoinAndSelect('resource.tags', 'tag')
+			.leftJoinAndSelect('resource.sections', 'section')
+			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
+
+			.leftJoinAndSelect('resource.relatedManual', 'related')
+
+			.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedResource', {
+				publishedResource: EResourceStatus.PUBLISHED
+			})
+
+			.where('resource.slug = :slug', { slug: resourceSlug })
+			.orderBy('section.position', 'ASC')
+
+		qb.addSelect(subQ => {
+			return subQ
+				.select('ARRAY_AGG(dm.user_id)', 'helpful')
+				.from('daily_metrics', 'dm')
+				.where('dm.entity_id = resource.id')
+				.andWhere('dm.metric_type = :helpfulType')
+				.andWhere('dm.user_id IS NOT NULL')
+		}, 'resource_helpful').setParameter('helpfulType', EDailyMetricType.RESOURCE_HELPFUL)
+
+		const raw = await qb.getRawAndEntities()
+
+		const resource = raw.entities[0]
+
+		if (!resource) {
+			throw new NotFoundException('Resource not found.')
+		}
+
+		const helpfulArray = raw.raw[0]?.resource_helpful ?? []
+
+		const helpful = (helpfulArray || []).filter((id: any) => id !== null)
+
+		if (resource.relatedManual?.length) {
+			resource.relatedManual = resource.relatedManual.filter(r => r.target)
+		}
+
+		return {
+			...resource,
+			helpful
+		}
 	}
 }

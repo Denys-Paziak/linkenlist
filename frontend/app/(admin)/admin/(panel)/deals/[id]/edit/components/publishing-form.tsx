@@ -29,7 +29,11 @@ import {
   dealStatuses,
   publishingFormSchema,
 } from "../../../../../../../../lib/schemas/deal/publishing-form-schema";
-import { cn, isoToDatetimeLocal, pickDirty } from "../../../../../../../../lib/utils";
+import {
+  cn,
+  isoToDatetimeLocal,
+  pickDirty,
+} from "../../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
 import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
 
@@ -71,9 +75,20 @@ export function PublishingForm() {
     }
 
     setStatus("loading");
+
     try {
       const values = form.getValues();
       const dirty = pickDirty(values, form.formState.dirtyFields);
+
+      const schedule = (key: "schedulePublish" | "scheduleExpire") => {
+        if (dirty[key]) {
+          return new Date(dirty[key] as string).toISOString();
+        }
+        if (dirty[key] === "") {
+          return null;
+        }
+        return undefined;
+      };
 
       await fetcherAdmin(`/admin/deals/${dealId}/change-status`, {
         method: "PATCH",
@@ -84,8 +99,8 @@ export function PublishingForm() {
         body: JSON.stringify({
           ...dirty,
           status: values.status,
-          schedulePublish: dirty.schedulePublish ? new Date(dirty.schedulePublish as string).toISOString() : undefined,
-          scheduleExpire: dirty.scheduleExpire ? new Date(dirty.scheduleExpire as string).toISOString() : undefined,
+          schedulePublish: schedule("schedulePublish"),
+          scheduleExpire: schedule("scheduleExpire"),
         }),
       });
 

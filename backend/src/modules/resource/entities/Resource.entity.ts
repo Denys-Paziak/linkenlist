@@ -55,9 +55,8 @@ export class Resource {
 	@JoinTable({ name: 'resource_tags_join' })
 	tags: ResourceTag[]
 
-	// Статуси/бейджі
-	@Column({ type: 'boolean', default: false, name: 'is_verified' })
-	isVerified: boolean
+	@Column({ type: 'text', name: 'tags_text', default: '' })
+  	tagsText: string
 
 	@Column({ type: 'boolean', default: false, name: 'is_featured' })
 	isFeatured: boolean
@@ -115,10 +114,28 @@ export class Resource {
 	@JoinColumn({ name: 'featured_deal_id' })
 	featuredDeal?: Deal | null
 
+	@Column({ type: 'int', default: 0, name: 'total_helpful' })
+	totalHelpful: number
+
+	@Column({ type: 'int', default: 0, name: 'helpful_30d' })
+	helpful30d: number
+
+	@Column({ type: 'int', default: 0, name: 'total_views' })
+	totalViews: number
+
+	@Column({ type: 'int', default: 0, name: 'views_30d' })
+	views30d: number
+
+	@Column({ type: 'int', default: 1, name: 'popular_score' })
+	popularScore: number
+
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()
 	createdAt: Date
 
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
+
+	@Column({ type: 'tsvector', select: false, nullable: true })
+  	search_document: any
 }

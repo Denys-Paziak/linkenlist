@@ -148,8 +148,6 @@ export class ImageProcessor extends WorkerHost {
 		this.logger.log(`Completed job ${job.id}: linkImageId=${entityFileId} -> ${uploaded.url}`)
 	}
 
-	
-
 	/** HERO для Deal */
 	private async dealHero(job: Job<ImageJobData>) {
 		const { entityId, entityFileId, srcKey } = job.data
@@ -399,7 +397,9 @@ export class ImageProcessor extends WorkerHost {
 		let uploaded: { key: string; url: string } | null = null
 		if (output) {
 			try {
-				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey)
+				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey, {
+					download: true
+				})
 			} catch (e) {
 				throw e
 			}
@@ -430,8 +430,6 @@ export class ImageProcessor extends WorkerHost {
 
 		this.logger.log(`Completed attachment job ${job.id}: attachmentId=${entityFileId} -> ${uploaded?.url}`)
 	}
-
-
 
 	/** HERO для Resource */
 	private async resourceHero(job: Job<ImageJobData>) {
@@ -684,7 +682,9 @@ export class ImageProcessor extends WorkerHost {
 		let uploaded: { key: string; url: string } | null = null
 		if (output) {
 			try {
-				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey)
+				uploaded = await this.s3.uploadPublic(output.out, output.contentType, true, dstKey, {
+					download: true
+				})
 			} catch (e) {
 				throw e
 			}

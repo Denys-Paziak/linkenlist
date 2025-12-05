@@ -54,19 +54,29 @@ export class S3StorageService {
 			| {
 					filename: string
 					path: string
-			  }
+			  },
+		options?: {
+			download?: boolean
+		}
 	) {
 		const Key = typeof key === 'string' ? key : this.buildKey(key.path, key.filename)
 
 		try {
 			await this.s3.send(
-				new PutObjectCommand({
-					Bucket: this.bucket,
-					Key,
-					Body: buffer,
-					ContentType: contentType,
-					CacheControl: cacheForever ? 'public, max-age=31536000, immutable' : 'public, max-age=600'
-				})
+				new PutObjectCommand(
+					Object.assign(
+						{
+							Bucket: this.bucket,
+							Key,
+							Body: buffer,
+							ContentType: contentType,
+							CacheControl: cacheForever ? 'public, max-age=31536000, immutable' : 'public, max-age=600'
+						},
+						options?.download && {
+							ContentDisposition: 'attachment'
+						}
+					)
+				)
 			)
 		} catch (err) {
 			throw new InternalServerErrorException('Failed to upload to S3')

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, FileText, ImageIcon, Upload } from "lucide-react";
+import { CheckCircle, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "../../../../../../../../../components/ui/button";
 import {
@@ -57,13 +57,12 @@ export function BasicsForm() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [showResourcesBrowser, setShowResourcesBrowser] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
 
   const form = useForm<BasicFormSchemaType>({
     resolver: zodResolver(basicFormSchema),
     values: data
       ? {
-          featuredDeal: data.featuredDeal?.id || null,
+          featuredDealId: data.featuredDeal?.id || null,
           image: data.image?.url || "",
           title: data?.title || "",
           slug: data?.slug || "",
@@ -73,7 +72,7 @@ export function BasicsForm() {
           format: data?.format || "",
         }
       : {
-          featuredDeal: null,
+          featuredDealId: null,
           image: "",
           title: "",
           slug: "",
@@ -132,14 +131,14 @@ export function BasicsForm() {
     try {
       const values = form.getValues();
       const dirty = pickDirty(values, form.formState.dirtyFields);
-
+      console.log(dirty);
       const formData = new FormData();
 
       formData.append(
         "payload",
         JSON.stringify({
           ...dirty,
-          slug: dirty.slug === "" ? null : dirty.slug,
+          slug: dirty.slug === "" ? null : dirty.slug
         })
       );
       if (!!imageFile) {
@@ -363,10 +362,10 @@ export function BasicsForm() {
               <TagsField form={form as any} url="/admin/resources/tags" />
             </div>
 
-            {/* Featured Resource */}
+            {/* Featured Deal */}
             <div className="space-y-2">
               <p className="block text-sm font-medium text-foreground">
-                Featured Resource
+                Featured Deal
               </p>
               {featuredDeal ? (
                 <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
@@ -391,7 +390,10 @@ export function BasicsForm() {
                       size="sm"
                       variant="destructive"
                       onClick={() => {
-                        form.setValue("featuredDeal", null);
+                        form.setValue("featuredDealId", null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                         setFeaturedDeal(null);
                       }}
                     >
@@ -406,9 +408,9 @@ export function BasicsForm() {
                   closeBrowser={() => {
                     setShowResourcesBrowser(false);
                   }}
-                  selected={form.watch("featuredDeal") || null}
+                  selected={form.watch("featuredDealId") || null}
                   setSelected={(newValue: IDealSimple) => {
-                    form.setValue("featuredDeal", newValue.id);
+                    form.setValue("featuredDealId", newValue.id);
                     setFeaturedDeal(newValue);
                   }}
                 />

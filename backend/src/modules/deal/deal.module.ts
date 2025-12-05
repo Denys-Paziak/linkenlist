@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { ImageQueueModule } from '../image-queue/image-queue.module'
+import { MetricsModule } from '../metrics/metrics.module'
 import { S3StorageModule } from '../s3-storage/s3-storage.module'
 import { ScheduleQueueModule } from '../schedule-queue/schedule-queue.module'
 
 import { DealAdminController } from './controllers/deal-admin.controller'
+import { DealController } from './controllers/deal.controller'
 import { Deal } from './entities/Deal.entity'
 import { DealImage } from './entities/DealImage.entity'
 import { DealRelated } from './entities/DealRelated.entity'
@@ -13,6 +15,7 @@ import { DealSection } from './entities/DealSection.entity'
 import { DealSectionAttachment } from './entities/DealSectionAttachment.entity'
 import { DealTag } from './entities/DealTag.entity'
 import { DealCommandService } from './services/deal-command.service'
+import { DealCronService } from './services/deal-cron.service'
 import { DealQueryService } from './services/deal-query.service'
 import { DealSystemService } from './services/deal-system.service'
 
@@ -21,10 +24,11 @@ import { DealSystemService } from './services/deal-system.service'
 		TypeOrmModule.forFeature([Deal, DealRelated, DealSection, DealSectionAttachment, DealTag, DealImage]),
 		S3StorageModule,
 		ImageQueueModule,
-		ScheduleQueueModule
+		ScheduleQueueModule,
+		MetricsModule
 	],
-	controllers: [DealAdminController],
-	providers: [DealCommandService, DealSystemService, DealQueryService],
+	controllers: [DealAdminController, DealController],
+	providers: [DealCommandService, DealSystemService, DealQueryService, DealCronService],
 	exports: [DealSystemService]
 })
 export class DealModule {}

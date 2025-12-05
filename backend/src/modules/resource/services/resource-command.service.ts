@@ -27,6 +27,9 @@ import { ResourceRelated } from '../entities/ResourceRelated.entity'
 import { ResourceSection } from '../entities/ResourceSection.entity'
 import { ResourceSectionAttachment } from '../entities/ResourceSectionAttachment.entity'
 import { ResourceTag } from '../entities/ResourceTag.entity'
+import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
+import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
 
 @Injectable()
 export class ResourceCommandService {
@@ -42,7 +45,8 @@ export class ResourceCommandService {
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
-		private readonly s3StorageService: S3StorageService
+		private readonly s3StorageService: S3StorageService,
+		private readonly metricsSystemService: MetricsSystemService
 	) {}
 
 	private async saveImage(file: IMultipartFile, resourceId: number): Promise<IUploadedImage> {
@@ -54,10 +58,18 @@ export class ResourceCommandService {
 	}
 
 	private async saveFile(file: IMultipartFile, resourceId: number, sectionId: number): Promise<IUploadedFile> {
-		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
-			filename: file.filename,
-			path: 'resource/attachments/' + resourceId + '/' + sectionId
-		})
+		const { url, key } = await this.s3StorageService.uploadPublic(
+			file.buffer,
+			file.mimetype,
+			false,
+			{
+				filename: file.filename,
+				path: 'resource/attachments/' + resourceId + '/' + sectionId
+			},
+			{
+				download: true
+			}
+		)
 
 		return { key, url, name: file.filename, ext: extname(file.filename).substring(1), size: file.size }
 	}
@@ -199,11 +211,12 @@ export class ResourceCommandService {
 				seoMetaTitle: seoMetaTitle(),
 				slug: slug,
 				tags: tagsToSet,
+				tagsText: dto.tags?.join(' '),
 				teaser: dto.teaser === '' ? null : dto.teaser,
 				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				format: dto.format,
-				featuredDeal: { id: dto.featuredDealId },
+				featuredDeal: dto.featuredDealId ? { id: dto.featuredDealId } : null,
 				image:
 					newImage !== undefined
 						? {
@@ -371,6 +384,12 @@ export class ResourceCommandService {
 	async switchRelatedMode(resourceId: number, dto: SwitchRelatedMode) {
 		await this.resourceRepository.update(resourceId, {
 			relatedAutoMode: dto.relatedAutoMode
+		})
+	}
+
+	async switchFeatured(resourceId: number, dto: SwitchFeaturedDto) {
+		await this.resourceRepository.update(resourceId, {
+			isFeatured: dto.isFeatured
 		})
 	}
 
@@ -639,5 +658,15 @@ export class ResourceCommandService {
 				} catch {}
 			}
 		}
+	}
+
+	async addView(dealId: number) {
+		await this.metricsSystemService.addView(EDailyMetricType.RESOURCE_VIEW, dealId)
+	}
+
+	async addHelpful(dealId: number, userId: number) {
+		await this.metricsSystemService.addHelpful(EDailyMetricType.RESOURCE_HELPFUL, dealId, userId)
+
+		await this.resourceRepository.increment({ id: dealId }, 'totalHelpful', 1)
 	}
 }

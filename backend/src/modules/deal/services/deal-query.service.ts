@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ILike, IsNull, Repository } from 'typeorm'
 
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
+import { EDealStatus } from '../../../interfaces/EDealStatus'
+import { EResourceStatus } from '../../../interfaces/EResourceStatus'
 import { GetSimplifiedResourceDto } from '../../resource/dtos/GetSimplifiedResource.dto'
+import { GetAllDealsDto } from '../dtos/GetAllDeals.dto'
 import { GetAllDealsAdminDto } from '../dtos/GetAllDealsAdmin.dto'
 import { Deal } from '../entities/Deal.entity'
 import { DealTag } from '../entities/DealTag.entity'
@@ -13,7 +18,9 @@ export class DealQueryService {
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
 		@InjectRepository(DealTag)
-		private readonly dealTagRepository: Repository<DealTag>
+		private readonly dealTagRepository: Repository<DealTag>,
+		@Inject(CACHE_MANAGER)
+		private readonly cacheManager: Cache
 	) {}
 
 	async getAllDealsAdmin(query: GetAllDealsAdminDto) {
@@ -39,9 +46,113 @@ export class DealQueryService {
 		})
 	}
 
+	async getAllDeals(query: GetAllDealsDto) {
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(16, Number(query.limit ?? 16))
+		const offset = (page - 1) * limit
+
+		const cacheKey = 'deals:list|' + `page:${page}|` + `limit:${limit}|` + `cat:${query.category ?? 'all'}`
+
+		if (!query.search) {
+			const cached = await this.cacheManager.get<[Deal[], number]>(cacheKey)
+			if (cached) return cached
+		}
+
+		const qb = this.dealRepository
+			.createQueryBuilder('l')
+			.leftJoinAndSelect('l.image', 'img')
+			.leftJoinAndSelect('l.tags', 't')
+			.where('l.status = :status', { status: EDealStatus.PUBLISHED })
+
+		// CATEGORY
+		if (query.category) {
+			qb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		// SELECT LIST
+		qb.select([
+			'l.id',
+			'l.title',
+			'l.slug',
+			'l.teaser',
+			'l.categories',
+			'l.status',
+			'l.popularScore',
+			'l.totalHelpful',
+			'l.outboundUrl',
+			'img',
+			't.id',
+			't.name'
+		])
+
+		// 🔍 SEARCH (FTS + trigram)
+		if (query.search && query.search.trim() !== '') {
+			qb.andWhere(
+				`(
+					l.search_document @@ plainto_tsquery('simple', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
+				)`,
+				{ q: query.search }
+			)
+
+			qb.addSelect(
+				`
+					GREATEST(
+						ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+						similarity(l.title, :q),
+						similarity(l.tags_text, :q)
+					)
+				`,
+				'relevance'
+			)
+
+			qb.orderBy('relevance', 'DESC')
+		}
+
+		// СОРТУВАННЯ (лише якщо не search)
+		if (!query.search) {
+			qb.orderBy('l.popularScore', 'DESC')
+		}
+
+		qb.skip(offset).take(limit)
+
+		// COUNT BUILDER
+		const countQb = this.dealRepository
+			.createQueryBuilder('l')
+			.leftJoin('l.tags', 't')
+			.where('l.status = :status', { status: EDealStatus.PUBLISHED })
+
+		if (query.category) {
+			countQb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		if (query.search && query.search.trim() !== '') {
+			countQb.andWhere(
+				`(
+					l.search_document @@ plainto_tsquery('simple', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
+				)`,
+				{ q: query.search }
+			)
+		}
+
+		const cnt = await countQb.select('COUNT(DISTINCT l.id)', 'cnt').getRawOne<{ cnt: string }>()
+
+		const items = await qb.getMany()
+		const result: [Deal[], number] = [items, Number(cnt?.cnt || 0)]
+
+		if (!query.search) {
+			await this.cacheManager.set(cacheKey, result, 60000)
+		}
+
+		return result
+	}
+
 	async getSimplifiedDeals(query: GetSimplifiedResourceDto) {
 		const where: any = {
-			featuredResource: IsNull() 
+			featuredResource: IsNull()
 		}
 
 		if (query?.search) {
@@ -77,7 +188,7 @@ export class DealQueryService {
 			.getRawMany<{ id: number; name: string; count: string }>()
 	}
 
-	async getOneDeal(dealId: number) {
+	async getOneDealAdmin(dealId: number) {
 		const deal = await this.dealRepository
 			.createQueryBuilder('deal')
 			.leftJoinAndSelect('deal.image', 'image')
@@ -101,5 +212,59 @@ export class DealQueryService {
 		}
 
 		return deal
+	}
+
+	async getOneDeal(dealSlug: string) {
+		const qb = this.dealRepository
+			.createQueryBuilder('deal')
+			.leftJoinAndSelect('deal.image', 'image')
+			.leftJoinAndSelect('deal.ogImage', 'ogImage')
+
+			.leftJoinAndSelect('deal.featuredResource', 'featuredResource', 'featuredResource.status = :publishedResource', {
+				publishedResource: EResourceStatus.PUBLISHED
+			})
+
+			.leftJoinAndSelect('deal.tags', 'tag')
+			.leftJoinAndSelect('deal.sections', 'section')
+			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
+
+			.leftJoinAndSelect('deal.relatedManual', 'related')
+
+			.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedDeal', {
+				publishedDeal: EDealStatus.PUBLISHED
+			})
+
+			.where('deal.slug = :slug', { slug: dealSlug })
+			.orderBy('section.position', 'ASC')
+
+		qb.addSelect(subQ => {
+			return subQ
+				.select('ARRAY_AGG(dm.user_id)', 'helpful')
+				.from('daily_metrics', 'dm')
+				.where('dm.entity_id = deal.id')
+				.andWhere('dm.metric_type = :helpfulType')
+				.andWhere('dm.user_id IS NOT NULL')
+		}, 'deal_helpful').setParameter('helpfulType', EDailyMetricType.DEAL_HELPFUL)
+
+		const raw = await qb.getRawAndEntities()
+
+		const deal = raw.entities[0]
+
+		if (!deal) {
+			throw new NotFoundException('Deal not found.')
+		}
+
+		const helpfulArray = raw.raw[0]?.deal_helpful ?? []
+
+		const helpful = (helpfulArray || []).filter((id: any) => id !== null)
+
+		if (deal.relatedManual?.length) {
+			deal.relatedManual = deal.relatedManual.filter(r => r.target)
+		}
+
+		return {
+			...deal,
+			helpful
+		}
 	}
 }

@@ -15,7 +15,6 @@ interface SearchBarProps {
   onCategoryChange: (category: string) => void;
   selectedSort: string;
   onSortChange: (sort: string) => void;
-  placeholder?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   showFavoritesOnly: boolean;
   onFavoritesToggle: (show: boolean) => void;
@@ -30,7 +29,6 @@ export function SearchBar({
   onCategoryChange,
   selectedSort = "",
   onSortChange,
-  placeholder = "Search resources...",
   onKeyDown,
   showFavoritesOnly = false,
   onFavoritesToggle,
@@ -120,7 +118,7 @@ export function SearchBar({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <input
               type="text"
-              placeholder={placeholder}
+              placeholder="Search 400+ official DoD websites"
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={onKeyDown}
@@ -194,25 +192,25 @@ export function SearchBar({
               onClick={() => handleDropdownToggle("category")}
               className="flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent min-w-[120px]"
             >
-              <span>{selectedCategory || "Category"}</span>
+              <span>{selectedCategory || "All Categories"}</span>
               <ChevronDown className="h-4 w-4 ml-2" />
             </button>
             {activeDropdown === "category" && (
               <div
-                className={`absolute top-full mt-1 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto ${
+                className={`absolute top-full mt-1 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-x-hidden overflow-y-auto ${
                   rightAlignedDropdowns.has("category") ? "right-0" : "left-0"
                 }`}
               >
-                {["All", ...categories].map((category) => (
+                {["All Categories", ...categories].map((category) => (
                   <button
                     key={category}
                     onClick={() => {
-                      onCategoryChange(category === "All" ? "" : category);
+                      onCategoryChange(category === "All Categories" ? "" : category);
                       setActiveDropdown(null);
                     }}
                     className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
                       selectedCategory === category ||
-                      (!selectedCategory && category === "All")
+                      (!selectedCategory && category === "All Categories")
                         ? "bg-primary/10 text-primary"
                         : ""
                     }`}

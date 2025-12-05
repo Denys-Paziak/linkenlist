@@ -1,3 +1,4 @@
+import { ScrollButtons } from "../../../components/scroll-buttons";
 import { List } from "./components/list";
 
 export default function LinksPage() {
@@ -14,7 +15,10 @@ export default function LinksPage() {
           </p>
         </div>
       </div>
+      
       <List />
+      
+      <ScrollButtons />
     </div>
   );
 }

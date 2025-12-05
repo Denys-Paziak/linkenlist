@@ -112,7 +112,7 @@ export function List() {
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
                         {item.image ? (
                           <Image
-                            className="w-full h-full object-fill"
+                            className="w-full h-full object-cover"
                             src={item.image.url}
                             alt={item.title || "Screenshot of the website"}
                             width={item.image.width}

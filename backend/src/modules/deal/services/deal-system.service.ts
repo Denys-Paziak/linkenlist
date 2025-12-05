@@ -32,11 +32,17 @@ export class DealSystemService {
 
 	async updateDealStatus(id: number, status: EDealStatus) {
 		let lastPublishedAt: Date | undefined
+		let publishAt: Date | undefined | null
+		let expireAt: Date | undefined | null
 		if (status === EDealStatus.PUBLISHED) {
 			lastPublishedAt = new Date()
+			publishAt = null
+		}
+		if (status === EDealStatus.EXPIRED) {
+			expireAt = null
 		}
 
-		await this.dealRepository.update(id, { status, lastPublishedAt })
+		await this.dealRepository.update(id, { status, lastPublishedAt, publishAt, expireAt })
 	}
 
 	async isImageStatus(id: number, status: EFileStatus) {

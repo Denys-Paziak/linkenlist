@@ -69,5 +69,5 @@ export class SaveBasicInformationDto {
 	@IsOptional()
 	@IsInt()
 	@Min(1)
-	featuredResourceId: number
+	featuredResourceId: number | null
 }

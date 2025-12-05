@@ -24,20 +24,20 @@ export function pickDirty<T extends FieldValues>(
 
 export function formatSmartSize(bytes: number): string {
   if (bytes >= 1024 * 1024) {
-    const mb = bytes / (1024 * 1024)
+    const mb = bytes / (1024 * 1024);
     if (Math.floor(mb) >= 1) {
-      return `${Math.floor(mb)} MB`
+      return `${Math.floor(mb)} MB`;
     }
   }
 
   if (bytes >= 1024) {
-    const kb = bytes / 1024
+    const kb = bytes / 1024;
     if (Math.floor(kb) >= 1) {
-      return `${Math.floor(kb)} KB`
+      return `${Math.floor(kb)} KB`;
     }
   }
 
-  return `${bytes} B`
+  return `${bytes} B`;
 }
 
 export function isoToDatetimeLocal(iso?: string | null): string {
@@ -55,4 +55,24 @@ export function isoToDatetimeLocal(iso?: string | null): string {
 
   // формат для input[type="datetime-local"]
   return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+export const capitalize = (str: string) =>
+  (str ?? "").length === 0 ? "" : str[0].toUpperCase() + str.slice(1);
+
+export function getFileTypeLabel(ext: string): string {
+	const normalized = ext.replace('.', '').toLowerCase()
+
+	const map: Record<string, string> = {
+		pdf: 'PDF Document',
+		doc: 'Word Document',
+		docx: 'Word Document',
+		xls: 'Excel Spreadsheet',
+		xlsx: 'Excel Spreadsheet',
+		png: 'PNG Image',
+		jpg: 'JPEG Image',
+		jpeg: 'JPEG Image'
+	}
+
+	return map[normalized] ?? 'Unknown File'
 }

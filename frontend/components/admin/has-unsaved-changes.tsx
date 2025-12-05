@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAdminContext } from "../../contexts/admin-context";
+import { useAdmin } from "../../contexts/admin-context";
 
 export function HasUnsavedChanges() {
-  const { hasUnsavedChanges } = useAdminContext();
+  const { hasUnsavedChanges } = useAdmin();
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

@@ -1,76 +1,76 @@
-import { IResource } from "./Resource"
-import { EOgImageMode } from "./shared"
+import { IResource } from "./Resource";
+import { EOgImageMode } from "./shared";
 
 export enum EDealStatus {
-	DRAFT = 'draft',
-	SCHEDULED = 'scheduled',
-	PUBLISHED = 'published',
-	EXPIRED = 'expired',
-	ARCHIVED = 'archived'
+  DRAFT = "draft",
+  SCHEDULED = "scheduled",
+  PUBLISHED = "published",
+  EXPIRED = "expired",
+  ARCHIVED = "archived",
 }
 
 export enum EDealCategory {
-    SOFTWARE = "software",
-    FINANCE = "finance",
-    MILITARY = "military",
-    HOUSING = "housing",
-    TRAVEL = "travel",
-    EDUCATION = "education",
-    HEALTH = "health",
-    RETAIL = "retail"
+  SOFTWARE = "software",
+  FINANCE = "finance",
+  MILITARY = "military",
+  HOUSING = "housing",
+  TRAVEL = "travel",
+  EDUCATION = "education",
+  HEALTH = "health",
+  RETAIL = "retail",
 }
 
 export enum EDealType {
-    PERCENTAGE = 'Percentage Off',
-    FIXED = 'Fixed Amount Off',
-    FREE = 'Free Item/Service',
-    SPECIAL = 'Special Price',
-    BOGO = 'Buy One Get One'
+  PERCENTAGE = "Percentage Off",
+  FIXED = "Fixed Amount Off",
+  FREE = "Free Item/Service",
+  SPECIAL = "Special Price",
+  BOGO = "Buy One Get One",
 }
 
 export enum EDealCadencePrice {
-   ONE_TIME = "one-time", 
-   MONTH = "month", 
-   YEAR = "year", 
-   WEEK = "week", 
-   DAY = "day"
+  ONE_TIME = "one-time",
+  MONTH = "month",
+  YEAR = "year",
+  WEEK = "week",
+  DAY = "day",
 }
 
 export interface IDealSectionAttachment {
-	id: number
-	url: string
-	originalKey?: string | null
-	processedKey?: string | null
-	name: string
-	ext: string
-	sizeBytes: number
+  id: number;
+  url: string;
+  originalKey?: string | null;
+  processedKey?: string | null;
+  name: string;
+  ext: string;
+  sizeBytes: number;
 }
 
 export interface IDealImage {
-	id: number
-	url: string
-	width: number
-	height: number
+  id: number;
+  url: string;
+  width: number;
+  height: number;
 }
 
 export interface IDealSection {
-	id: number
-	position: number
-	title: string
-	enabled: boolean
-	bodyMd: string | null
+  id: number;
+  position: number;
+  title: string;
+  enabled: boolean;
+  bodyMd: string | null;
 
-	attachments: IDealSectionAttachment[]
+  attachments: IDealSectionAttachment[];
 }
 
 export interface IDealTag {
-	id: number
-	name: string
+  id: number;
+  name: string;
 }
 
 export interface IDealRelated {
-	id: number
-	target: IDeal
+  id: number;
+  target: IDeal;
 }
 
 export interface IDealSimple {
@@ -81,70 +81,93 @@ export interface IDealSimple {
 }
 
 export interface IDealList {
-	id: number
-	title: string | null
-	image: IDealImage | null
-	categories: EDealCategory[]
-	status: EDealStatus
-	updatedAt: string
+  id: number;
+  title: string | null;
+  image: IDealImage | null;
+  categories: EDealCategory[];
+  status: EDealStatus;
+  updatedAt: string;
+}
+
+export interface IDealListExtended {
+  id: number;
+  title: string;
+  slug: string;
+  teaser: string | null;
+  image: IDealImage;
+  categories: EDealCategory[];
+  tags: IDealTag[];
+  outboundUrl: string;
+  status: EDealStatus;
+  totalHelpful: number;
+  popularScore: number;
+  updatedAt: string;
 }
 
 export interface IDeal {
-	id: number
+  id: number;
 
-	title: string | null
-	slug: string | null
-	teaser: string | null
+  title: string;
+  slug: string;
+  teaser: string | null;
 
-	image: IDealImage | null
+  image: IDealImage;
 
-	categories: EDealCategory[]
-	tags: IDealTag[]
+  categories: EDealCategory[];
+  tags: IDealTag[];
 
-	outboundUrl: string | null
-	outboundUrlButtonLabel: string
+  outboundUrl: string;
+  outboundUrlButtonLabel: string;
 
-	// Offer Details
-	offerEnabled: boolean
-	dealType: EDealType | null
-	originalPrice: number | null
-	yourPrice: number | null
-	cadencePrice: EDealCadencePrice
+  // Offer Details
+  offerEnabled: boolean;
+  dealType: EDealType | null;
+  originalPrice: number | null;
+  yourPrice: number | null;
+  cadencePrice: EDealCadencePrice;
 
-	promoCode: string | null
-	whereToEnterCode: string
+  promoCode: string | null;
+  whereToEnterCode: string;
 
-	ongoingOffer: boolean
-	validFrom: string | null       // 'YYYY-MM-DD'
-	validUntil: string | null      // 'YYYY-MM-DD'
+  ongoingOffer: boolean;
+  validFrom: string | null; // 'YYYY-MM-DD'
+  validUntil: string | null; // 'YYYY-MM-DD'
 
-	providerDisplayName: string | null
+  providerDisplayName: string | null;
 
-	// Content sections (sorted by position ASC)
-	sections: IDealSection[]
+  // Content sections (sorted by position ASC)
+  sections: IDealSection[];
 
-	// Surfacing & related
-	relatedAutoMode: boolean
-	relatedManual: IDealRelated[]
+  // Surfacing & related
+  relatedAutoMode: boolean;
+  relatedManual: IDealRelated[];
 
-	// SEO & indexation
-	seoMetaTitle: string | null
-	seoMetaDescription: string | null
-	ogImageMode: EOgImageMode
-	ogImage: IDealImage | null
-	canonicalUrl: string | null
-	allowIndexing: boolean
+  // SEO & indexation
+  seoMetaTitle: string;
+  seoMetaDescription: string;
+  ogImageMode: EOgImageMode;
+  ogImage: IDealImage;
+  canonicalUrl: string | null;
+  allowIndexing: boolean;
 
-	// Publishing workflow
-	status: EDealStatus
-	publishAt: string | null       // ISO string
-	expireAt: string | null        // ISO string
-	lastPublishedAt: string | null // ISO string
+  // Publishing workflow
+  status: EDealStatus;
+  publishAt: string | null; // ISO string
+  expireAt: string | null; // ISO string
+  lastPublishedAt: string | null; // ISO string
 
-	commentsEnabled: boolean
+  commentsEnabled: boolean;
 
-	featuredResource: IResource
+  featuredResource: IResource | null;
 
-	createdAt: string
-	updatedAt: string
+  totalHelpful: number;
+  helpful30d: number;
+  totalViews: number;
+  views30d: number;
+  popularScore: number;
+
+  helpful: number[];
+
+  createdAt: string;
+  updatedAt: string;
 }

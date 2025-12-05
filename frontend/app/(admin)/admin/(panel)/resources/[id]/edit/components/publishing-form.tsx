@@ -24,11 +24,18 @@ import {
 } from "../../../../../../../../components/ui/button-submit";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cn, isoToDatetimeLocal, pickDirty } from "../../../../../../../../lib/utils";
+import {
+  cn,
+  isoToDatetimeLocal,
+  pickDirty,
+} from "../../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
 import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
 import { IResource } from "../../../../../../../../types/Resource";
-import { resourceStatuses, publishingFormSchema } from "../../../../../../../../lib/schemas/resources/publishing-form-schema";
+import {
+  resourceStatuses,
+  publishingFormSchema,
+} from "../../../../../../../../lib/schemas/resources/publishing-form-schema";
 
 export function PublishingForm() {
   const { id: resourceId } = useParams();
@@ -72,6 +79,16 @@ export function PublishingForm() {
       const values = form.getValues();
       const dirty = pickDirty(values, form.formState.dirtyFields);
 
+      const schedule = (key: "schedulePublish" | "scheduleExpire") => {
+        if (dirty[key]) {
+          return new Date(dirty[key] as string).toISOString();
+        }
+        if (dirty[key] === "") {
+          return null;
+        }
+        return undefined;
+      };
+
       await fetcherAdmin(`/admin/resources/${resourceId}/change-status`, {
         method: "PATCH",
         credentials: "include",
@@ -81,8 +98,8 @@ export function PublishingForm() {
         body: JSON.stringify({
           ...dirty,
           status: values.status,
-          schedulePublish: dirty.schedulePublish ? new Date(dirty.schedulePublish as string).toISOString() : undefined,
-          scheduleExpire: dirty.scheduleExpire ? new Date(dirty.scheduleExpire as string).toISOString() : undefined,
+          schedulePublish: schedule("schedulePublish"),
+          scheduleExpire: schedule("scheduleExpire"),
         }),
       });
 

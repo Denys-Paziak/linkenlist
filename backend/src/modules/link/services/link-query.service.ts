@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
-import { GetAllLinksAdminDto } from '../dtos/GetAllLinks.admin.dto'
+import { GetAllLinksAdminDto } from '../dtos/GetAllLinksAdmin.dto'
 import { GetAllLinksDto } from '../dtos/GetAllLinks.dto'
 import { Link } from '../entities/Link.entity'
 import { LinkTag } from '../entities/LinkTag.entity'
@@ -14,7 +15,9 @@ export class LinkQueryService {
 		@InjectRepository(Link)
 		private readonly linkRepository: Repository<Link>,
 		@InjectRepository(LinkTag)
-		private readonly linkTagRepository: Repository<LinkTag>
+		private readonly linkTagRepository: Repository<LinkTag>,
+		@Inject(CACHE_MANAGER)
+		private readonly cacheManager: Cache
 	) {}
 
 	async getAllLinksAdmin(query: GetAllLinksAdminDto) {
@@ -31,6 +34,7 @@ export class LinkQueryService {
 				'l.verified',
 				'l.category',
 				'l.status',
+				'l.url',
 				'l.updatedAt',
 				'l.createdAt',
 				'img.id',
@@ -81,6 +85,19 @@ export class LinkQueryService {
 		const limit = Math.max(16, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
+		const cacheKey =
+			'links:list|' +
+			`page:${page}|` +
+			`limit:${limit}|` +
+			`cat:${query.category ?? 'all'}|` +
+			`branch:${query.branch ?? 'all'}|` +
+			`sort:${query.sort ?? 'default'}`
+
+		if (!query.search) {
+			const cached = await this.cacheManager.get<[Link[], number]>(cacheKey)
+			if (cached) return cached
+		}
+
 		const qb = this.linkRepository
 			.createQueryBuilder('l')
 			.leftJoinAndSelect('l.image', 'img')
@@ -107,6 +124,7 @@ export class LinkQueryService {
 			'l.branches',
 			'l.status',
 			'l.verified',
+			'l.verifiedAt',
 			'l.totalViews',
 			'l.views30d',
 			'l.popularScore',
@@ -197,11 +215,23 @@ export class LinkQueryService {
 		const cnt = await countQb.select('COUNT(DISTINCT l.id)', 'cnt').getRawOne<{ cnt: string }>()
 
 		const items = await qb.getMany()
-		return [items, Number(cnt?.cnt || 0)] as const
+		const result: [Link[], number] = [items, Number(cnt?.cnt || 0)]
+
+		if (!query.search) {
+			await this.cacheManager.set(cacheKey, result, 60000)
+		}
+
+		return result
 	}
 
 	async getOneLink(id: number) {
-		return await this.linkRepository.findOne({ where: { id }, relations: ['tags'] })
+		const link = await this.linkRepository.findOne({ where: { id }, relations: ['tags'] })
+
+		if (!link) {
+			throw new NotFoundException('Link not found.')
+		}
+
+		return link
 	}
 
 	async getAllLinkTags() {
