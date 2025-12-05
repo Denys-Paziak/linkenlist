@@ -25,9 +25,10 @@ function getDeal(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>
 }) {
-  const deal = (await getDeal(params.slug)) as IDeal;
+  const { slug } = await params
+  const deal = (await getDeal(slug)) as IDeal;
 
   if (!deal) {
     return {
@@ -96,9 +97,10 @@ export async function generateMetadata({
 export default async function DealDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>
 }) {
-  const deal = (await getDeal(params.slug)) as IDeal;
+  const { slug } = await params
+  const deal = (await getDeal(slug)) as IDeal;
 
   if (!deal) {
     notFound();

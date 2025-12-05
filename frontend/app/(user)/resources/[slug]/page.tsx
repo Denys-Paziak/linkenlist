@@ -24,9 +24,10 @@ function getResource(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const resource = (await getResource(params.slug)) as IResource;
+  const { slug } = await params;
+  const resource = (await getResource(slug)) as IResource;
 
   if (!resource) {
     return {
@@ -95,9 +96,10 @@ export async function generateMetadata({
 export default async function ResourceDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const resource = (await getResource(params.slug)) as IResource;
+  const { slug } = await params;
+  const resource = (await getResource(slug)) as IResource;
 
   if (!resource) {
     notFound();
