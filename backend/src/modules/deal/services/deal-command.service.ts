@@ -113,6 +113,7 @@ export class DealCommandService {
 			select: {
 				id: true,
 				title: true,
+				slug: true,
 				categories: true,
 				outboundUrl: true,
 				ogImageMode: true,

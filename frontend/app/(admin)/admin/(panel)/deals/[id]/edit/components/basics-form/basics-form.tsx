@@ -379,7 +379,7 @@ export function BasicsForm() {
                         {featuredResource?.title || "[Not specified]"}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {"https://linkenlist.com/deals/" +
+                        {"https://linkenlist.com/resources/" +
                           (featuredResource?.slug || "[Not specified]")}
                       </p>
                     </div>

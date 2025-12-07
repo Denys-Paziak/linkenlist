@@ -115,6 +115,7 @@ export class ResourceCommandService {
 			select: {
 				id: true,
 				title: true,
+				slug: true,
 				categories: true,
 				format: true,
 				ogImageMode: true,
