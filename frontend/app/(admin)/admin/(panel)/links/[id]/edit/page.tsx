@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
-import { SafeLink } from "../../../../../../../components/admin/safe-link";
 import { EditForm } from "./components/update-form";
 import { Button } from "../../../../../../../components/ui/button";
+import { SafeLink } from "../../../../components/safe-link";
 
 interface LinkEditorPageProps {
   params: { id: string };

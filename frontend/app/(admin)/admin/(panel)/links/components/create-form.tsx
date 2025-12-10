@@ -22,7 +22,6 @@ import { ErrorAlert } from "@/components/ui/error-alert";
 import { FilePen, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcherAdmin } from "@/lib/fetcher";
-import { TagsField } from "../../../../../../components/admin/tags-field";
 import {
   CreateLinkFormData,
   createFormSchema,
@@ -30,6 +29,7 @@ import {
   categories,
 } from "../../../../../../lib/schemas/link-form-schema";
 import { UploadImage } from "../../../../../../components/ui/upload-image";
+import { TagsField } from "../../../components/tags-field";
 
 export function CreateForm() {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");

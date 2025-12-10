@@ -13,10 +13,10 @@ import { cn } from "../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
 import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-query-state-with-local-storage";
 import { parseAsInteger, parseAsString } from "nuqs";
-import { SafeLink } from "../../../../../../../components/admin/safe-link";
 import { Pagination } from "../../../../../../../components/ui/pagination";
 import { StatusChip } from "../../../../../../../components/ui/status-chip";
 import { useDebounce } from "use-debounce";
+import { SafeLink } from "../../../../components/safe-link";
 
 export function List() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
