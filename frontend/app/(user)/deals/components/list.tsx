@@ -3,7 +3,6 @@
 import { Filter, Loader2, Star } from "lucide-react";
 import { MobileFilterDrawer } from "./mobile-filter-drawer";
 import { FilterBar } from "./filter-bar";
-import { Card } from "./card";
 import { Pagination } from "../../../../components/ui/pagination";
 import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state-with-local-storage";
 import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
@@ -12,6 +11,7 @@ import useSWR from "swr";
 import { IDealListExtended } from "../../../../types/Deal";
 import { useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
+import { DealCard } from "../../../../components/deal-card";
 
 export function List() {
   const [searchQuery, setSearchQuery] = useQueryStateWithLocalStorage(
@@ -183,7 +183,7 @@ export function List() {
               {data && data[0].length !== 0 ? (
                 <div className="grid-container-deals">
                   {data[0].map((deal) => (
-                    <Card key={deal.id} data={deal} isLoading={isLoading} />
+                    <DealCard key={deal.id} data={deal} isLoading={isLoading} />
                   ))}
                 </div>
               ) : isLoading ? (

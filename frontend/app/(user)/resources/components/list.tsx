@@ -3,7 +3,6 @@
 import { Filter, Loader2, Star } from "lucide-react";
 import { MobileFilterDrawer } from "./mobile-filter-drawer";
 import { FilterBar } from "./filter-bar";
-import { Card } from "./card";
 import { Pagination } from "../../../../components/ui/pagination";
 import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state-with-local-storage";
 import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
@@ -12,6 +11,7 @@ import useSWR from "swr";
 import { useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { IResourceListExtended } from "../../../../types/Resource";
+import { ResourceCard } from "../../../../components/resource-card";
 
 export function List() {
   const [searchQuery, setSearchQuery] = useQueryStateWithLocalStorage(
@@ -73,7 +73,8 @@ export function List() {
   if (selectedFormat) params.set("format", selectedFormat);
 
   const key = `/resources?${params.toString()}`;
-  const { data, isLoading, error } = useSWR<[IResourceListExtended[], number]>(key);
+  const { data, isLoading, error } =
+    useSWR<[IResourceListExtended[], number]>(key);
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -195,7 +196,11 @@ export function List() {
               {data && data[0].length !== 0 ? (
                 <div className="grid-container-resources">
                   {data[0].map((resource) => (
-                    <Card key={resource.id} data={resource} isLoading={isLoading} />
+                    <ResourceCard
+                      key={resource.id}
+                      data={resource}
+                      isLoading={isLoading}
+                    />
                   ))}
                 </div>
               ) : isLoading ? (

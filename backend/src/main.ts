@@ -35,7 +35,7 @@ async function bootstrap() {
 			},
 			auth: fastifyOauth2.GOOGLE_CONFIGURATION
 		},
-		startRedirectPath: '/auth/google/start',
+		startRedirectPath: config.getOrThrow<string>('GOOGLE_LOGIN_PATH'),
 
 		callbackUri: config.getOrThrow<string>('GOOGLE_CALLBACK_URL')
 	})

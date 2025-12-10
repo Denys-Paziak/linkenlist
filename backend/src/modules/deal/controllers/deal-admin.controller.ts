@@ -9,6 +9,7 @@ import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { MultipartOptions } from '../../../utils/file.util'
 import { ChangePosContentSectionsDto } from '../dtos/ChangePosContentSections.dto'
 import { ChangeStatusDto } from '../dtos/ChangeStatus.dto'
+import { DeleteDealDto } from '../dtos/DeleteDeal.dto'
 import { GetAllDealsAdminDto } from '../dtos/GetAllDealsAdmin.dto'
 import { GetSimplifiedDealsDto } from '../dtos/GetSimplifiedDeals.dto'
 import { ParamsContentSection } from '../dtos/ParamsContentSection.dto'
@@ -17,11 +18,11 @@ import { SaveContentSectionDto } from '../dtos/SaveContentSection.dto'
 import { SaveOfferDetailsDto } from '../dtos/SaveOfferDetails.dto'
 import { SaveSEODto } from '../dtos/SaveSEO.dto'
 import { SetSelectRelatedDto } from '../dtos/SetSelectRelatedDto.dto'
+import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
 import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { SwitchShowOfferDetailsDto } from '../dtos/SwitchShowOfferDetails.dto'
 import { DealCommandService } from '../services/deal-command.service'
 import { DealQueryService } from '../services/deal-query.service'
-import { DeleteDealDto } from '../dtos/DeleteDeal.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -151,6 +152,16 @@ export class DealAdminController {
 	@Patch(':id/surfacing/related-mode')
 	async switchRelatedMode(@Param() params: ParamId, @Body() dto: SwitchRelatedMode) {
 		await this.dealCommandService.switchRelatedMode(params.id, dto)
+
+		return {
+			ok: true
+		}
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Patch(':id/surfacing/featured')
+	async switchFeatured(@Param() params: ParamId, @Body() dto: SwitchFeaturedDto) {
+		await this.dealCommandService.switchFeatured(params.id, dto)
 
 		return {
 			ok: true

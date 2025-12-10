@@ -56,6 +56,9 @@ export class Deal {
 	@Column({ type: 'text', name: 'tags_text', default: '' })
 	tagsText: string
 
+	@Column({ type: 'boolean', default: false, name: 'is_featured' })
+	isFeatured: boolean
+
 	@Column({ type: 'text', name: 'outbound_url', nullable: true })
 	outboundUrl?: string | null
 

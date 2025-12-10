@@ -154,9 +154,7 @@ export default async function ResourceDetailPage({
 
               <Comments />
 
-              {resource.relatedManual.length ? (
-                <Related data={resource.relatedManual} />
-              ) : null}
+              <Related resourceData={resource} autoMode={resource.relatedAutoMode} related={resource.relatedManual} />
             </div>
           </main>
         </div>

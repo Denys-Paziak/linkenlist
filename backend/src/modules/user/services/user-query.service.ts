@@ -15,7 +15,7 @@ export class UserQueryService {
 	) {}
 
 	async getSelf(userId: number, userRole: ERoleName): Promise<GetSelfResponse> {
-		const userFromDB = await this.userRepository.findOne({ where: { id: userId, role: userRole } })
+		const userFromDB = await this.userRepository.findOne({ where: { id: userId, role: userRole, emailVerified: true } })
 		if (!userFromDB) throw new NotFoundException('No such user found')
 
 		await this.userRepository.update(userId, { lastActivity: new Date() })

@@ -6,9 +6,12 @@ import { useState } from "react";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import { useUser } from "../../../../../contexts/user-context";
 import { IResource } from "../../../../../types/Resource";
+import useSWR from "swr";
 
 export function Helpful({ data }: { data: IResource }) {
   const { user, setShowLoginModal } = useUser();
+
+  const {data: helpful} = useSWR<number[]>(`/resources/${data.id}/helpful`)
 
   const [showFireworks, setShowFireworks] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -33,7 +36,7 @@ export function Helpful({ data }: { data: IResource }) {
     } catch {}
   };
 
-  const isHelpful = data.helpful.includes(user?.id || -1);
+  const isHelpful = helpful?.includes(user?.id || -1);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-border p-6 mb-6 lg:mb-8">
@@ -108,7 +111,7 @@ export function Helpful({ data }: { data: IResource }) {
               )}
             </div>
             <span className="text-sm text-gray-500">
-              {data.totalHelpful} people found this helpful
+              {helpful?.length} people found this helpful
             </span>
           </div>
         </div>

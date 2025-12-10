@@ -1,96 +1,116 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { EnhancedResourceCard } from "../../../../components/enhanced-resource-card";
-import { mockResources } from "../../../../data/mock-resources-data";
+import { ResourceCard } from "../../../../components/resource-card";
+import { IResourceListExtended } from "../../../../types/Resource";
+import useSWR from "swr";
+import useEmblaCarousel from "embla-carousel-react";
+import {
+  NextButton,
+  PrevButton,
+  usePrevNextButtons,
+} from "../../../../components/slider-arrow-buttons";
 
 export function FeaturedCarousel() {
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { data, isLoading, error, mutate } = useSWR<
+    [IResourceListExtended[], number]
+  >("/resources?page=1&limit=10&isFeatured=true");
 
-  // Featured resources with enhanced data
-    const featuredResources = useMemo(() => {
-      return mockResources
-        .filter((resource) => resource.isFeatured)
-        .slice(0, 8)
-        .map((resource) => ({
-          ...resource,
-          likes: Math.floor(Math.random() * 100) + 10,
-        }))
-    }, [])
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start" });
+  const {
+    prevBtnDisabled,
+    nextBtnDisabled,
+    onPrevButtonClick,
+    onNextButtonClick,
+  } = usePrevNextButtons(emblaApi);
 
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: "smooth" });
-    }
-  };
+  const hasDeals = !!data && data[0]?.length > 0;
+  const showArrows = hasDeals && !isLoading && !error;
 
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
-  };
+  let content;
 
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-    }
-  };
-
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      handleScroll()
-    }
-  }, [featuredResources])
-
-  return (
-    <div className="relative">
-      {/* Left Scroll Button - Outside carousel - Hidden on mobile */}
-      <button
-        onClick={scrollLeft}
-        disabled={!canScrollLeft}
-        className={`absolute -left-6 top-1/2 -translate-y-1/2 z-30 px-2 py-6 rounded-lg bg-white/60 backdrop-blur-sm shadow-md transition-all duration-200 hidden md:block ${
-          canScrollLeft
-            ? "text-gray-600 hover:bg-white/80 hover:shadow-lg"
-            : "text-gray-300 cursor-not-allowed opacity-30"
-        }`}
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-
-      {/* Right Scroll Button - Outside carousel - Hidden on mobile */}
-      <button
-        onClick={scrollRight}
-        disabled={!canScrollRight}
-        className={`absolute -right-6 top-1/2 -translate-y-1/2 z-30 px-2 py-6 rounded-lg bg-white/60 backdrop-blur-sm shadow-md transition-all duration-200 hidden md:block ${
-          canScrollRight
-            ? "text-gray-600 hover:bg-white/80 hover:shadow-lg"
-            : "text-gray-300 cursor-not-allowed opacity-30"
-        }`}
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-
-      {/* Carousel Container */}
-      <div className="mx-2 md:mx-10">
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex gap-6 overflow-x-auto pb-8 pt-4 px-4 snap-x snap-mandatory scroll-smooth"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {featuredResources.map((resource) => (
-            <div key={resource.id} className="flex-shrink-0 w-72 snap-start">
-              <EnhancedResourceCard resource={resource} />
+  if (isLoading) {
+    content = (
+      <div className="md:mx-5 overflow-hidden min-w-0" ref={emblaRef}>
+        <div className="flex gap-3 md:gap-4 pb-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="flex-shrink-0 w-64 md:w-72">
+              <div className="h-64 rounded-xl bg-gray-200 animate-pulse" />
             </div>
           ))}
         </div>
       </div>
+    );
+  } else if (error) {
+    content = (
+      <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+        <p className="text-red-600 font-semibold">
+          Failed to load featured deals.
+        </p>
+        <p className="text-sm text-gray-500 max-w-md">
+          Something went wrong while loading the deals. Please check your
+          connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => mutate()}
+          className="mt-2 inline-flex items-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-300 hover:bg-gray-100 hover:text-gray-700"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  } else if (hasDeals) {
+    content = (
+      <div className="md:mx-5 overflow-hidden min-w-0" ref={emblaRef}>
+        <div
+          className="flex gap-3 md:gap-4 pb-4"
+          style={{ touchAction: "pan-y pinch-zoom" }}
+        >
+          {data![0].map((resource) => (
+            <div
+              key={resource.id}
+              className="flex-shrink-0 w-64 md:w-72 max-h-64 select-none"
+            >
+              <ResourceCard data={resource} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+        <p className="text-gray-700 font-medium">
+          No featured deals available right now.
+        </p>
+        <p className="text-sm text-gray-500">
+          Please check back later for new military deals.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {showArrows && (
+        <>
+          <PrevButton
+            onClick={() => {
+              onPrevButtonClick();
+            }}
+            disabled={prevBtnDisabled}
+          />
+
+          <NextButton
+            onClick={() => {
+              onNextButtonClick();
+            }}
+            disabled={nextBtnDisabled}
+          />
+        </>
+      )}
+
+      {content}
     </div>
   );
 }

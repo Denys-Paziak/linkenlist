@@ -20,7 +20,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn, pickDirty } from "../../../../../../../../../lib/utils";
 import { MultiSelect } from "../../../../../../../../../components/ui/multi-select";
-import { TagsField } from "../../../../../../../../../components/admin/tags-field";
 import useSWR from "swr";
 import { fetcherAdmin } from "../../../../../../../../../lib/fetcher";
 import { ErrorAlert } from "../../../../../../../../../components/ui/error-alert";
@@ -43,6 +42,7 @@ import {
 import { IDealSimple } from "../../../../../../../../../types/Deal";
 import { StatusChip } from "../../../../../../../../../components/ui/status-chip";
 import { UploadImage } from "../../../../../../../../../components/ui/upload-image";
+import { TagsField } from "../../../../../../components/tags-field";
 
 export function BasicsForm() {
   const { id: resourceId } = useParams();
@@ -138,7 +138,7 @@ export function BasicsForm() {
         "payload",
         JSON.stringify({
           ...dirty,
-          slug: dirty.slug === "" ? null : dirty.slug
+          slug: dirty.slug === "" ? null : dirty.slug,
         })
       );
       if (!!imageFile) {
@@ -410,7 +410,9 @@ export function BasicsForm() {
                   }}
                   selected={form.watch("featuredDealId") || null}
                   setSelected={(newValue: IDealSimple) => {
-                    form.setValue("featuredDealId", newValue.id);
+                    form.setValue("featuredDealId", newValue.id, {
+                      shouldDirty: true,
+                    });
                     setFeaturedDeal(newValue);
                   }}
                 />

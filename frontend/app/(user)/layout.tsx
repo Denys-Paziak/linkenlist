@@ -2,9 +2,9 @@ import type React from "react";
 import "./style.css";
 import { UserProvider } from "@/contexts/user-context";
 import ScrollToTop from "@/components/scroll-to-top";
-import { Footer } from "../../components/footer";
-import { Header } from "../../components/header";
 import { UserCheck } from "../../components/user-check";
+import { Header } from "../../components/header";
+import { Footer } from "../../components/footer";
 import { LoginModal } from "../../components/login-modal";
 
 export default function RootLayout({

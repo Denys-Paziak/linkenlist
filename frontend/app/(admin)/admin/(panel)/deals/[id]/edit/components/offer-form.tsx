@@ -124,14 +124,9 @@ export function OfferForm() {
       mutate().then(() => {
         form.reset();
       });
-
-      setTimeout(() => {
-        setStatus("idle");
-      }, 2000);
     } catch (err: any) {
       setStatus("error");
       setFormError(err?.message ?? "Update failed");
-      setTimeout(() => setStatus("idle"), 2000);
     }
   };
 

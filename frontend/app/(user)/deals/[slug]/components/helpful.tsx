@@ -6,9 +6,12 @@ import { Button } from "../../../../../components/ui/button";
 import { useState } from "react";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import { useUser } from "../../../../../contexts/user-context";
+import useSWR from "swr";
 
 export function Helpful({ data }: { data: IDeal }) {
   const { user, setShowLoginModal } = useUser();
+
+  const { data: helpful } = useSWR<number[]>(`/deals/${data.id}/helpful`);
 
   const [showFireworks, setShowFireworks] = useState(false);
 
@@ -24,7 +27,7 @@ export function Helpful({ data }: { data: IDeal }) {
     setTimeout(() => setShowFireworks(false), 1000);
   };
 
-  const isHelpful = data.helpful.includes(user?.id || -1);
+  const isHelpful = helpful?.includes(user?.id || -1);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-border p-6 mb-6 lg:mb-8">
@@ -89,7 +92,7 @@ export function Helpful({ data }: { data: IDeal }) {
               )}
             </div>
             <span className="text-sm text-gray-500">
-              {data.totalHelpful} people found this helpful
+              {helpful?.length} people found this helpful
             </span>
           </div>
         </div>

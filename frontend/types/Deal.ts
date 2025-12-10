@@ -102,6 +102,7 @@ export interface IDealListExtended {
   totalHelpful: number;
   popularScore: number;
   updatedAt: string;
+  isFeatured: boolean;
 }
 
 export interface IDeal {
@@ -116,10 +117,11 @@ export interface IDeal {
   categories: EDealCategory[];
   tags: IDealTag[];
 
+  isFeatured: boolean;
+
   outboundUrl: string;
   outboundUrlButtonLabel: string;
 
-  // Offer Details
   offerEnabled: boolean;
   dealType: EDealType | null;
   originalPrice: number | null;
@@ -130,19 +132,16 @@ export interface IDeal {
   whereToEnterCode: string;
 
   ongoingOffer: boolean;
-  validFrom: string | null; // 'YYYY-MM-DD'
-  validUntil: string | null; // 'YYYY-MM-DD'
+  validFrom: string | null;
+  validUntil: string | null;
 
   providerDisplayName: string | null;
 
-  // Content sections (sorted by position ASC)
   sections: IDealSection[];
 
-  // Surfacing & related
   relatedAutoMode: boolean;
   relatedManual: IDealRelated[];
 
-  // SEO & indexation
   seoMetaTitle: string;
   seoMetaDescription: string;
   ogImageMode: EOgImageMode;
@@ -150,23 +149,19 @@ export interface IDeal {
   canonicalUrl: string | null;
   allowIndexing: boolean;
 
-  // Publishing workflow
   status: EDealStatus;
-  publishAt: string | null; // ISO string
-  expireAt: string | null; // ISO string
-  lastPublishedAt: string | null; // ISO string
+  publishAt: string | null;
+  expireAt: string | null;
+  lastPublishedAt: string | null;
 
   commentsEnabled: boolean;
 
   featuredResource: IResource | null;
 
-  totalHelpful: number;
   helpful30d: number;
   totalViews: number;
   views30d: number;
   popularScore: number;
-
-  helpful: number[];
 
   createdAt: string;
   updatedAt: string;

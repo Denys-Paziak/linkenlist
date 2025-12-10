@@ -1,8 +1,8 @@
+import { AdminCheck } from "../components/admin-check";
+import { Header } from "../components/header";
+import { Navigation } from "../components/navigation";
 import "./style.css";
 import { AdminProvider } from "@/contexts/admin-context";
-import { Navigation } from "../../../../components/admin/navigation";
-import { Header } from "../../../../components/admin/header";
-import { AdminCheck } from "../../../../components/admin/admin-check";
 
 export default function AdminLayout({
   children,

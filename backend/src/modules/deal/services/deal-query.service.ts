@@ -51,7 +51,12 @@ export class DealQueryService {
 		const limit = Math.max(16, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
-		const cacheKey = 'deals:list|' + `page:${page}|` + `limit:${limit}|` + `cat:${query.category ?? 'all'}`
+		const cacheKey =
+			'deals:list|' +
+			`page:${page}|` +
+			`limit:${limit}|` +
+			`cat:${query.category ?? 'all'}` +
+			`isFeatured:${query.isFeatured ?? false}`
 
 		if (!query.search) {
 			const cached = await this.cacheManager.get<[Deal[], number]>(cacheKey)
@@ -80,6 +85,7 @@ export class DealQueryService {
 			'l.popularScore',
 			'l.totalHelpful',
 			'l.outboundUrl',
+			'l.isFeatured',
 			'img',
 			't.id',
 			't.name'
@@ -107,12 +113,19 @@ export class DealQueryService {
 				'relevance'
 			)
 
-			qb.orderBy('relevance', 'DESC')
-		}
-
-		// СОРТУВАННЯ (лише якщо не search)
-		if (!query.search) {
-			qb.orderBy('l.popularScore', 'DESC')
+			if (query.isFeatured) {
+				qb.orderBy('l.isFeatured', 'DESC')
+				qb.addOrderBy('relevance', 'DESC')
+			} else {
+				qb.orderBy('relevance', 'DESC')
+			}
+		} else {
+			if (query.isFeatured) {
+				qb.orderBy('l.isFeatured', 'DESC')
+				qb.addOrderBy('l.popularScore', 'DESC')
+			} else {
+				qb.orderBy('l.popularScore', 'DESC')
+			}
 		}
 
 		qb.skip(offset).take(limit)
@@ -223,48 +236,61 @@ export class DealQueryService {
 			.leftJoinAndSelect('deal.featuredResource', 'featuredResource', 'featuredResource.status = :publishedResource', {
 				publishedResource: EResourceStatus.PUBLISHED
 			})
+			.leftJoinAndSelect('featuredResource.tags', 'featuredTag')
+			.leftJoinAndSelect('featuredResource.image', 'featuredImage')
 
 			.leftJoinAndSelect('deal.tags', 'tag')
 			.leftJoinAndSelect('deal.sections', 'section')
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
 
-			.leftJoinAndSelect('deal.relatedManual', 'related')
-
-			.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedDeal', {
-				publishedDeal: EDealStatus.PUBLISHED
-			})
-
 			.where('deal.slug = :slug', { slug: dealSlug })
 			.orderBy('section.position', 'ASC')
 
-		qb.addSelect(subQ => {
-			return subQ
-				.select('ARRAY_AGG(dm.user_id)', 'helpful')
-				.from('daily_metrics', 'dm')
-				.where('dm.entity_id = deal.id')
-				.andWhere('dm.metric_type = :helpfulType')
-				.andWhere('dm.user_id IS NOT NULL')
-		}, 'deal_helpful').setParameter('helpfulType', EDailyMetricType.DEAL_HELPFUL)
+		// Перший запит — базовий deal (щоб дізнатись relatedAutoMode)
+		const baseDeal = await qb.getOne()
 
-		const raw = await qb.getRawAndEntities()
-
-		const deal = raw.entities[0]
-
-		if (!deal) {
+		if (!baseDeal) {
 			throw new NotFoundException('Deal not found.')
 		}
 
-		const helpfulArray = raw.raw[0]?.deal_helpful ?? []
+		// Якщо потрібні relatedManual — додаємо join’и та перезапускаємо запит
+		if (baseDeal.relatedAutoMode === true) {
+			qb.leftJoinAndSelect('deal.relatedManual', 'related')
+				.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedDeal', {
+					publishedDeal: EDealStatus.PUBLISHED
+				})
+				.leftJoinAndSelect('relatedTarget.tags', 'relatedTag')
+				.leftJoinAndSelect('relatedTarget.image', 'relatedImage')
 
-		const helpful = (helpfulArray || []).filter((id: any) => id !== null)
+			const dealWithRelated = await qb.getOne()
 
-		if (deal.relatedManual?.length) {
-			deal.relatedManual = deal.relatedManual.filter(r => r.target)
+			if (!dealWithRelated) {
+				throw new NotFoundException('Deal not found.')
+			}
+
+			if (dealWithRelated.relatedManual?.length) {
+				dealWithRelated.relatedManual = dealWithRelated.relatedManual.filter(r => r.target)
+			}
+
+			return dealWithRelated
 		}
 
-		return {
-			...deal,
-			helpful
-		}
+		return baseDeal
+	}
+
+	async getDealHelpful(dealId: number): Promise<number[]> {
+		const raw = await this.dealRepository.manager
+			.createQueryBuilder()
+			.select('ARRAY_AGG(dm.user_id)', 'helpful')
+			.from('daily_metrics', 'dm')
+			.where('dm.entity_id = :dealId', { dealId })
+			.andWhere('dm.metric_type = :helpfulType', {
+				helpfulType: EDailyMetricType.DEAL_HELPFUL
+			})
+			.andWhere('dm.user_id IS NOT NULL')
+			.getRawOne<{ helpful: (number | null)[] | null }>()
+
+		const helpfulArray = raw?.helpful ?? []
+		return (helpfulArray || []).filter((id): id is number => id !== null)
 	}
 }

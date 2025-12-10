@@ -61,7 +61,6 @@ export async function fetcherUser(url: string, options: RequestInit = {}) {
     if (refreshed) {
       response = await fetch(fullUrl, config);
     } else {
-      window.location.href = "/signin";
       throw new Error("Session expired");
     }
   }

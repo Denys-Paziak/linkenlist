@@ -1,6 +1,5 @@
-import { EnhancedResourceCard } from "../../../../../components/enhanced-resource-card";
+import { DealCard } from "../../../../../components/deal-card";
 import { IDeal } from "../../../../../types/Deal";
-import { Card } from "../../components/card";
 
 export function Featured({ data }: { data: IDeal }) {
   return (
@@ -9,22 +8,7 @@ export function Featured({ data }: { data: IDeal }) {
         Featured Deal
       </h3>
       <div className="space-y-3">
-        <Card
-          data={{
-            id: data.id,
-            title: data.title,
-            teaser: data.teaser,
-            image: data.image,
-            slug: data.slug,
-            categories: data.categories as any,
-            tags: data.tags,
-            status: data.status as any,
-            updatedAt: data.updatedAt,            
-            isFeatured: false,
-            popularScore: 0,
-            totalHelpful: 0,
-          }}
-        />
+        <DealCard data={data} />
       </div>
     </div>
   );

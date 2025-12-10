@@ -1,6 +1,5 @@
-import { EnhancedResourceCard } from "../../../../../components/enhanced-resource-card";
+import { ResourceCard } from "../../../../../components/resource-card";
 import { IResource } from "../../../../../types/Resource";
-import { Card } from "../../components/card";
 
 export function Featured({ data }: { data: IResource }) {
   return (
@@ -9,22 +8,7 @@ export function Featured({ data }: { data: IResource }) {
         Featured Resource
       </h3>
       <div className="space-y-3">
-        <Card
-          data={{
-            id: data.id,
-            title: data.title,
-            teaser: data.teaser,
-            image: data.image,
-            slug: data.slug,
-            categories: data.categories as any,
-            tags: data.tags,
-            status: data.status as any,
-            updatedAt: data.updatedAt,            
-            outboundUrl: "",
-            popularScore: 0,
-            totalHelpful: 0,
-          }}
-        />
+        <ResourceCard data={data} />
       </div>
     </div>
   );

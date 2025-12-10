@@ -56,7 +56,8 @@ export class ResourceQueryService {
 			`page:${page}|` +
 			`limit:${limit}|` +
 			`cat:${query.category ?? 'all'}` +
-			`format:${query.format ?? 'all'}`
+			`format:${query.format ?? 'all'}` +
+			`isFeatured:${query.isFeatured ?? false}`
 
 		if (!query.search) {
 			const cached = await this.cacheManager.get<[Resource[], number]>(cacheKey)
@@ -118,12 +119,19 @@ export class ResourceQueryService {
 				'relevance'
 			)
 
-			qb.orderBy('relevance', 'DESC')
-		}
-
-		// СОРТУВАННЯ (лише якщо не search)
-		if (!query.search) {
-			qb.orderBy('l.popularScore', 'DESC')
+			if (query.isFeatured) {
+				qb.orderBy('l.isFeatured', 'DESC')
+				qb.addOrderBy('relevance', 'DESC')
+			} else {
+				qb.orderBy('relevance', 'DESC')
+			}
+		} else {
+			if (query.isFeatured) {
+				qb.orderBy('l.isFeatured', 'DESC')
+				qb.addOrderBy('l.popularScore', 'DESC')
+			} else {
+				qb.orderBy('l.popularScore', 'DESC')
+			}
 		}
 
 		qb.skip(offset).take(limit)
@@ -238,48 +246,59 @@ export class ResourceQueryService {
 			.leftJoinAndSelect('resource.featuredDeal', 'featuredDeal', 'featuredDeal.status = :publishedDeal', {
 				publishedDeal: EDealStatus.PUBLISHED
 			})
+			.leftJoinAndSelect('featuredDeal.tags', 'featuredTag')
+			.leftJoinAndSelect('featuredDeal.image', 'featuredImage')
 
 			.leftJoinAndSelect('resource.tags', 'tag')
 			.leftJoinAndSelect('resource.sections', 'section')
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
 
-			.leftJoinAndSelect('resource.relatedManual', 'related')
-
-			.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedResource', {
-				publishedResource: EResourceStatus.PUBLISHED
-			})
-
 			.where('resource.slug = :slug', { slug: resourceSlug })
 			.orderBy('section.position', 'ASC')
 
-		qb.addSelect(subQ => {
-			return subQ
-				.select('ARRAY_AGG(dm.user_id)', 'helpful')
-				.from('daily_metrics', 'dm')
-				.where('dm.entity_id = resource.id')
-				.andWhere('dm.metric_type = :helpfulType')
-				.andWhere('dm.user_id IS NOT NULL')
-		}, 'resource_helpful').setParameter('helpfulType', EDailyMetricType.RESOURCE_HELPFUL)
+		const baseResource = await qb.getOne()
 
-		const raw = await qb.getRawAndEntities()
-
-		const resource = raw.entities[0]
-
-		if (!resource) {
+		if (!baseResource) {
 			throw new NotFoundException('Resource not found.')
 		}
 
-		const helpfulArray = raw.raw[0]?.resource_helpful ?? []
+		if (baseResource.relatedAutoMode === true) {
+			qb.leftJoinAndSelect('resource.relatedManual', 'related')
+				.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedResource', {
+					publishedResource: EResourceStatus.PUBLISHED
+				})
+				.leftJoinAndSelect('relatedTarget.tags', 'relatedTag')
+				.leftJoinAndSelect('relatedTarget.image', 'relatedImage')
 
-		const helpful = (helpfulArray || []).filter((id: any) => id !== null)
+			const resourceWithRelated = await qb.getOne()
 
-		if (resource.relatedManual?.length) {
-			resource.relatedManual = resource.relatedManual.filter(r => r.target)
+			if (!resourceWithRelated) {
+				throw new NotFoundException('Resource not found.')
+			}
+
+			if (resourceWithRelated.relatedManual?.length) {
+				resourceWithRelated.relatedManual = resourceWithRelated.relatedManual.filter(r => r.target)
+			}
+
+			return resourceWithRelated
 		}
 
-		return {
-			...resource,
-			helpful
-		}
+		return baseResource
+	}
+
+	async getResourceHelpful(resourceId: number) {
+		const raw = await this.resourceRepository.manager
+			.createQueryBuilder()
+			.select('ARRAY_AGG(dm.user_id)', 'helpful')
+			.from('daily_metrics', 'dm')
+			.where('dm.entity_id = :resourceId', { resourceId })
+			.andWhere('dm.metric_type = :helpfulType', {
+				helpfulType: EDailyMetricType.RESOURCE_HELPFUL
+			})
+			.andWhere('dm.user_id IS NOT NULL')
+			.getRawOne<{ helpful: (number | null)[] | null }>()
+
+		const helpfulArray = raw?.helpful ?? []
+		return (helpfulArray || []).filter((id): id is number => id !== null)
 	}
 }

@@ -5,22 +5,6 @@ import { IsPasswordsEqual } from '../../../decorators/is-passwords-equal.decorat
 
 export class RegistrationDto {
 	@ApiProperty({
-		description: 'New user first name',
-		example: 'Steve',
-		type: String
-	})
-	@IsString()
-	firstName: string
-
-	@ApiProperty({
-		description: 'New user last name',
-		example: 'Johnson',
-		type: String
-	})
-	@IsString()
-	lastName: string
-
-	@ApiProperty({
 		description: 'New user email',
 		example: 'example@gmail.com',
 		type: String,

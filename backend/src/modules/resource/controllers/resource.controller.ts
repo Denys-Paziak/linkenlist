@@ -19,8 +19,13 @@ export class ResourceController {
 	) {}
 
 	@Get(':slug')
-	async getOneDeal(@Param() params: ParamSlug) {
+	async getOneResource(@Param() params: ParamSlug) {
 		return await this.resourceQueryService.getOneResource(params.slug)
+	}
+
+	@Get(':id/helpful')
+	async getResourceHelpful(@Param() params: ParamId) {
+		return await this.resourceQueryService.getResourceHelpful(params.id)
 	}
 
 	@Get()

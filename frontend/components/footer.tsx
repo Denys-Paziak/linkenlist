@@ -91,25 +91,17 @@ export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }
                   </Link>
                 </li>
                 <li>
-                  <button
-                    onClick={() => (window.location.href = "/signin")}
+                  <Link
+                    href="/auth/signin?tab=login"
                     className="text-gray-300 hover:text-white transition-colors"
                   >
                     Sign In
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <Link href="/deals" className="text-gray-300 hover:text-white transition-colors">
                     Deals
                   </Link>
-                </li>
-                <li>
-                  <button
-                    onClick={() => (window.location.href = "/add-edit-link")}
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Add/Edit Link
-                  </button>
                 </li>
               </ul>
             </div>
@@ -159,11 +151,6 @@ export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }
                   <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
                     Contact Us
                   </Link>
-                </li>
-                <li>
-                  <a href="#donate" className="text-gray-300 hover:text-white transition-colors">
-                    Donate
-                  </a>
                 </li>
               </ul>
             </div>

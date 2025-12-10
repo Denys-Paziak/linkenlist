@@ -30,6 +30,8 @@ import { ResourceTag } from '../entities/ResourceTag.entity'
 import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
 import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
+import { Deal } from '../../deal/entities/Deal.entity'
+import { ResourceQueryService } from './resource-query.service'
 
 @Injectable()
 export class ResourceCommandService {
@@ -46,7 +48,8 @@ export class ResourceCommandService {
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
 		private readonly s3StorageService: S3StorageService,
-		private readonly metricsSystemService: MetricsSystemService
+		private readonly metricsSystemService: MetricsSystemService,
+		private readonly resourceQueryService: ResourceQueryService,
 	) {}
 
 	private async saveImage(file: IMultipartFile, resourceId: number): Promise<IUploadedImage> {
@@ -206,6 +209,19 @@ export class ResourceCommandService {
 				}
 			}
 
+			if (typeof dto.featuredDealId === "number") {
+				manager.getRepository(Deal).save({
+					id: dto.featuredDealId,
+					featuredDeal: { id: resourceId }
+				})
+			}
+			if (dto.featuredDealId === null && exists.featuredDeal) {
+				manager.getRepository(Deal).save({
+					id: exists.featuredDeal.id,
+					featuredDeal: null
+				})
+			}
+
 			return repo.save({
 				id: resourceId,
 				title: dto.title,
@@ -217,7 +233,7 @@ export class ResourceCommandService {
 				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				format: dto.format,
-				featuredDeal: dto.featuredDealId ? { id: dto.featuredDealId } : null,
+				featuredDeal: typeof dto.featuredDealId === "number" ? { id: dto.featuredDealId } : dto.featuredDealId,
 				image:
 					newImage !== undefined
 						? {
@@ -661,13 +677,17 @@ export class ResourceCommandService {
 		}
 	}
 
-	async addView(dealId: number) {
-		await this.metricsSystemService.addView(EDailyMetricType.RESOURCE_VIEW, dealId)
+	async addView(resourceId: number) {
+		await this.metricsSystemService.addView(EDailyMetricType.RESOURCE_VIEW, resourceId)
 	}
 
-	async addHelpful(dealId: number, userId: number) {
-		await this.metricsSystemService.addHelpful(EDailyMetricType.RESOURCE_HELPFUL, dealId, userId)
+	async addHelpful(resourceId: number, userId: number) {
+		const helpful = await this.resourceQueryService.getResourceHelpful(resourceId)
 
-		await this.resourceRepository.increment({ id: dealId }, 'totalHelpful', 1)
+		if (!helpful.includes(userId)) {
+			await this.metricsSystemService.addHelpful(EDailyMetricType.RESOURCE_HELPFUL, resourceId, userId)
+	
+			await this.resourceRepository.increment({ id: resourceId }, 'totalHelpful', 1)
+		}
 	}
 }

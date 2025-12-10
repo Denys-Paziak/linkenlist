@@ -157,9 +157,7 @@ export default async function DealDetailPage({
 
               <Comments />
 
-              {deal.relatedManual.length ? (
-                <Related data={deal.relatedManual} />
-              ) : null}
+              <Related dealData={deal} related={deal.relatedManual} autoMode={deal.relatedAutoMode} />
             </div>
           </main>
         </div>

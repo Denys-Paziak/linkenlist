@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { IsNull, Not } from 'typeorm'
 
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { ETokenType } from '../../../interfaces/ETokenType'
 import { UserCommandService } from '../../../modules/user/services/user-command.service'
 import { UserSystemService } from '../../../modules/user/services/user-system.service'
@@ -21,7 +22,7 @@ import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
 import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
-import { ERoleName } from '../../../interfaces/ERoleName'
+import { UserQueryService } from '../../user/services/user-query.service'
 
 @Injectable()
 export class AuthService {
@@ -35,10 +36,16 @@ export class AuthService {
 
 	async register(dto: RegistrationDto) {
 		let userExist = await this.userSystemService.findOne({
-			where: { privateEmail: dto.email }
+			where: { privateEmail: dto.email },
+			select: {
+				id: true,
+				password: true,
+				privateEmail: true,
+				emailVerified: true
+			}
 		})
 
-		if (userExist?.emailVerified) throw new ConflictException('This user already exists.')
+		if (userExist?.emailVerified && userExist.password) throw new ConflictException('This user already exists.')
 
 		const salt = await bcrypt.genSalt(10)
 
@@ -68,15 +75,10 @@ export class AuthService {
 
 		if (user) {
 			user = await this.userSystemService.update(user.id, {
-				firstName: dto.firstName,
-				lastName: dto.lastName,
-				username: username,
 				password: hashPassword
 			})
 		} else {
 			user = await this.userSystemService.save({
-				firstName: dto.firstName,
-				lastName: dto.lastName,
 				privateEmail: dto.email,
 				username: username,
 				password: hashPassword
@@ -127,6 +129,34 @@ export class AuthService {
 		}
 
 		await this.tokenService.deleteToken(tokenFromDB)
+
+		const userFromDB = await this.userSystemService.findOne({
+			where: {
+				id: tokenFromDB.user.id
+			},
+			select: {
+				id: true,
+				role: true
+			}
+		})
+
+		if (!userFromDB) {
+			return 'No such user found'
+		}
+
+		const refreshToken = await this.tokenService.generateRefreshToken({
+			id: userFromDB.id,
+			role: userFromDB.role
+		})
+		const accessToken = await this.tokenService.generateAccessToken({
+			id: userFromDB.id,
+			role: userFromDB.role
+		})
+
+		return {
+			accessToken,
+			refreshToken
+		}
 	}
 
 	async googleLogin(googleToken: string) {
@@ -223,7 +253,7 @@ export class AuthService {
 
 		return {
 			accessToken,
-			refreshToken
+			refreshToken,
 		}
 	}
 

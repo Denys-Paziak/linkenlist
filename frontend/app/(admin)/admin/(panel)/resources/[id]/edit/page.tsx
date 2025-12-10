@@ -8,10 +8,10 @@ import { SurfacingForm } from "./components/surfacing-form/surfacing-form";
 import { SeoForm } from "./components/seo-form";
 import { PublishingForm } from "./components/publishing-form";
 import { useQueryState, parseAsString } from "nuqs";
-import { SafeLink } from "../../../../../../../components/admin/safe-link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { IResource } from "../../../../../../../types/Resource";
+import { SafeLink } from "../../../../components/safe-link";
 
 export default function ResourceEditorPage() {
   const { id: resourceId } = useParams();

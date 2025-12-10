@@ -4,19 +4,27 @@ import type React from "react";
 
 import Link from "next/link";
 import Image from "next/image";
-import { fetcherUser } from "../../../../lib/fetcher";
-import { cn } from "../../../../lib/utils";
-import { IResourceListExtended } from "../../../../types/Resource";
+import { IDealListExtended } from "../types/Deal";
+import { fetcherUser } from "../lib/fetcher";
+import { cn } from "../lib/utils";
 
 interface CardProps {
-  data: IResourceListExtended;
+  data: IDealListExtended;
   isLoading?: boolean;
 }
 
-export function Card({ data, isLoading = false }: CardProps) {
+export function DealCard({ data, isLoading = false }: CardProps) {
+  const handleExternalClick = async () => {
+    try {
+      await fetcherUser(`/deals/${data.id}/add-view`, { method: "PATCH" });
+    } catch {}
+
+    window.open(data.outboundUrl, "_blank", "noopener,noreferrer");
+  };
+
   const handleCardClick = async () => {
     try {
-      await fetcherUser(`/resources/${data.id}/add-view`, { method: "PATCH" });
+      await fetcherUser(`/deals/${data.id}/add-view`, { method: "PATCH" });
     } catch {}
   };
 
@@ -30,7 +38,7 @@ export function Card({ data, isLoading = false }: CardProps) {
       {/* Link covering entire card */}
       <Link
         onClick={handleCardClick}
-        href={`/resources/${data.slug}`}
+        href={`/deals/${data.slug}`}
         className={cn(
           "absolute inset-0 z-10",
           isLoading && "pointer-events-none"
@@ -55,16 +63,15 @@ export function Card({ data, isLoading = false }: CardProps) {
         />
       </button>
 
-      {/* Is Featured  */}
-      {data.isFeatured ? (
-        <div
-          className="absolute top-2 right-2 z-20 w-6 h-6 bg-white/90 hover:bg-gray-100 rounded-sm shadow-sm flex items-center justify-center transition-colors duration-200"
-          aria-label="Is Featured"
-          title="Is Featured"
-        >
-          <Star className="w-4 h-4 fill-green-500 text-green-500 my-1 mx-1" />
-        </div>
-      ) : null}
+      {/* External Link Button */}
+      <button
+        type="button"
+        onClick={handleExternalClick}
+        className="absolute top-2 right-2 z-20 w-6 h-6 bg-white/90 hover:bg-gray-100 rounded-sm shadow-sm flex items-center justify-center transition-colors duration-200"
+        aria-label="Open external link"
+      >
+        <ExternalLink className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+      </button>
 
       {/* Image Container */}
       <div className="card-media-container p-2 pb-1">

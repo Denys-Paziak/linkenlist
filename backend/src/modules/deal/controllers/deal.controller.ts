@@ -23,6 +23,11 @@ export class DealController {
 		return await this.dealQueryService.getOneDeal(params.slug)
 	}
 
+	@Get(':id/helpful')
+	async getDealHelpful(@Param() params: ParamId) {
+		return await this.dealQueryService.getDealHelpful(params.id)
+	}
+
 	@Get()
 	async getAllDeals(@Query() query: GetAllDealsDto) {
 		return await this.dealQueryService.getAllDeals(query)

@@ -13,6 +13,7 @@ import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
 import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
+import { Resource } from '../../resource/entities/Resource.entity'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
 import { ChangePosContentSectionsDto } from '../dtos/ChangePosContentSections.dto'
@@ -23,6 +24,7 @@ import { SaveContentSectionDto } from '../dtos/SaveContentSection.dto'
 import { SaveOfferDetailsDto } from '../dtos/SaveOfferDetails.dto'
 import { SaveSEODto } from '../dtos/SaveSEO.dto'
 import { SetSelectRelatedDto } from '../dtos/SetSelectRelatedDto.dto'
+import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
 import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { SwitchShowOfferDetailsDto } from '../dtos/SwitchShowOfferDetails.dto'
 import { Deal } from '../entities/Deal.entity'
@@ -31,6 +33,7 @@ import { DealRelated } from '../entities/DealRelated.entity'
 import { DealSection } from '../entities/DealSection.entity'
 import { DealSectionAttachment } from '../entities/DealSectionAttachment.entity'
 import { DealTag } from '../entities/DealTag.entity'
+import { DealQueryService } from './deal-query.service'
 
 @Injectable()
 export class DealCommandService {
@@ -47,7 +50,8 @@ export class DealCommandService {
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
 		private readonly s3StorageService: S3StorageService,
-		private readonly metricsSystemService: MetricsSystemService
+		private readonly metricsSystemService: MetricsSystemService,
+		private readonly dealQueryService: DealQueryService
 	) {}
 
 	private async saveImage(file: IMultipartFile, dealId: number): Promise<IUploadedImage> {
@@ -205,19 +209,33 @@ export class DealCommandService {
 				}
 			}
 
+			if (typeof dto.featuredResourceId === 'number') {
+				manager.getRepository(Resource).save({
+					id: dto.featuredResourceId,
+					featuredDeal: { id: dealId }
+				})
+			}
+			if (dto.featuredResourceId === null && exists.featuredResource) {
+				manager.getRepository(Resource).save({
+					id: exists.featuredResource.id,
+					featuredDeal: null
+				})
+			}
+
 			return repo.save({
 				id: dealId,
 				title: dto.title,
 				seoMetaTitle: seoMetaTitle(),
 				slug: slug,
 				tags: tagsToSet,
-				tagsText: dto.tags?.join(" "),
+				tagsText: dto.tags?.join(' '),
 				teaser: dto.teaser === '' ? null : dto.teaser,
 				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				outboundUrl: dto.outboundUrl,
 				outboundUrlButtonLabel: dto.outboundUrlButtonLabel === '' ? 'Go to Deal' : dto.outboundUrlButtonLabel,
-				featuredResource: dto.featuredResourceId ? { id: dto.featuredResourceId } : null,
+				featuredResource:
+					typeof dto.featuredResourceId === 'number' ? { id: dto.featuredResourceId } : dto.featuredResourceId,
 				image:
 					newImage !== undefined
 						? {
@@ -432,6 +450,12 @@ export class DealCommandService {
 	async switchRelatedMode(dealId: number, dto: SwitchRelatedMode) {
 		await this.dealRepository.update(dealId, {
 			relatedAutoMode: dto.relatedAutoMode
+		})
+	}
+
+	async switchFeatured(resourceId: number, dto: SwitchFeaturedDto) {
+		await this.dealRepository.update(resourceId, {
+			isFeatured: dto.isFeatured
 		})
 	}
 
@@ -711,8 +735,12 @@ export class DealCommandService {
 	}
 
 	async addHelpful(dealId: number, userId: number) {
-		await this.metricsSystemService.addHelpful(EDailyMetricType.DEAL_HELPFUL, dealId, userId)
+		const helpful = await this.dealQueryService.getDealHelpful(dealId)
 
-		await this.dealRepository.increment({id: dealId}, "totalHelpful", 1)
+		if (!helpful.includes(userId)) {
+			await this.metricsSystemService.addHelpful(EDailyMetricType.DEAL_HELPFUL, dealId, userId)
+	
+			await this.dealRepository.increment({ id: dealId }, 'totalHelpful', 1)
+		}
 	}
 }

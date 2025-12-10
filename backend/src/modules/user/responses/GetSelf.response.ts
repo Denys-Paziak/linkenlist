@@ -14,7 +14,7 @@ export class GetSelfResponse {
         type: String,
         nullable: true
     })
-    firstName: string
+    firstName: string | null
 
     @ApiProperty({
         description: "User full name",
@@ -22,7 +22,7 @@ export class GetSelfResponse {
         type: String,
         nullable: true
     })
-    lastName: string
+    lastName: string | null
 
 	@ApiProperty({
 		description: "User email address",

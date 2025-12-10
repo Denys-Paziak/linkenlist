@@ -3,19 +3,19 @@ import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedCol
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { EUserStatus } from '../../../interfaces/EUserStatus'
 import { Listing } from '../../listing/entities/Listing.entity'
-import { Token } from '../../token/entities/Token.entity'
 import { DailyMetric } from '../../metrics/entities/Metrics.entity'
+import { Token } from '../../token/entities/Token.entity'
 
 @Entity({ name: 'users' })
 export class User {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	@Column({ name: 'first_name', type: 'varchar', length: 150 })
-	firstName: string
+	@Column({ name: 'first_name', type: 'varchar', length: 150, nullable: true })
+	firstName: string | null
 
-	@Column({ name: 'last_name', type: 'varchar', length: 150 })
-	lastName: string
+	@Column({ name: 'last_name', type: 'varchar', length: 150, nullable: true })
+	lastName: string | null
 
 	@Column({ name: 'username', type: 'varchar', length: 255, unique: true })
 	username: string

@@ -24,7 +24,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn, pickDirty } from "../../../../../../../../../lib/utils";
 import { MultiSelect } from "../../../../../../../../../components/ui/multi-select";
-import { TagsField } from "../../../../../../../../../components/admin/tags-field";
 import useSWR from "swr";
 import { IDeal } from "../../../../../../../../../types/Deal";
 import { fetcherAdmin } from "../../../../../../../../../lib/fetcher";
@@ -34,6 +33,7 @@ import { useParams } from "next/navigation";
 import { StatusChip } from "../../../../../../../../../components/ui/status-chip";
 import { IResourceSimple } from "../../../../../../../../../types/Resource";
 import { UploadImage } from "../../../../../../../../../components/ui/upload-image";
+import { TagsField } from "../../../../../../components/tags-field";
 
 export function BasicsForm() {
   const { id: dealId } = useParams();
@@ -134,7 +134,7 @@ export function BasicsForm() {
           slug: dirty.slug === "" ? null : dirty.slug,
         })
       );
-      
+
       if (!!imageFile) {
         formData.append("imageFile", imageFile as File);
       }
@@ -411,7 +411,9 @@ export function BasicsForm() {
                   }}
                   selected={form.watch("featuredResourceId") || null}
                   setSelected={(newValue: IResourceSimple) => {
-                    form.setValue("featuredResourceId", newValue.id);
+                    form.setValue("featuredResourceId", newValue.id, {
+                      shouldDirty: true,
+                    });
                     setFeaturedResource(newValue);
                   }}
                 />

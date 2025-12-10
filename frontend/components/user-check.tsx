@@ -3,16 +3,19 @@
 import { Loader2 } from "lucide-react";
 import useSWR from "swr";
 import { useUser } from "../contexts/user-context";
+import { useEffect } from "react";
 
 export function UserCheck({ children }: { children: JSX.Element }) {
-  const { data, isValidating } = useSWR("/users/self");
+  const { data, isLoading } = useSWR("/users/self");
   const { setUser } = useUser();
 
-  if (data) {
-    setUser(data);
-  }
+  useEffect(() => {
+    if (data) {
+      setUser(data);
+    }
+  }, [data])
 
-  if (isValidating) {
+  if (isLoading) {
     return (
       <div className="flex h-screen justify-center items-center">
         <Loader2 className="animate-spin w-12 h-12" />

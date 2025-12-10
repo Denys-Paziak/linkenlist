@@ -5,19 +5,20 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
 export function AdminCheck({ children }: { children: JSX.Element }) {
-  const { error, isValidating } = useSWR("/admin/users/self");
+  const { error, data } = useSWR("/admin/users/self");
   const router = useRouter();
 
   if (error) {
     router.push("/admin/signin");
   }
 
-  if (isValidating) {
-    return (
-      <div className="flex h-screen justify-center items-center">
-        <Loader2 className="animate-spin w-12 h-12" />
-      </div>
-    );
+  if (data) {
+    return <>{children}</>;
   }
-  return <>{children}</>;
+
+  return (
+    <div className="flex h-screen justify-center items-center">
+      <Loader2 className="animate-spin w-12 h-12" />
+    </div>
+  );
 }

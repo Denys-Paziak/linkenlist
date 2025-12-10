@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAdmin } from "../../contexts/admin-context";
+import { useAdmin } from "../../../../contexts/admin-context";
 
 export function HasUnsavedChanges() {
   const { hasUnsavedChanges } = useAdmin();

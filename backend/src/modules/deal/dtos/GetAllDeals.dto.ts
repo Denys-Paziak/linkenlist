@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { Type } from 'class-transformer'
-import { IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator'
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator'
 
 import { EDealCategory } from '../../../interfaces/EDealCategory'
 
@@ -37,4 +37,9 @@ export class GetAllDealsDto {
 		minimum: 1
 	})
 	page: number
+
+	@IsOptional()
+	@Type(() => Boolean)
+	@IsBoolean()
+	isFeatured?: boolean
 }

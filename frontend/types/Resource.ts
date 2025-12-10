@@ -108,17 +108,13 @@ export interface IResource {
   categories: EResourceCategory[];
   tags: IResourceTag[];
 
-  // Статуси/бейджі
   isFeatured: boolean;
 
-  // Content (Markdown секції)
   sections: IResourceSection[];
 
-  // Surfacing & related
   relatedAutoMode: boolean;
   relatedManual: IResourceRelated[];
 
-  // SEO & indexation
   seoMetaTitle: string;
   seoMetaDescription: string;
   ogImageMode: EOgImageMode;
@@ -126,23 +122,19 @@ export interface IResource {
   canonicalUrl: string | null;
   allowIndexing: boolean;
 
-  // Publishing workflow
   status: EResourceStatus;
-  publishAt: string | null; // ISO string
-  expireAt: string | null; // ISO string
-  lastPublishedAt: string | null; // ISO string
+  publishAt: string | null;
+  expireAt: string | null;
+  lastPublishedAt: string | null;
 
   commentsEnabled: boolean;
 
   featuredDeal: IDeal | null;
 
-  totalHelpful: number;
   helpful30d: number;
   totalViews: number;
   views30d: number;
   popularScore: number;
-
-  helpful: number[];
 
   createdAt: string;
   updatedAt: string;

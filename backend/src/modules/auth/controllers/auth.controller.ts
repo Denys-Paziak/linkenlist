@@ -22,7 +22,7 @@ export class AuthController {
 		private readonly configService: ConfigService
 	) {}
 
-	@Post('signup')
+	@Post('register')
 	@ApiOperation({ summary: 'User registration' })
 	@ApiResponse({ status: 201, description: 'User successfully registered' })
 	@ApiResponse({ status: 409, description: 'A user with this email address is already registered.' })
@@ -44,16 +44,41 @@ export class AuthController {
 	@ApiResponse({ status: 302, description: 'Email successfully confirmed' })
 	@ApiResponse({ status: 400, description: 'Invalid email confirmation token' })
 	async confirmEmail(@Query() query: ConfirmEmailDto, @Res({ passthrough: true }) response: FastifyReply) {
-		const message = await this.authService.confirmEmail(query.token)
+		const data = await this.authService.confirmEmail(query.token)
 
-		return response.redirect(this.configService.getOrThrow('LOGIN_FRONT_URL') + (message ? '?message=' + message : ''), 302)
+		if (typeof data === 'string') {
+			return response.redirect(
+				this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL') + (data ? '?message=' + data : ''),
+				302
+			)
+		} else {
+			response.setCookie('refresh_token', data.refreshToken, {
+				maxAge: 30 * 24 * 60 * 60,
+				httpOnly: true,
+				secure: this.configService.getOrThrow('NODE_ENV') === 'production',
+				sameSite: 'strict',
+				path: '/'
+			})
+			response.setCookie('access_token', data.accessToken, {
+				maxAge: 5 * 60,
+				httpOnly: true,
+				secure: this.configService.getOrThrow('NODE_ENV') === 'production',
+				sameSite: 'strict',
+				path: '/'
+			})
+
+			return response.redirect(this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL'), 302)
+		}
 	}
 
 	@Get('google/login')
 	@ApiOperation({ summary: 'Start Google OAuth2 flow' })
 	@ApiResponse({ status: 302, description: 'Redirect to Google consent screen' })
 	startGoogle(@Res({ passthrough: true }) response: FastifyReply) {
-		return response.redirect('/auth/google/start', 302)
+		return response.redirect(
+			this.configService.getOrThrow('SERVER_URL') + this.configService.getOrThrow('GOOGLE_LOGIN_PATH'),
+			302
+		)
 	}
 
 	@Get('google/callback')
@@ -155,8 +180,6 @@ export class AuthController {
 
 		return { ok: true }
 	}
-
-	async changeEmail() {}
 
 	@Post('refresh')
 	@ApiOperation({ summary: 'Update access and refresh tokens' })
