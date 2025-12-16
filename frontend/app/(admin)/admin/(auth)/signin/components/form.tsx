@@ -16,6 +16,7 @@ export function Form() {
 
   const [formError, setFormError] = useState<string | null>(null);
   console.log(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
+  console.log(process.env.NEXT_PUBLIC_API_URL)
   const form = useForm({
     resolver: zodResolver(adminLoginSchema),
     values: {
@@ -85,7 +86,7 @@ export function Form() {
         />
         <Input
           label="Password"
-          placeholder="Enter your email"
+          placeholder="Enter your password"
           type="password"
           {...form.register("password")}
           error={!!form.formState.errors.email}
