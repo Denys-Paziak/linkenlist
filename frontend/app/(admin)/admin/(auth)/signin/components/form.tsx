@@ -17,6 +17,7 @@ export function Form() {
   const [formError, setFormError] = useState<string | null>(null);
   console.log(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
   console.log(process.env.NEXT_PUBLIC_API_URL)
+  console.log(process.env.NEXT_PUBLIC_SITE_URL)
   const form = useForm({
     resolver: zodResolver(adminLoginSchema),
     values: {
