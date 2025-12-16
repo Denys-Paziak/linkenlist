@@ -596,259 +596,259 @@ export default function RealEstatePage () {
   return null
 }
 
-function RealEstate() {
-  const { getParam, setParam, removeParam } = useUrlState();
-  const [viewMode, setViewMode] = useState<"grid" | "map">(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth < 768 ? "grid" : "map";
-    }
-    return "grid";
-  });
-  const [bookmarkedListings, setBookmarkedListings] = useState<number[]>([]);
-  const [filters, setFilters] = useState<any>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+// function RealEstate() {
+//   const { getParam, setParam, removeParam } = useUrlState();
+//   const [viewMode, setViewMode] = useState<"grid" | "map">(() => {
+//     if (typeof window !== "undefined") {
+//       return window.innerWidth < 768 ? "grid" : "map";
+//     }
+//     return "grid";
+//   });
+//   const [bookmarkedListings, setBookmarkedListings] = useState<number[]>([]);
+//   const [filters, setFilters] = useState<any>({});
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const itemsPerPage = 50;
 
-  const selectedListingId = getParam("listing");
-  const selectedListing = useMemo(() => {
-    if (!selectedListingId) return null;
-    return (
-      mockListings.find(
-        (listing) => listing.id.toString() === selectedListingId
-      ) || null
-    );
-  }, [selectedListingId]);
+//   const selectedListingId = getParam("listing");
+//   const selectedListing = useMemo(() => {
+//     if (!selectedListingId) return null;
+//     return (
+//       mockListings.find(
+//         (listing) => listing.id.toString() === selectedListingId
+//       ) || null
+//     );
+//   }, [selectedListingId]);
 
-  const openPropertyDetails = (listing: any) => {
-    setParam("listing", listing.id.toString()); // Use push for opening modal
-  };
+//   const openPropertyDetails = (listing: any) => {
+//     setParam("listing", listing.id.toString()); // Use push for opening modal
+//   };
 
-  const closePropertyDetails = () => {
-    removeParam("listing"); // This will trigger back button behavior
-  };
+//   const closePropertyDetails = () => {
+//     removeParam("listing"); // This will trigger back button behavior
+//   };
 
-  const filteredListings = useMemo(() => {
-    return mockListings.filter((listing) => {
-      const searchQuery = filters.q || "";
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch =
-        searchQuery === "" ||
-        listing.address.toLowerCase().includes(searchLower) ||
-        listing.description.toLowerCase().includes(searchLower) ||
-        listing.tags.some((tag) => tag.toLowerCase().includes(searchLower));
+//   const filteredListings = useMemo(() => {
+//     return mockListings.filter((listing) => {
+//       const searchQuery = filters.q || "";
+//       const searchLower = searchQuery.toLowerCase();
+//       const matchesSearch =
+//         searchQuery === "" ||
+//         listing.address.toLowerCase().includes(searchLower) ||
+//         listing.description.toLowerCase().includes(searchLower) ||
+//         listing.tags.some((tag) => tag.toLowerCase().includes(searchLower));
 
-      let matchesListingTypeFilter = true;
-      if (filters.type === "sale") {
-        matchesListingTypeFilter =
-          listing.type === "sale" && listing.status === "active";
-      } else if (filters.type === "rent") {
-        matchesListingTypeFilter =
-          listing.type === "rent" && listing.status === "active";
-      } else if (filters.type === "inactive") {
-        matchesListingTypeFilter = listing.status === "inactive";
-      }
+//       let matchesListingTypeFilter = true;
+//       if (filters.type === "sale") {
+//         matchesListingTypeFilter =
+//           listing.type === "sale" && listing.status === "active";
+//       } else if (filters.type === "rent") {
+//         matchesListingTypeFilter =
+//           listing.type === "rent" && listing.status === "active";
+//       } else if (filters.type === "inactive") {
+//         matchesListingTypeFilter = listing.status === "inactive";
+//       }
 
-      let matchesFilters = true;
-      if (filters.price_min || filters.price_max) {
-        const price = Number.parseInt(
-          listing.rentPrice || listing.salePrice.replace(/[$,]/g, "")
-        );
-        if (filters.price_min) {
-          matchesFilters =
-            matchesFilters && price >= Number.parseInt(filters.price_min);
-        }
-        if (filters.price_max) {
-          matchesFilters =
-            matchesFilters && price <= Number.parseInt(filters.price_max);
-        }
-      }
-      if (filters.beds && filters.beds !== "any") {
-        matchesFilters =
-          matchesFilters && listing.beds >= Number.parseInt(filters.beds);
-      }
-      if (filters.baths && filters.baths !== "any") {
-        matchesFilters =
-          matchesFilters && listing.baths >= Number.parseInt(filters.baths);
-      }
+//       let matchesFilters = true;
+//       if (filters.price_min || filters.price_max) {
+//         const price = Number.parseInt(
+//           listing.rentPrice || listing.salePrice.replace(/[$,]/g, "")
+//         );
+//         if (filters.price_min) {
+//           matchesFilters =
+//             matchesFilters && price >= Number.parseInt(filters.price_min);
+//         }
+//         if (filters.price_max) {
+//           matchesFilters =
+//             matchesFilters && price <= Number.parseInt(filters.price_max);
+//         }
+//       }
+//       if (filters.beds && filters.beds !== "any") {
+//         matchesFilters =
+//           matchesFilters && listing.beds >= Number.parseInt(filters.beds);
+//       }
+//       if (filters.baths && filters.baths !== "any") {
+//         matchesFilters =
+//           matchesFilters && listing.baths >= Number.parseInt(filters.baths);
+//       }
 
-      return matchesSearch && matchesListingTypeFilter && matchesFilters;
-    });
-  }, [filters, bookmarkedListings]);
+//       return matchesSearch && matchesListingTypeFilter && matchesFilters;
+//     });
+//   }, [filters, bookmarkedListings]);
 
-  const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedListings = filteredListings.slice(startIndex, endIndex);
+//   const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
+//   const startIndex = (currentPage - 1) * itemsPerPage;
+//   const endIndex = startIndex + itemsPerPage;
+//   const paginatedListings = filteredListings.slice(startIndex, endIndex);
 
-  const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
-  };
+//   const handleFiltersChange = (newFilters: any) => {
+//     setFilters(newFilters);
+//     setCurrentPage(1);
+//   };
 
-  const toggleBookmark = (id: number) => {
-    setBookmarkedListings((prev) =>
-      prev.includes(id)
-        ? prev.filter((listingId) => listingId !== id)
-        : [...prev, id]
-    );
-  };
+//   const toggleBookmark = (id: number) => {
+//     setBookmarkedListings((prev) =>
+//       prev.includes(id)
+//         ? prev.filter((listingId) => listingId !== id)
+//         : [...prev, id]
+//     );
+//   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      setViewMode(window.innerWidth < 768 ? "grid" : "map");
-    };
+//   useEffect(() => {
+//     const handleResize = () => {
+//       setViewMode(window.innerWidth < 768 ? "grid" : "map");
+//     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+//     window.addEventListener("resize", handleResize);
+//     return () => window.removeEventListener("resize", handleResize);
+//   }, []);
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Search and Filters Component */}
-      <SearchAndFilters
-        onFiltersChange={handleFiltersChange}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        mapPropertyCount={filteredListings.length}
-      />
+//   return (
+//     <div className="min-h-screen bg-gray-50 flex flex-col">
+//       {/* Search and Filters Component */}
+//       <SearchAndFilters
+//         onFiltersChange={handleFiltersChange}
+//         viewMode={viewMode}
+//         onViewModeChange={setViewMode}
+//         mapPropertyCount={filteredListings.length}
+//       />
 
-      {/* Main Content Area */}
-      <div className="flex-1">
-        {viewMode === "map" ? (
-          <div className="flex h-full">
-            {/* Left side - Map */}
-            <div className="flex-1 bg-gray-200 relative">
-              <div
-                className="sticky bg-gray-200 md:rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
-                style={{
-                  top: "64px",
-                  height: "calc(100vh - 64px)",
-                  overflow: "hidden",
-                  pointerEvents: "none",
-                  userSelect: "none",
-                  touchAction: "none",
-                }}
-              >
-                <div className="text-center text-gray-500 p-4 max-w-full">
-                  <Map className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 text-gray-400" />
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-1">
-                    Interactive Map Coming Soon
-                  </h3>
-                  <p className="text-xs sm:text-sm mb-2 md:mb-4">
-                    Map integration in development
-                  </p>
-                  <div className="relative w-full max-w-[200px] sm:max-w-[300px] md:max-w-[400px] mx-auto aspect-[4/3] bg-gray-100 rounded">
-                    <img
-                      src="/placeholder.svg?height=300&width=400"
-                      alt="Map Placeholder"
-                      className="w-full h-full object-cover rounded"
-                      style={{ pointerEvents: "none" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+//       {/* Main Content Area */}
+//       <div className="flex-1">
+//         {viewMode === "map" ? (
+//           <div className="flex h-full">
+//             {/* Left side - Map */}
+//             <div className="flex-1 bg-gray-200 relative">
+//               <div
+//                 className="sticky bg-gray-200 md:rounded-lg flex items-center justify-center shadow-sm overflow-hidden"
+//                 style={{
+//                   top: "64px",
+//                   height: "calc(100vh - 64px)",
+//                   overflow: "hidden",
+//                   pointerEvents: "none",
+//                   userSelect: "none",
+//                   touchAction: "none",
+//                 }}
+//               >
+//                 <div className="text-center text-gray-500 p-4 max-w-full">
+//                   <Map className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 text-gray-400" />
+//                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-1">
+//                     Interactive Map Coming Soon
+//                   </h3>
+//                   <p className="text-xs sm:text-sm mb-2 md:mb-4">
+//                     Map integration in development
+//                   </p>
+//                   <div className="relative w-full max-w-[200px] sm:max-w-[300px] md:max-w-[400px] mx-auto aspect-[4/3] bg-gray-100 rounded">
+//                     <img
+//                       src="/placeholder.svg?height=300&width=400"
+//                       alt="Map Placeholder"
+//                       className="w-full h-full object-cover rounded"
+//                       style={{ pointerEvents: "none" }}
+//                     />
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
 
-            {/* Right side - Property Cards (Desktop only) */}
-            <div className="hidden md:flex flex-col bg-white border-l border-gray-200 w-[700px] min-h-screen">
-              <div className="flex-1 overflow-y-auto">
-                <div className="list-inner-map p-4 my-1.5">
-                  {paginatedListings.map((listing) => (
-                    <PropertyCard
-                      key={listing.id}
-                      listing={listing}
-                      onDetailsClick={() => openPropertyDetails(listing)}
-                      isBookmarked={bookmarkedListings.includes(listing.id)}
-                      onBookmarkToggle={() => toggleBookmark(listing.id)}
-                      showStatusBadges="inactive-only"
-                    />
-                  ))}
+//             {/* Right side - Property Cards (Desktop only) */}
+//             <div className="hidden md:flex flex-col bg-white border-l border-gray-200 w-[700px] min-h-screen">
+//               <div className="flex-1 overflow-y-auto">
+//                 <div className="list-inner-map p-4 my-1.5">
+//                   {paginatedListings.map((listing) => (
+//                     <PropertyCard
+//                       key={listing.id}
+//                       listing={listing}
+//                       onDetailsClick={() => openPropertyDetails(listing)}
+//                       isBookmarked={bookmarkedListings.includes(listing.id)}
+//                       onBookmarkToggle={() => toggleBookmark(listing.id)}
+//                       showStatusBadges="inactive-only"
+//                     />
+//                   ))}
 
-                  {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-2 mt-6 pb-4">
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
+//                   {totalPages > 1 && (
+//                     <div className="flex justify-center items-center gap-2 mt-6 pb-4">
+//                       <button
+//                         onClick={() =>
+//                           setCurrentPage((prev) => Math.max(prev - 1, 1))
+//                         }
+//                         disabled={currentPage === 1}
+//                         className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//                       >
+//                         Previous
+//                       </button>
 
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: Math.min(5, totalPages) },
-                          (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
+//                       <div className="flex items-center gap-1">
+//                         {Array.from(
+//                           { length: Math.min(5, totalPages) },
+//                           (_, i) => {
+//                             let pageNum;
+//                             if (totalPages <= 5) {
+//                               pageNum = i + 1;
+//                             } else if (currentPage <= 3) {
+//                               pageNum = i + 1;
+//                             } else if (currentPage >= totalPages - 2) {
+//                               pageNum = totalPages - 4 + i;
+//                             } else {
+//                               pageNum = currentPage - 2 + i;
+//                             }
 
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() => setCurrentPage(pageNum)}
-                                className={`px-3 py-2 text-sm font-medium rounded-md ${
-                                  currentPage === pageNum
-                                    ? "bg-[#002244] text-white"
-                                    : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          }
-                        )}
-                      </div>
+//                             return (
+//                               <button
+//                                 key={pageNum}
+//                                 onClick={() => setCurrentPage(pageNum)}
+//                                 className={`px-3 py-2 text-sm font-medium rounded-md ${
+//                                   currentPage === pageNum
+//                                     ? "bg-[#002244] text-white"
+//                                     : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+//                                 }`}
+//                               >
+//                                 {pageNum}
+//                               </button>
+//                             );
+//                           }
+//                         )}
+//                       </div>
 
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          )
-                        }
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full px-4 pt-4">
-            <div className="grid-container-realestate">
-              {paginatedListings.map((listing) => (
-                <PropertyCard
-                  key={listing.id}
-                  listing={listing}
-                  onDetailsClick={() => openPropertyDetails(listing)}
-                  isBookmarked={bookmarkedListings.includes(listing.id)}
-                  onBookmarkToggle={() => toggleBookmark(listing.id)}
-                  showStatusBadges="inactive-only"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+//                       <button
+//                         onClick={() =>
+//                           setCurrentPage((prev) =>
+//                             Math.min(prev + 1, totalPages)
+//                           )
+//                         }
+//                         disabled={currentPage === totalPages}
+//                         className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//                       >
+//                         Next
+//                       </button>
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         ) : (
+//           <div className="w-full px-4 pt-4">
+//             <div className="grid-container-realestate">
+//               {paginatedListings.map((listing) => (
+//                 <PropertyCard
+//                   key={listing.id}
+//                   listing={listing}
+//                   onDetailsClick={() => openPropertyDetails(listing)}
+//                   isBookmarked={bookmarkedListings.includes(listing.id)}
+//                   onBookmarkToggle={() => toggleBookmark(listing.id)}
+//                   showStatusBadges="inactive-only"
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         )}
+//       </div>
 
-      {/* Listing Modal - controlled by URL state */}
-      <ListingModal
-        listing={selectedListing}
-        isOpen={!!selectedListing}
-        onClose={closePropertyDetails}
-      />
-    </div>
-  );
-}
+//       {/* Listing Modal - controlled by URL state */}
+//       <ListingModal
+//         listing={selectedListing}
+//         isOpen={!!selectedListing}
+//         onClose={closePropertyDetails}
+//       />
+//     </div>
+//   );
+// }
