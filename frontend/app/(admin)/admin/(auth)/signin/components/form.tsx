@@ -86,7 +86,7 @@ export function Form() {
         <Input
           label="Password"
           placeholder="Enter your email"
-          type={"password"}
+          type="password"
           {...form.register("password")}
           error={!!form.formState.errors.email}
           errorMessage={form.formState.errors.email?.message}

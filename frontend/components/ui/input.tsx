@@ -75,7 +75,6 @@ const PasswordInput = forwardRef<HTMLInputElement, InputProps>(
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Hide password" : "Show password"}
             className="absolute inset-y-0 right-0 pr-4 flex items-center"
-            disabled={status === "loading"}
           >
             {showPassword ? (
               <Eye className="h-5 w-5 text-foreground/50" />

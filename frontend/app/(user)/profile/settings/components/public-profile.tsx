@@ -11,7 +11,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { publicProfileSchema } from "../../../../../lib/schemas/public-profile-schema";
-import { cn, pickDirty } from "../../../../../lib/utils";
+import { pickDirty } from "../../../../../lib/utils";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import { ErrorAlert } from "../../../../../components/ui/error-alert";
 import { mutate } from "swr";

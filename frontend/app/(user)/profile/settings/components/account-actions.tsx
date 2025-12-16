@@ -3,14 +3,11 @@
 import {
   ChevronDown,
   ChevronUp,
-  Eye,
-  EyeOff,
   Mail,
   Lock,
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "../../../../../components/ui/button";
 import {
   ButtonSubitStatus,
   ButtonSubmit,
@@ -20,7 +17,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { deleteAccountSchema } from "../../../../../lib/schemas/delete-account-schema";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import { mutate } from "swr";
-import { cn } from "../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../components/ui/error-alert";
 import { changePasswordSchema } from "../../../../../lib/schemas/change-password-schema";
 import { changeEmailSchema } from "../../../../../lib/schemas/change-email-schema";
@@ -76,7 +72,6 @@ function ChangeEmail({
   setActiveAction: (value: string | null) => void;
 }) {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
-  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({
@@ -186,7 +181,6 @@ function ChangePassword({
   setActiveAction: (value: string | null) => void;
 }) {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
-  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({
@@ -310,7 +304,6 @@ function DeleteAccount({
   setActiveAction: (value: string | null) => void;
 }) {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
-  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({
