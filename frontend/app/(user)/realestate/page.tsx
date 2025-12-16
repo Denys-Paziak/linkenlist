@@ -592,7 +592,11 @@ const mockListings = [
   },
 ];
 
-export default function RealEstatePage() {
+export default function RealEstatePage () {
+  return null
+}
+
+function RealEstate() {
   const { getParam, setParam, removeParam } = useUrlState();
   const [viewMode, setViewMode] = useState<"grid" | "map">(() => {
     if (typeof window !== "undefined") {
