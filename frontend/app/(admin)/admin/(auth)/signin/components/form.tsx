@@ -15,7 +15,7 @@ export function Form() {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
-
+  console.log(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
   const form = useForm({
     resolver: zodResolver(adminLoginSchema),
     values: {
