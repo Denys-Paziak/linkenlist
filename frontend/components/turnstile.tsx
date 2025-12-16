@@ -29,7 +29,6 @@ export function Turnstile({ onToken }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const onTokenRef = useRef(onToken);
 
-  // Оновлюємо ref, але НЕ перерендеримо віджет
   useEffect(() => {
     onTokenRef.current = onToken;
   }, [onToken]);
@@ -40,7 +39,7 @@ export function Turnstile({ onToken }: TurnstileProps) {
 
     const renderWidget = () => {
       if (!window.turnstile || !containerRef.current || cancelled) return;
-
+      console.log(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
       widgetId = window.turnstile.render(containerRef.current, {
         sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!,
         callback(token) {
@@ -80,7 +79,7 @@ export function Turnstile({ onToken }: TurnstileProps) {
         window.turnstile.remove(widgetId);
       }
     };
-  }, []); // <- порожній масив, віджет рендериться лише один раз
+  }, []);
 
   return <div ref={containerRef} />;
 }
