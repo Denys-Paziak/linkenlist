@@ -11,16 +11,31 @@ import useSWR from "swr";
 import { cn } from "../../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
 import { useQueryStateWithLocalStorage } from "../../../../../../../hooks/use-query-state-with-local-storage";
-import { parseAsInteger } from "nuqs";
+import { parseAsInteger, parseAsString } from "nuqs";
 import { Pagination } from "../../../../../../../components/ui/pagination";
 import { StatusChip } from "../../../../../../../components/ui/status-chip";
-import { IResourceList } from "../../../../../../../types/Resource";
+import {
+  EResourceStatus,
+  IResourceList,
+} from "../../../../../../../types/Resource";
 import { SafeLink } from "../../../../components/safe-link";
+import { useDebounce } from "use-debounce";
 
 export function List() {
-  const [searchTerm, setSearchTerm] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
+
+  const [searchQuery, setSearchQuery] = useQueryStateWithLocalStorage(
+    "/admin/resources?search",
+    {
+      defaultValue: "",
+      parse: (v) => parseAsString.parse(v),
+      sync: true,
+    }
+  );
+  const [debouncedSearch] = useDebounce(searchQuery, 700, {
+    leading: true,
+  });
 
   const [page, setPage] = useQueryStateWithLocalStorage(
     "/admin/resources?page",
@@ -40,17 +55,24 @@ export function List() {
     }
   );
 
-  const { data, mutate, isLoading, error } = useSWR<[IResourceList[], number]>(
-    "/admin/resources?" + `page=${page}` + "&" + `limit=${limit}`,
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
+
+  const key = `/admin/resources?${params.toString()}`;
+  const { data, mutate, isValidating, error } = useSWR<[IResourceList[], number]>(
+    key,
     {
       revalidateIfStale: true,
     }
   );
-
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
-  const handleCardClick = (id: number) => {
-    window.open("", "_blank");
+  const handleCardClick = (slug: string) => {
+    window.open(window.location.origin + "/resources/" + slug, "_blank");
   };
 
   const handleDeleteClick = (item: any) => {
@@ -73,16 +95,15 @@ export function List() {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md pointer-events-none ">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder={`Search resources...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search resources..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex w-fit rounded-md border border-input bg-background px-3 pr-2 pl-8 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring"
+            />
           </div>
         </CardHeader>
         {error ? (
@@ -91,18 +112,24 @@ export function List() {
           </div>
         ) : null}
         <CardContent>
-          {data && data[0].length !== 0  ? (
+          {data && data[0].length !== 0 ? (
             <div className="grid-container-resources">
               {data[0].map((item) => (
                 <div
                   key={item.id}
                   className={cn(
-                    "card group  relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
-                    isLoading && "pointer-events-none"
+                    "card group  relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg ",
+                    isValidating && "pointer-events-none",
+                    !isValidating &&
+                      item.status === EResourceStatus.PUBLISHED &&
+                      "cursor-pointer"
                   )}
                   onClick={() => {
-                    if (!isLoading) {
-                      handleCardClick(item.id);
+                    if (
+                      !isValidating &&
+                      item.status === EResourceStatus.PUBLISHED
+                    ) {
+                      handleCardClick(item.slug);
                     }
                   }}
                 >
@@ -197,7 +224,7 @@ export function List() {
                     </button>
                   </div>
 
-                  {isLoading ? (
+                  {isValidating ? (
                     <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
                       <Loader2 className="animate-spin w-11 h-11 text-white" />
                     </div>
@@ -205,11 +232,15 @@ export function List() {
                 </div>
               ))}
             </div>
-          ) : isLoading ? (
+          ) : isValidating ? (
             <div className="w-full max-h-full py-5 h-full flex-grow flex items-center justify-center">
               <Loader2 className="animate-spin w-14 h-14" />
             </div>
-          ) : null}
+          ) : (
+            <div className="w-full max-h-full py-5 h-full flex-grow flex items-center justify-center">
+              No resources found
+            </div>
+          )}
         </CardContent>
         <Pagination
           handlePageChange={handlePageChange}

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 
-import { TokenModule } from '../token/token.module'
+import { TurnstileModule } from '../turnstile/turnstile.module'
 import { UserModule } from '../user/user.module'
 
 import { AuthAdminController } from './controllers/auth-admin.controller'
@@ -8,7 +8,7 @@ import { AuthController } from './controllers/auth.controller'
 import { AuthService } from './services/auth.service'
 
 @Module({
-	imports: [UserModule, TokenModule],
+	imports: [UserModule, TurnstileModule],
 	controllers: [AuthController, AuthAdminController],
 	providers: [AuthService]
 })

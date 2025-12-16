@@ -43,7 +43,7 @@ export class Resource {
 
 	@OneToOne(() => ResourceImage, { cascade: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'image_id' })
-	image?: ResourceImage
+	image?: ResourceImage | null
 
 	@Column({ type: 'enum', enum: EResourceFormat, nullable: true })
 	format?: EResourceFormat

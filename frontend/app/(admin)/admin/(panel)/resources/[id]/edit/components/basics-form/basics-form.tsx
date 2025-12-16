@@ -43,6 +43,7 @@ import { IDealSimple } from "../../../../../../../../../types/Deal";
 import { StatusChip } from "../../../../../../../../../components/ui/status-chip";
 import { UploadImage } from "../../../../../../../../../components/ui/upload-image";
 import { TagsField } from "../../../../../../components/tags-field";
+import { Input } from "../../../../../../../../../components/ui/input";
 
 export function BasicsForm() {
   const { id: resourceId } = useParams();
@@ -210,26 +211,13 @@ export function BasicsForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Title *
-                  </label>
-                  <input
-                    placeholder="Enter resource title"
-                    {...form.register("title")}
-                    className={cn(
-                      "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                      form.formState.errors.title
-                        ? "border-destructive focus:border-destructive"
-                        : "border-input"
-                    )}
-                  />
-                  {form.formState.errors.title ? (
-                    <p className="mt-1 text-sm text-destructive">
-                      {form.formState.errors.title.message}
-                    </p>
-                  ) : null}
-                </div>
+                <Input
+                  label="Title *"
+                  placeholder="Enter resource title"
+                  {...form.register("title")}
+                  error={!!form.formState.errors.title}
+                  errorMessage={form.formState.errors.title?.message}
+                />
                 <p className="text-sm text-gray-500 mt-1">
                   {form.watch("title")?.length || 0}/140 characters
                 </p>
@@ -242,21 +230,12 @@ export function BasicsForm() {
                     <span className="text-sm text-gray-500">
                       linkenlist.com/resources/
                     </span>
-                    <input
+                    <Input
                       placeholder="url-slug"
                       {...form.register("slug")}
-                      className={cn(
-                        "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                        form.formState.errors.slug
-                          ? "border-destructive focus:border-destructive"
-                          : "border-input"
-                      )}
+                      error={!!form.formState.errors.slug}
+                      errorMessage={form.formState.errors.slug?.message}
                     />
-                    {form.formState.errors.slug ? (
-                      <p className="mt-1 text-sm text-destructive">
-                        {form.formState.errors.slug.message}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
@@ -267,24 +246,17 @@ export function BasicsForm() {
 
             {/* Description */}
             <div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Teaser / Subtitle
-                </label>
-                <Textarea
-                  placeholder="1-2 lines under title (used for resource card generation)"
-                  {...form.register("teaser")}
-                  rows={2}
-                  className={cn(
-                    form.formState.errors.teaser ? "border-destructive" : ""
-                  )}
-                />
-                {form.formState.errors.teaser ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.teaser.message}
-                  </p>
-                ) : null}
-              </div>
+              <Textarea
+                label="Teaser / Subtitle"
+                placeholder="1-2 lines under title (used for resource card generation)"
+                {...form.register("teaser")}
+                rows={2}
+                className={cn(
+                  form.formState.errors.teaser ? "border-destructive" : ""
+                )}
+                error={!!form.formState.errors.teaser}
+                errorMessage={form.formState.errors.teaser?.message}
+              />
               <p className="text-sm text-gray-500 mt-1">
                 {form.watch("teaser")?.length || 0}/200 characters
               </p>
@@ -293,9 +265,7 @@ export function BasicsForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Categories */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Categories *
-                </label>
+                <Label>Categories *</Label>
                 <MultiSelect
                   options={[...resourceCategories]}
                   value={form.watch("categories")}
@@ -320,9 +290,7 @@ export function BasicsForm() {
               </div>
               {/* Resource Type */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Resource Type *
-                </label>
+                <Label>Resource Type *</Label>
                 <Select
                   value={form.watch("format")}
                   onValueChange={(value) =>
@@ -335,8 +303,8 @@ export function BasicsForm() {
                   <SelectTrigger
                     className={cn(
                       form.formState.errors.format
-                        ? "border-destructive focus:border-destructive"
-                        : ""
+                        ? "border-destructive bg-background focus:border-destructive"
+                        : "bg-background border border-input"
                     )}
                   >
                     <SelectValue placeholder="Select a type" />

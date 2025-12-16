@@ -11,9 +11,9 @@ export class IsPasswordsEqual implements ValidatorConstraintInterface {
 		passwordConfirmation: string,
 		validationArguments?: ValidationArguments
 	): Promise<boolean> | boolean {
-		const dto = validationArguments?.object as RegistrationDto
+		const dto = validationArguments?.object as any
 
-		return passwordConfirmation === dto.password
+		return (passwordConfirmation === dto.password) || (passwordConfirmation === dto.newPassword)
 	}
 
 	defaultMessage(): string {

@@ -34,6 +34,7 @@ import { StatusChip } from "../../../../../../../../../components/ui/status-chip
 import { IResourceSimple } from "../../../../../../../../../types/Resource";
 import { UploadImage } from "../../../../../../../../../components/ui/upload-image";
 import { TagsField } from "../../../../../../components/tags-field";
+import { Input } from "../../../../../../../../../components/ui/input";
 
 export function BasicsForm() {
   const { id: dealId } = useParams();
@@ -204,26 +205,13 @@ export function BasicsForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Title *
-                  </label>
-                  <input
-                    placeholder="Enter deal title"
-                    {...form.register("title")}
-                    className={cn(
-                      "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                      form.formState.errors.title
-                        ? "border-destructive focus:border-destructive"
-                        : "border-input"
-                    )}
-                  />
-                  {form.formState.errors.title ? (
-                    <p className="mt-1 text-sm text-destructive">
-                      {form.formState.errors.title.message}
-                    </p>
-                  ) : null}
-                </div>
+                <Input
+                  label="Title *"
+                  placeholder="Enter deal title"
+                  {...form.register("title")}
+                  error={!!form.formState.errors.title}
+                  errorMessage={form.formState.errors.title?.message}
+                />
                 <p className="text-sm text-gray-500 mt-1">
                   {form.watch("title")?.length || 0}/140 characters
                 </p>
@@ -236,21 +224,12 @@ export function BasicsForm() {
                     <span className="text-sm text-gray-500">
                       linkenlist.com/deals/
                     </span>
-                    <input
+                    <Input
                       placeholder="url-slug"
                       {...form.register("slug")}
-                      className={cn(
-                        "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                        form.formState.errors.slug
-                          ? "border-destructive focus:border-destructive"
-                          : "border-input"
-                      )}
+                      error={!!form.formState.errors.slug}
+                      errorMessage={form.formState.errors.slug?.message}
                     />
-                    {form.formState.errors.slug ? (
-                      <p className="mt-1 text-sm text-destructive">
-                        {form.formState.errors.slug.message}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
@@ -261,24 +240,17 @@ export function BasicsForm() {
 
             {/* Description */}
             <div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Teaser / Subtitle
-                </label>
-                <Textarea
-                  placeholder="1-2 lines under title (used for deal card generation)"
-                  {...form.register("teaser")}
-                  rows={2}
-                  className={cn(
-                    form.formState.errors.teaser ? "border-destructive" : ""
-                  )}
-                />
-                {form.formState.errors.teaser ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.teaser.message}
-                  </p>
-                ) : null}
-              </div>
+              <Textarea
+                label="Teaser / Subtitle"
+                placeholder="1-2 lines under title (used for deal card generation)"
+                {...form.register("teaser")}
+                rows={2}
+                className={cn(
+                  form.formState.errors.teaser ? "border-destructive" : ""
+                )}
+                error={!!form.formState.errors.teaser}
+                errorMessage={form.formState.errors.teaser?.message}
+              />
               <p className="text-sm text-gray-500 mt-1">
                 {form.watch("teaser")?.length || 0}/200 characters
               </p>
@@ -287,9 +259,7 @@ export function BasicsForm() {
             {/* Categories */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Categories *
-                </label>
+                <Label>Categories *</Label>
                 <MultiSelect
                   options={[...dealCategories]}
                   value={form.watch("categories")}
@@ -323,46 +293,22 @@ export function BasicsForm() {
             <div>
               <Label>Primary Call-to-Action</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Button Label
-                  </label>
-                  <input
-                    placeholder="Go to Deal"
-                    {...form.register("outboundUrlButtonLabel")}
-                    className={cn(
-                      "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                      form.formState.errors.outboundUrlButtonLabel
-                        ? "border-destructive focus:border-destructive"
-                        : "border-input"
-                    )}
-                  />
-                  {form.formState.errors.outboundUrlButtonLabel ? (
-                    <p className="mt-1 text-sm text-destructive">
-                      {form.formState.errors.outboundUrlButtonLabel.message}
-                    </p>
-                  ) : null}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Outbound URL *
-                  </label>
-                  <input
-                    placeholder="https://example.com/deal"
-                    {...form.register("outboundUrl")}
-                    className={cn(
-                      "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                      form.formState.errors.outboundUrl
-                        ? "border-destructive focus:border-destructive"
-                        : "border-input"
-                    )}
-                  />
-                  {form.formState.errors.outboundUrl ? (
-                    <p className="mt-1 text-sm text-destructive">
-                      {form.formState.errors.outboundUrl.message}
-                    </p>
-                  ) : null}
-                </div>
+                <Input
+                  label="Button Label"
+                  placeholder="url-slug"
+                  {...form.register("outboundUrlButtonLabel")}
+                  error={!!form.formState.errors.outboundUrlButtonLabel}
+                  errorMessage={
+                    form.formState.errors.outboundUrlButtonLabel?.message
+                  }
+                />
+                <Input
+                  label="Outbound URL *"
+                  placeholder="https://example.com/deal"
+                  {...form.register("outboundUrl")}
+                  error={!!form.formState.errors.outboundUrl}
+                  errorMessage={form.formState.errors.outboundUrl?.message}
+                />
               </div>
             </div>
 
@@ -439,7 +385,6 @@ export function BasicsForm() {
                 disabled: "Disabled",
               }}
               className="font-semibold"
-              disabled={loading || !data}
             >
               <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
               Save

@@ -40,7 +40,10 @@ export function formatSmartSize(bytes: number): string {
   return `${bytes} B`;
 }
 
-export function isoToDatetimeLocal(iso?: string | null): string {
+export function isoToDatetimeLocal(
+  iso?: string | null,
+  inTime: boolean = true
+): string {
   if (!iso) return "";
 
   const date = new Date(iso);
@@ -54,25 +57,25 @@ export function isoToDatetimeLocal(iso?: string | null): string {
   const minutes = pad(date.getMinutes());
 
   // формат для input[type="datetime-local"]
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${year}-${month}-${day} ${inTime ? `T${hours}:${minutes}` : ""}`;
 }
 
 export const capitalize = (str: string) =>
   (str ?? "").length === 0 ? "" : str[0].toUpperCase() + str.slice(1);
 
 export function getFileTypeLabel(ext: string): string {
-	const normalized = ext.replace('.', '').toLowerCase()
+  const normalized = ext.replace(".", "").toLowerCase();
 
-	const map: Record<string, string> = {
-		pdf: 'PDF Document',
-		doc: 'Word Document',
-		docx: 'Word Document',
-		xls: 'Excel Spreadsheet',
-		xlsx: 'Excel Spreadsheet',
-		png: 'PNG Image',
-		jpg: 'JPEG Image',
-		jpeg: 'JPEG Image'
-	}
+  const map: Record<string, string> = {
+    pdf: "PDF Document",
+    doc: "Word Document",
+    docx: "Word Document",
+    xls: "Excel Spreadsheet",
+    xlsx: "Excel Spreadsheet",
+    png: "PNG Image",
+    jpg: "JPEG Image",
+    jpeg: "JPEG Image",
+  };
 
-	return map[normalized] ?? 'Unknown File'
+  return map[normalized] ?? "Unknown File";
 }

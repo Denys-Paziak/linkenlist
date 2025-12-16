@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { X, Search, ChevronDown } from "lucide-react";
+import { X, Search } from "lucide-react";
 import { capitalize } from "../../../../lib/utils";
-import { dealCategories } from "../../../../lib/schemas/deal/basic-form-schema";
 import {
   resourceCategories,
   resourceFormats,
 } from "../../../../lib/schemas/resources/basic-form-schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../../components/ui/select";
 
 interface MobileFilterDrawer {
   isOpen: boolean;
@@ -30,46 +35,9 @@ export function MobileFilterDrawer({
   selectedFormat,
   onFormatChange,
 }: MobileFilterDrawer) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleDropdownToggle = (dropdownName: string) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
-  };
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
   const resetFilters = () => {
     onCategoryChange("");
     onSearchChange("");
-    setActiveDropdown(null);
   };
 
   if (!isOpen) return null;
@@ -104,81 +72,43 @@ export function MobileFilterDrawer({
             />
           </div>
 
-          {/* Category Filter */}
-          <div className="relative">
-            <button
-              onClick={() => handleDropdownToggle("category")}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <span>{capitalize(selectedCategory) || "All Categories"}</span>
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                  activeDropdown === "category" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+          <Select
+            value={selectedCategory}
+            onValueChange={(value) => {
+              onCategoryChange(value);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {resourceCategories.map((item, i) => (
+                <SelectItem key={i} value={item}>
+                  {capitalize(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            {activeDropdown === "category" && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                {["All Categories", ...resourceCategories].map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      onCategoryChange(
-                        category === "All Categories" ? "" : category
-                      );
-                      setActiveDropdown(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                      selectedCategory === category ||
-                      (!selectedCategory && category === "All Categories")
-                        ? "bg-primary/10 text-primary"
-                        : ""
-                    }`}
-                  >
-                    {capitalize(category)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Format Filter */}
-          <div className="relative">
-            <button
-              onClick={() => handleDropdownToggle("format")}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <span>{capitalize(selectedFormat) || "All Formats"}</span>
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                  activeDropdown === "format" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {activeDropdown === "format" && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                {["All Categories", ...resourceFormats].map((format) => (
-                  <button
-                    key={format}
-                    onClick={() => {
-                      onFormatChange(format === "All Formats" ? "" : format);
-                      setActiveDropdown(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                      selectedFormat === format ||
-                      (!selectedFormat && format === "All Formats")
-                        ? "bg-primary/10 text-primary"
-                        : ""
-                    }`}
-                  >
-                    {capitalize(format)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Select
+            value={selectedFormat}
+            onValueChange={(value) => {
+              onFormatChange(value);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Formats</SelectItem>
+              {resourceFormats.map((item, i) => (
+                <SelectItem key={i} value={item}>
+                  {capitalize(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <button
             onClick={resetFilters}

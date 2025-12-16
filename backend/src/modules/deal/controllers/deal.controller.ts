@@ -10,6 +10,7 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetAllDealsDto } from '../dtos/GetAllDeals.dto'
 import { DealCommandService } from '../services/deal-command.service'
 import { DealQueryService } from '../services/deal-query.service'
+import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 
 @Controller('deals')
 export class DealController {
@@ -28,9 +29,12 @@ export class DealController {
 		return await this.dealQueryService.getDealHelpful(params.id)
 	}
 
+	@OptionalAuthorization()
 	@Get()
-	async getAllDeals(@Query() query: GetAllDealsDto) {
-		return await this.dealQueryService.getAllDeals(query)
+	async getAllDeals(@Req() request: FastifyRequest, @Query() query: GetAllDealsDto) {
+		const userFromToken = request.user as ITokenUser | undefined
+
+		return await this.dealQueryService.getAllDeals(query, userFromToken?.id)
 	}
 
 	@Throttle({ default: { limit: 1, ttl: 60 * 60 * 1000 } })

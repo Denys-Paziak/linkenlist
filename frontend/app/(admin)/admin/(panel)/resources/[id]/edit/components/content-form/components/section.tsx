@@ -32,6 +32,7 @@ import {
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { MarkdownSection } from "../../../../../../../../../../components/markdown-section/markdown-section";
 import { insertIconCommand } from "../../../../../../../../../../components/markdown-section/insert-icon-command";
+import { Input } from "../../../../../../../../../../components/ui/input";
 
 interface IFileData {
   id?: number;
@@ -170,22 +171,13 @@ export function Section({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
               {/* Title */}
-              <div>
-                <input
+              <div className="w-[216px]">
+                <Input
                   placeholder="Custom Section"
                   {...form.register("title")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.title
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
+                  error={!!form.formState.errors.title}
+                  errorMessage={form.formState.errors.title?.message}
                 />
-                {form.formState.errors.title ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.title.message}
-                  </p>
-                ) : null}
               </div>
               <Controller
                 control={form.control}

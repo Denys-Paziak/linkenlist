@@ -10,10 +10,9 @@ import {
 } from "react";
 import { SWRConfig } from "swr";
 import { fetcherUser } from "../lib/fetcher";
+import Script from "next/script";
 
 interface UserContextType {
-  user: any;
-  setUser: Dispatch<SetStateAction<undefined>>;
   showLoginModal: boolean;
   setShowLoginModal: Dispatch<SetStateAction<boolean>>;
 }
@@ -21,7 +20,6 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState();
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   return (
@@ -38,8 +36,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }}
     >
       <UserContext.Provider
-        value={{ user, setUser, showLoginModal, setShowLoginModal }}
+        value={{ showLoginModal, setShowLoginModal }}
       >
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={() => {
+            (window as any).turnstileLoaded = true;
+          }}
+          defer
+        />
         {children}
       </UserContext.Provider>
     </SWRConfig>

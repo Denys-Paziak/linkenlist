@@ -2,18 +2,10 @@
 
 import { Loader2 } from "lucide-react";
 import useSWR from "swr";
-import { useUser } from "../contexts/user-context";
-import { useEffect } from "react";
+import { IUser } from "../types/User";
 
 export function UserCheck({ children }: { children: JSX.Element }) {
-  const { data, isLoading } = useSWR("/users/self");
-  const { setUser } = useUser();
-
-  useEffect(() => {
-    if (data) {
-      setUser(data);
-    }
-  }, [data])
+  const { isLoading } = useSWR<IUser>("/users/self");
 
   if (isLoading) {
     return (

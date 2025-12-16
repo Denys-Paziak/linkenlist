@@ -2,9 +2,21 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Star } from "lucide-react";
-import { branchesOptions, categories } from "../../../../lib/schemas/link-form-schema";
+import { Search, Star } from "lucide-react";
+import {
+  branchesOptions,
+  categories,
+} from "../../../../lib/schemas/link-form-schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../../components/ui/select";
+import { capitalize } from "../../../../lib/utils";
+import useSWR from "swr";
+import { IUser } from "../../../../types/User";
 
 interface SearchBarProps {
   value: string;
@@ -20,6 +32,14 @@ interface SearchBarProps {
   onFavoritesToggle: (show: boolean) => void;
 }
 
+const sortOptions = [
+  { value: "default", label: "Default" },
+  { value: "most_used", label: "Most used (clicks last 30 days)" },
+  { value: "recently_verified", label: "Recently verified" },
+  { value: "alphabetical", label: "Alphabetical" },
+  { value: "official_first", label: "Official first (.mil/.gov)" },
+];
+
 export function SearchBar({
   value,
   onChange,
@@ -33,85 +53,18 @@ export function SearchBar({
   showFavoritesOnly = false,
   onFavoritesToggle,
 }: SearchBarProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [rightAlignedDropdowns, setRightAlignedDropdowns] = useState<
-    Set<string>
-  >(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
-  const branchRef = useRef<HTMLDivElement>(null);
-  const categoryRef = useRef<HTMLDivElement>(null);
-  const sortRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (activeDropdown) {
-      const checkDropdownPosition = () => {
-        const refs = {
-          branch: branchRef.current,
-          category: categoryRef.current,
-          sort: sortRef.current
-        };
-
-        const currentRef = refs[activeDropdown as keyof typeof refs];
-        if (currentRef) {
-          const rect = currentRef.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          const dropdownWidth = 200; // Approximate dropdown width
-
-          const newRightAligned = new Set(rightAlignedDropdowns);
-
-          if (rect.left + dropdownWidth > viewportWidth - 20) {
-            newRightAligned.add(activeDropdown);
-          } else {
-            newRightAligned.delete(activeDropdown);
-          }
-
-          setRightAlignedDropdowns(newRightAligned);
-        }
-      };
-
-      setTimeout(checkDropdownPosition, 10);
-    }
-  }, [activeDropdown]);
-
-  const handleDropdownToggle = (dropdownName: string) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
-  };
-
-  const sortOptions = [
-    { value: "", label: "Default" },
-    { value: "most_used", label: "Most used (clicks last 30 days)" },
-    { value: "recently_verified", label: "Recently verified" },
-    { value: "alphabetical", label: "Alphabetical" },
-    { value: "official_first", label: "Official first (.mil/.gov)" },
-  ];
+  const { data: user } = useSWR<IUser>("/users/self");
 
   const resetFilters = () => {
     if (onBranchChange) onBranchChange("");
     if (onCategoryChange) onCategoryChange("");
     if (onSortChange) onSortChange("");
     onChange("");
-    setActiveDropdown(null);
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 px-6 py-3">
-      <div ref={containerRef} className="space-y-4">
+      <div className="space-y-4">
         <div className="flex gap-3 items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -126,7 +79,7 @@ export function SearchBar({
             />
           </div>
 
-          {onFavoritesToggle && (
+          {user && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -150,117 +103,66 @@ export function SearchBar({
             </button>
           )}
 
-          {/* Branch Filter */}
-          <div className="relative" ref={branchRef}>
-            <button
-              onClick={() => handleDropdownToggle("branch")}
-              className="flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent min-w-[120px]"
-            >
-              <span>{selectedBranch || "Branch"}</span>
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </button>
-            {activeDropdown === "branch" && (
-              <div
-                className={`absolute top-full mt-1 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto ${
-                  rightAlignedDropdowns.has("branch") ? "right-0" : "left-0"
-                }`}
-              >
-                {["All", ...branchesOptions].map((branch) => (
-                  <button
-                    key={branch}
-                    onClick={() => {
-                      onBranchChange(branch === "All" ? "" : branch);
-                      setActiveDropdown(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                      selectedBranch === branch ||
-                      (!selectedBranch && branch === "All")
-                        ? "bg-primary/10 text-primary"
-                        : ""
-                    }`}
-                  >
-                    {branch}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Select
+            value={selectedBranch}
+            onValueChange={(value) => {
+              onBranchChange(value);
+            }}
+          >
+            <SelectTrigger className="w-fit">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branchesOptions.map((item, i) => (
+                <SelectItem key={i} value={item}>
+                  {capitalize(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          {/* Category Filter */}
-          <div className="relative" ref={categoryRef}>
-            <button
-              onClick={() => handleDropdownToggle("category")}
-              className="flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent min-w-[120px]"
-            >
-              <span>{selectedCategory || "All Categories"}</span>
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </button>
-            {activeDropdown === "category" && (
-              <div
-                className={`absolute top-full mt-1 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-x-hidden overflow-y-auto ${
-                  rightAlignedDropdowns.has("category") ? "right-0" : "left-0"
-                }`}
-              >
-                {["All Categories", ...categories].map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      onCategoryChange(category === "All Categories" ? "" : category);
-                      setActiveDropdown(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                      selectedCategory === category ||
-                      (!selectedCategory && category === "All Categories")
-                        ? "bg-primary/10 text-primary"
-                        : ""
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Select
+            value={selectedCategory}
+            onValueChange={(value) => {
+              onCategoryChange(value);
+            }}
+          >
+            <SelectTrigger className="w-fit">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((item, i) => (
+                <SelectItem key={i} value={item}>
+                  {capitalize(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          {/* Sort Filter */}
-          <div className="relative" ref={sortRef}>
-            <button
-              onClick={() => handleDropdownToggle("sort")}
-              className="flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent min-w-[120px]"
-            >
-              <span>
-                {selectedSort
-                  ? sortOptions.find((option) => option.value === selectedSort)
-                      ?.label
-                  : "Sort"}
-              </span>
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </button>
-            {activeDropdown === "sort" && (
-              <div
-                className={`absolute top-full mt-1 min-w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto ${
-                  rightAlignedDropdowns.has("sort") ? "right-0" : "left-0"
-                }`}
-              >
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      onSortChange(option.value);
-                      setActiveDropdown(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                      selectedSort === option.value
-                        ? "bg-primary/10 text-primary"
-                        : ""
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <Select
+            value={
+              selectedSort
+                ? sortOptions.find((option) => option.value === selectedSort)
+                    ?.value
+                : "Sort"
+            }
+            onValueChange={(value) => {
+              onSortChange(value);
+            }}
+          >
+            <SelectTrigger className="w-fit">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((item, i) => (
+                <SelectItem key={i} value={item.value}>
+                  {capitalize(item.label)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <button
             onClick={resetFilters}

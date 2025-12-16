@@ -36,6 +36,8 @@ import {
   resourceStatuses,
   publishingFormSchema,
 } from "../../../../../../../../lib/schemas/resources/publishing-form-schema";
+import { Label } from "../../../../../../../../components/ui/label";
+import { Input } from "../../../../../../../../components/ui/input";
 
 export function PublishingForm() {
   const { id: resourceId } = useParams();
@@ -138,9 +140,7 @@ export function PublishingForm() {
             {formError ? <ErrorAlert message={formError} /> : null}
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Status *
-              </label>
+              <Label>Status *</Label>
               <Controller
                 name="status"
                 control={form.control}
@@ -156,7 +156,9 @@ export function PublishingForm() {
                   >
                     <SelectTrigger
                       className={cn(
-                        form.formState.errors.status && "border-destructive"
+                        form.formState.errors.status
+                          ? "border-destructive bg-background focus:border-destructive"
+                          : "bg-background border border-input"
                       )}
                     >
                       <SelectValue placeholder="Select a category" />
@@ -180,48 +182,22 @@ export function PublishingForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Schedule Publish */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Schedule Publish
-                </label>
-                <input
-                  {...form.register("schedulePublish")}
-                  type="datetime-local"
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.schedulePublish
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.schedulePublish ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.schedulePublish.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Schedule Publish"
+                {...form.register("schedulePublish")}
+                type="date"
+                error={!!form.formState.errors.schedulePublish}
+                errorMessage={form.formState.errors.schedulePublish?.message}
+              />
 
               {/* Schedule Expire */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Schedule Expire
-                </label>
-                <input
-                  {...form.register("scheduleExpire")}
-                  type="datetime-local"
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.scheduleExpire
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.scheduleExpire ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.scheduleExpire.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Schedule Expire"
+                {...form.register("scheduleExpire")}
+                type="date"
+                error={!!form.formState.errors.scheduleExpire}
+                errorMessage={form.formState.errors.scheduleExpire?.message}
+              />
             </div>
 
             {/* Enable Comments */}
@@ -236,12 +212,12 @@ export function PublishingForm() {
                       checked={field.value}
                       onCheckedChange={(checked) => field.onChange(checked)}
                     />
-                    <label
+                    <Label
                       htmlFor="allowIndexing"
-                      className="text-sm text-gray-600"
+                      className="text-sm text-gray-600 mb-0"
                     >
                       Enable Comments for this Resource
-                    </label>
+                    </Label>
                   </>
                 )}
               />

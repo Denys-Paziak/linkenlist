@@ -25,6 +25,9 @@ export class Token {
 	@JoinColumn({ name: 'user_id' })
 	user: User
 
+	@Column({ type: 'jsonb', enum: ETokenType, nullable: true })
+	payload: any
+
 	@CreateDateColumn({ type: 'timestamptz', select: false, name: 'created_at' })
 	createdAt: Date
 

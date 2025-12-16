@@ -7,9 +7,12 @@ import { useState } from "react";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import { useUser } from "../../../../../contexts/user-context";
 import useSWR from "swr";
+import { IUser } from "../../../../../types/User";
 
 export function Helpful({ data }: { data: IDeal }) {
-  const { user, setShowLoginModal } = useUser();
+  const { data: user } = useSWR<IUser>("/users/self");
+
+  const { setShowLoginModal } = useUser();
 
   const { data: helpful } = useSWR<number[]>(`/deals/${data.id}/helpful`);
 

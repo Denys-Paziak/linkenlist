@@ -9,16 +9,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "../../../../lib/schemas/reset-password-schema";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
-import { cn } from "../../../../lib/utils";
 import { Button } from "../../../../components/ui/button";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
 import { useQueryState } from "nuqs";
+import { Input } from "../../../../components/ui/input";
 
 export default function ResetPasswordPage() {
   const [token] = useQueryState("token");
 
-  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -110,82 +108,30 @@ export default function ResetPasswordPage() {
                     className="space-y-4"
                   >
                     {formError ? <ErrorAlert message={formError} /> : null}
-
-                    <div>
-                      <label className="block text-sm font-medium text-[#222222] mb-2">
-                        New Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          {...form.register("password")}
-                          className={cn(
-                            "w-full px-4 py-2 border rounded-lg focus:outline-none transition-colors",
-                            form.formState.errors.password
-                              ? "border-destructive focus:border-destructive"
-                              : "border-gray-300 focus:border-primary"
-                          )}
-                          placeholder="Enter your new password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-foreground/50" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-foreground/50" />
-                          )}
-                        </button>
-                      </div>
-                      {form.formState.errors.password ? (
-                        <p
-                          id="password-error"
-                          className="mt-1 text-sm text-destructive"
-                        >
-                          {form.formState.errors.password.message}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-[#222222] mb-2">
-                        Confirm New Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          {...form.register("confirmPassword")}
-                          className={cn(
-                            "w-full px-4 py-2 border rounded-lg focus:outline-none transition-colors",
-                            form.formState.errors.confirmPassword
-                              ? "border-destructive focus:border-destructive"
-                              : "border-gray-300 focus:border-primary"
-                          )}
-                          placeholder="Re-enter your new password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-foreground/50" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-foreground/50" />
-                          )}
-                        </button>
-                      </div>
-                      {form.formState.errors.confirmPassword ? (
-                        <p
-                          id="confirmPassword-error"
-                          className="mt-1 text-sm text-destructive"
-                        >
-                          {form.formState.errors.confirmPassword.message}
-                        </p>
-                      ) : null}
-                    </div>
+                    <Input
+                      label="New Password"
+                      placeholder="Enter your new password"
+                      type="password"
+                      {...form.register("password")}
+                      onBlur={() => {
+                        form.trigger("password");
+                        if (form.watch("confirmPassword")) {
+                          form.trigger("confirmPassword");
+                        }
+                      }}
+                      error={!!form.formState.errors.password}
+                      errorMessage={form.formState.errors.password?.message}
+                    />
+                    <Input
+                      label=" Confirm New Password"
+                      placeholder="Confirm your new password"
+                      type="password"
+                      {...form.register("confirmPassword")}
+                      error={!!form.formState.errors.confirmPassword}
+                      errorMessage={
+                        form.formState.errors.confirmPassword?.message
+                      }
+                    />
 
                     <ButtonSubmit
                       status={status}

@@ -1,10 +1,22 @@
-import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import {
+	Column,
+	CreateDateColumn,
+	Entity,
+	Index,
+	JoinColumn,
+	OneToMany,
+	OneToOne,
+	PrimaryGeneratedColumn,
+	UpdateDateColumn
+} from 'typeorm'
 
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { EUserStatus } from '../../../interfaces/EUserStatus'
 import { Listing } from '../../listing/entities/Listing.entity'
 import { DailyMetric } from '../../metrics/entities/Metrics.entity'
 import { Token } from '../../token/entities/Token.entity'
+
+import { UserAvatar } from './UserAvatar.entity'
 
 @Entity({ name: 'users' })
 export class User {
@@ -20,8 +32,9 @@ export class User {
 	@Column({ name: 'username', type: 'varchar', length: 255, unique: true })
 	username: string
 
-	@Column({ name: 'avatar', type: 'varchar', length: 255, nullable: true })
-	avatar?: string | null
+	@OneToOne(() => UserAvatar, { cascade: true, nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'avatar_id' })
+	avatar?: UserAvatar | null
 
 	@Column({ name: 'professional_title', type: 'varchar', length: 255, nullable: true })
 	professionalTitle?: string | null
@@ -32,10 +45,10 @@ export class User {
 	@Column({ name: 'private_email', type: 'varchar', length: 255, unique: true })
 	privateEmail: string
 
-	@Column({ name: 'public_email', type: 'varchar', length: 255, unique: true, nullable: true })
+	@Column({ name: 'public_email', type: 'varchar', length: 255, nullable: true })
 	publicEmail?: string | null
 
-	@Column({ name: 'phone', type: 'varchar', length: 20, unique: true, nullable: true })
+	@Column({ name: 'phone', type: 'varchar', length: 20, nullable: true })
 	phone?: string | null
 
 	@Column({ type: 'varchar', length: 255, select: false, nullable: true })

@@ -30,6 +30,8 @@ import {
 } from "../../../../../../lib/schemas/link-form-schema";
 import { UploadImage } from "../../../../../../components/ui/upload-image";
 import { TagsField } from "../../../components/tags-field";
+import { Input } from "../../../../../../components/ui/input";
+import { Label } from "../../../../../../components/ui/label";
 
 export function CreateForm() {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
@@ -173,32 +175,17 @@ export function CreateForm() {
             {/* Title / Category / Branches */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Title *
-                </label>
-                <input
-                  placeholder="Enter card title"
-                  {...form.register("title")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.title
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.title ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.title.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Title *"
+                placeholder="Enter card title"
+                {...form.register("title")}
+                error={!!form.formState.errors.title}
+                errorMessage={form.formState.errors.title?.message}
+              />
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Category *
-                </label>
+                <Label>Category *</Label>
                 <Select
                   value={form.watch("category")}
                   onValueChange={(value) =>
@@ -208,8 +195,8 @@ export function CreateForm() {
                   <SelectTrigger
                     className={cn(
                       form.formState.errors.category
-                        ? "border-destructive focus:border-destructive"
-                        : ""
+                        ? "border-destructive bg-background focus:border-destructive"
+                        : "bg-background border border-input"
                     )}
                   >
                     <SelectValue placeholder="Select a category" />
@@ -231,9 +218,7 @@ export function CreateForm() {
 
               {/* Branches */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Branches *
-                </label>
+                <Label>Branches *</Label>
                 <MultiSelect
                   options={[...branchesOptions]}
                   value={form.watch("branches")}
@@ -256,51 +241,32 @@ export function CreateForm() {
             </div>
 
             {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Short Description
-              </label>
-              <Textarea
-                placeholder="Enter a brief description"
-                {...form.register("description")}
-                rows={3}
-                className={cn(
-                  form.formState.errors.description ? "border-destructive" : ""
-                )}
-              />
-              {form.formState.errors.description ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.description.message}
-                </p>
-              ) : null}
-            </div>
+            <Textarea
+              label="Short Description"
+              placeholder="Enter a brief description"
+              {...form.register("description")}
+              rows={3}
+              error={!!form.formState.errors.description}
+              errorMessage={form.formState.errors.description?.message}
+            />
 
             {/* URL / Tags */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* URL */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  URL *
-                </label>
-                <input
-                  placeholder="https://example.com"
-                  {...form.register("url")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.url
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.url ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.url.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="URL *"
+                placeholder="https://example.com"
+                {...form.register("url")}
+                error={!!form.formState.errors.url}
+                errorMessage={form.formState.errors.url?.message}
+              />
 
               {/* Tags */}
-              <TagsField form={form as any} url="/admin/links/tags" label="Tags *" />
+              <TagsField
+                form={form as any}
+                url="/admin/links/tags"
+                label="Tags *"
+              />
             </div>
 
             {/* Actions */}

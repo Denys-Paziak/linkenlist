@@ -145,7 +145,7 @@ export function SurfacingForm() {
                     checked={data?.relatedAutoMode}
                     onCheckedChange={switchMode}
                   />
-                  <Label htmlFor="autoRelated" className="text-sm">
+                  <Label htmlFor="autoRelated" className="text-sm mb-0">
                     Auto-select
                   </Label>
                   {renderStatusIcon(statusSwitchMode)}
@@ -192,7 +192,7 @@ export function SurfacingForm() {
                   checked={data?.isFeatured}
                   onCheckedChange={switchFeatured}
                 />
-                <Label htmlFor="autoRelated" className="text-sm">
+                <Label htmlFor="isFeatured" className="text-sm mb-0">
                   Featured
                 </Label>
                 {renderStatusIcon(statusFeatured)}

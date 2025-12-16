@@ -10,6 +10,7 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetAllResourcesDto } from '../dtos/GetAllResources.dto'
 import { ResourceCommandService } from '../services/resource-command.service'
 import { ResourceQueryService } from '../services/resource-query.service'
+import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 
 @Controller('resources')
 export class ResourceController {
@@ -28,9 +29,12 @@ export class ResourceController {
 		return await this.resourceQueryService.getResourceHelpful(params.id)
 	}
 
+	@OptionalAuthorization()
 	@Get()
-	async getAllDeals(@Query() query: GetAllResourcesDto) {
-		return await this.resourceQueryService.getAllResources(query)
+	async getAllDeals(@Req() request: FastifyRequest, @Query() query: GetAllResourcesDto) {
+		const userFromToken = request.user as ITokenUser | undefined
+
+		return await this.resourceQueryService.getAllResources(query, userFromToken?.id)
 	}
 
 	@Throttle({ default: { limit: 1, ttl: 60 * 60 * 1000 } })

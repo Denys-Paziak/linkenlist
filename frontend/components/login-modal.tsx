@@ -14,13 +14,13 @@ import { cn } from "../lib/utils";
 import { mutate } from "swr";
 
 export function LoginModal() {
-  const { showLoginModal, setShowLoginModal, user } = useUser();
+  const { showLoginModal, setShowLoginModal } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
-  console.log(user)
+
   const form = useForm({
     resolver: zodResolver(userLoginSchema),
     values: {

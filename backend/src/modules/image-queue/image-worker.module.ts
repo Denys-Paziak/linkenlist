@@ -14,6 +14,7 @@ import { getThrottlerConfig } from '../../configs/throttler.config'
 import { DealModule } from '../deal/deal.module'
 import { LinkModule } from '../link/link.module'
 import { ListingModule } from '../listing/listing.module'
+import { MailModule } from '../mail/mail.module'
 import { ResourceModule } from '../resource/resource.module'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 import { TokenModule } from '../token/token.module'
@@ -37,7 +38,8 @@ import { ImageProcessor } from './image.processor'
 		ResourceModule,
 		UserModule,
 		ListingModule,
-		TokenModule
+		TokenModule,
+		MailModule
 	],
 	providers: [ImageProcessor, S3StorageService]
 })

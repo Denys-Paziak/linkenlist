@@ -27,6 +27,7 @@ import { ScheduleWorkerModule } from './schedule-queue/schedule-worker.module'
 import { TokenModule } from './token/token.module'
 import { UserModule } from './user/user.module'
 import { MetricsModule } from './metrics/metrics.module'
+import { TurnstileModule } from './turnstile/turnstile.module';
 
 @Module({
 	imports: [
@@ -51,7 +52,8 @@ import { MetricsModule } from './metrics/metrics.module'
 		ImageQueueModule,
 		MetricsModule,
 		ScheduleQueueModule,
-		ScheduleWorkerModule
+		ScheduleWorkerModule,
+		TurnstileModule
 	],
 	controllers: [AppController],
 	providers: [

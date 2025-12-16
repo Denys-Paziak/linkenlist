@@ -29,7 +29,7 @@ export function List() {
   const [selectedCategory, setSelectedCategory] = useQueryStateWithLocalStorage(
     "/resources?category",
     {
-      defaultValue: "",
+      defaultValue: "all",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -38,7 +38,7 @@ export function List() {
   const [selectedFormat, setSelectedFormat] = useQueryStateWithLocalStorage(
     "/resources?format",
     {
-      defaultValue: "",
+      defaultValue: "all",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -69,8 +69,9 @@ export function List() {
   });
 
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
-  if (selectedCategory) params.set("category", selectedCategory);
-  if (selectedFormat) params.set("format", selectedFormat);
+  if (selectedCategory !== "all") params.set("category", selectedCategory);
+  if (selectedFormat !== "all") params.set("format", selectedFormat);
+  if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/resources?${params.toString()}`;
   const { data, isLoading, error } =

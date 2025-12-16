@@ -2,14 +2,12 @@
 
 import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
-import { useUser } from "@/contexts/user-context"
+import useSWR from "swr";
+import { IUser } from "../types/User";
 
-interface FooterProps {
-  forceStickyDisclaimer?: boolean // This prop will still be passed but its effect will be managed externally
-  hideDisclaimer?: boolean // Added hideDisclaimer prop to conditionally hide disclaimer
-}
+export function Footer() {
+  const { data: user } = useSWR<IUser>("/users/self");
 
-export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }: FooterProps) {
   const [isFooterVisible, setIsFooterVisible] = useState(false)
   const footerRef = useRef<HTMLElement>(null)
 
@@ -43,7 +41,7 @@ export function Footer({ forceStickyDisclaimer = false, hideDisclaimer = false }
     </>
   )
 
-  const shouldShowDisclaimer = true
+  const shouldShowDisclaimer = user?.footerDisclaimer
 
   return (
     <>

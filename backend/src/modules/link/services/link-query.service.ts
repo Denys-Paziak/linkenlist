@@ -4,8 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
 import { ELinkStatus } from '../../../interfaces/ELinkStatus'
-import { GetAllLinksAdminDto } from '../dtos/GetAllLinksAdmin.dto'
+import { UserFavoriteLink } from '../../favorite/entities/UserFavorite.entity'
 import { GetAllLinksDto } from '../dtos/GetAllLinks.dto'
+import { GetAllLinksAdminDto } from '../dtos/GetAllLinksAdmin.dto'
 import { Link } from '../entities/Link.entity'
 import { LinkTag } from '../entities/LinkTag.entity'
 
@@ -43,19 +44,12 @@ export class LinkQueryService {
 				'img.height'
 			])
 
-		if (query.status) {
-			qb.andWhere('l.status = :status', { status: query.status })
-		}
-		if (query.category) {
-			qb.andWhere('l.category = :category', { category: query.category })
-		}
-
 		if (query.search && query.search.trim() !== '') {
 			qb.andWhere(
 				`(
 					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.2
-					OR similarity(l.tags_text, :q) > 0.2
+					OR similarity(l.title, :q) > 0.05
+					OR similarity(l.tags_text, :q) > 0.05
 				)`,
 				{ q: query.search }
 			)
@@ -80,7 +74,7 @@ export class LinkQueryService {
 		return [items, total] as const
 	}
 
-	async getAllLinks(query: GetAllLinksDto) {
+	async getAllLinks(query: GetAllLinksDto, userId?: number) {
 		const page = Math.max(1, Number(query.page ?? 1))
 		const limit = Math.max(16, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
@@ -93,7 +87,7 @@ export class LinkQueryService {
 			`branch:${query.branch ?? 'all'}|` +
 			`sort:${query.sort ?? 'default'}`
 
-		if (!query.search) {
+		if (!query.search || query.isFavorite) {
 			const cached = await this.cacheManager.get<[Link[], number]>(cacheKey)
 			if (cached) return cached
 		}
@@ -112,6 +106,15 @@ export class LinkQueryService {
 		// BRANCH
 		if (query.branch) {
 			qb.andWhere(':branch = ANY(l.branches)', { branch: query.branch })
+		}
+
+		// FAVORITES FILTER
+		if (query.isFavorite) {
+			if (!userId) {
+				return [[], 0]
+			}
+
+			qb.innerJoin(UserFavoriteLink, 'ufd', 'ufd.linkId = l.id AND ufd.userId = :userId', { userId })
 		}
 
 		// SELECT LIST
@@ -139,8 +142,8 @@ export class LinkQueryService {
 			qb.andWhere(
 				`(
 					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.15
-					OR similarity(l.tags_text, :q) > 0.15
+					OR similarity(l.title, :q) > 0.05
+					OR similarity(l.tags_text, :q) > 0.05
 				)`,
 				{ q: query.search }
 			)
@@ -201,6 +204,14 @@ export class LinkQueryService {
 			countQb.andWhere(':branch = ANY(l.branches)', { branch: query.branch })
 		}
 
+		if (query.isFavorite) {
+			if (!userId) {
+				return [[], 0]
+			}
+
+			countQb.innerJoin(UserFavoriteLink, 'ufd', 'ufd.linkId = l.id AND ufd.userId = :userId', { userId })
+		}
+
 		if (query.search && query.search.trim() !== '') {
 			countQb.andWhere(
 				`(
@@ -217,7 +228,7 @@ export class LinkQueryService {
 		const items = await qb.getMany()
 		const result: [Link[], number] = [items, Number(cnt?.cnt || 0)]
 
-		if (!query.search) {
+		if (!query.search || query.isFavorite) {
 			await this.cacheManager.set(cacheKey, result, 60000)
 		}
 

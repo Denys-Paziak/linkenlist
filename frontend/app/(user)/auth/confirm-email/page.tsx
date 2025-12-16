@@ -55,7 +55,7 @@ export default function ConfirmEmail() {
         </p>
 
         <Link
-          href="/profile"
+          href="/profile/settings"
           className="inline-block w-full py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
         >
           Go to Profile

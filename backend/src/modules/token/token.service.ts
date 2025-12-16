@@ -28,14 +28,18 @@ export class TokenService {
 		return new Date(token.expiresIn).getTime() > new Date().getTime()
 	}
 
-	async deleteToken(token: Token) {
-		await this.tokenRepository.delete({ type: token.type, user: token.user })
+	async deleteOneToken(tokenId: number) {
+		await this.tokenRepository.delete({ id: tokenId })
 	}
 
-	async generateRefreshToken(payload: ITokenUser, deleteToken?: string) {
+	async deleteAllUserTokens(userId: number, tokenType: ETokenType) {
+		await this.tokenRepository.delete({ type: tokenType, user: { id: userId } })
+	}
+
+	async generateRefreshToken(payload: ITokenUser, deleteToken?: string, expiresIn?: string) {
 		const token = await this.jwtService.signAsync(payload, {
 			secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET_KEY'),
-			expiresIn: '30d'
+			expiresIn: expiresIn || '30d'
 		})
 
 		if (deleteToken) {
@@ -106,6 +110,23 @@ export class TokenService {
 			expiresIn
 		})
 
-		return { token, expiresIn: 5 }
+		return { token, expiresIn: '5 min.' }
+	}
+
+	async generateChangeEmailConfirmedToken(userId: number, newEmail: string) {
+		const token = uuid()
+		const expiresIn = new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
+
+		await this.tokenRepository.delete({ type: ETokenType.CONFIRM_EMAIL, user: { id: userId } })
+
+		await this.tokenRepository.save({
+			tokenOrCode: token,
+			type: ETokenType.CONFIRM_EMAIL,
+			user: { id: userId },
+			expiresIn,
+			payload: { newEmail }
+		})
+
+		return { token, expiresIn: '24 hours.' }
 	}
 }

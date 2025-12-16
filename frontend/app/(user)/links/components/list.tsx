@@ -32,7 +32,7 @@ export function List() {
   const [selectedBranch, setSelectedBranch] = useQueryStateWithLocalStorage(
     "/links?branch",
     {
-      defaultValue: "",
+      defaultValue: "all",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -41,7 +41,7 @@ export function List() {
   const [selectedCategory, setSelectedCategory] = useQueryStateWithLocalStorage(
     "/links?category",
     {
-      defaultValue: "",
+      defaultValue: "all",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -50,7 +50,7 @@ export function List() {
   const [selectedSort, setSelectedSort] = useQueryStateWithLocalStorage(
     "/links?sort",
     {
-      defaultValue: "",
+      defaultValue: "default",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -81,9 +81,9 @@ export function List() {
   });
 
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
-  if (selectedBranch) params.set("branch", selectedBranch);
-  if (selectedCategory) params.set("category", selectedCategory);
-  if (selectedSort) params.set("sort", selectedSort);
+  if (selectedBranch !== "all") params.set("branch", selectedBranch);
+  if (selectedCategory !== "all") params.set("category", selectedCategory);
+  if (selectedSort !== "default") params.set("sort", selectedSort);
 
   const key = `/links?${params.toString()}`;
   const { data, isLoading, error } = useSWR<[ILink[], number]>(key);

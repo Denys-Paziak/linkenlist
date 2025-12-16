@@ -7,9 +7,12 @@ import { fetcherUser } from "../../../../../lib/fetcher";
 import { useUser } from "../../../../../contexts/user-context";
 import { IResource } from "../../../../../types/Resource";
 import useSWR from "swr";
+import { IUser } from "../../../../../types/User";
 
 export function Helpful({ data }: { data: IResource }) {
-  const { user, setShowLoginModal } = useUser();
+  const { data: user } = useSWR<IUser>("/users/self");
+
+  const { setShowLoginModal } = useUser();
 
   const {data: helpful} = useSWR<number[]>(`/resources/${data.id}/helpful`)
 

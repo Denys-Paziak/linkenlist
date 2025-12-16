@@ -27,7 +27,7 @@ export class MailService {
 		})
 	}
 
-	async sendEmailVerified(to: string, token: string, expiresInMinutes = 15) {
+	async sendEmailVerified(to: string, token: string, confirmUrl: string, expires: string = "15 min.") {
 		await this.mailerService.sendMail({
 			to,
 			subject: 'Email verified',
@@ -35,8 +35,8 @@ export class MailService {
 				<!doctype html>
 				<html>
 				<body style="font-family:Arial,Helvetica,sans-serif;line-height:1.5">
-					<a href='${this.configService.getOrThrow('CONFIRM_EMAIL_URL')}?token=${token}'>Confirm email</a>
-					<p>Expiration time: ${expiresInMinutes} min.</p>
+					<a href='${confirmUrl}?token=${token}'>Confirm email</a>
+					<p>Expiration time: ${expires}</p>
 					<hr />
 					<small>If you did not register an account, simply ignore this email.</small>
 				</body>

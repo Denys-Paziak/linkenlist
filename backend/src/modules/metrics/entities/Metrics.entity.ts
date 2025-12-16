@@ -17,7 +17,7 @@ export class DailyMetric {
 	entityId: number
 
 	@Index()
-	@ManyToOne(() => User, u => u.dailyMetric, { nullable: true })
+	@ManyToOne(() => User, u => u.dailyMetric, { nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'user_id' })
 	user: User | null
 

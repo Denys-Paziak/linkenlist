@@ -30,6 +30,8 @@ export function ContentForm() {
   );
 
   const addSection = async () => {
+    setFormError(null);
+
     setStatus("loading");
     try {
       const newSection: IDealSection = await fetcherAdmin(

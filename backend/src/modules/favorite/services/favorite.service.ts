@@ -1,4 +1,111 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+
+import { UserFavoriteDeal, UserFavoriteLink, UserFavoriteListing, UserFavoriteResource } from '../entities/UserFavorite.entity'
 
 @Injectable()
-export class FavoriteService {}
+export class FavoriteService {
+	constructor(
+		@InjectRepository(UserFavoriteDeal)
+		private readonly favoriteDealRepository: Repository<UserFavoriteDeal>,
+		@InjectRepository(UserFavoriteResource)
+		private readonly favoriteResourceRepository: Repository<UserFavoriteResource>,
+		@InjectRepository(UserFavoriteListing)
+		private readonly favoriteListingRepository: Repository<UserFavoriteListing>,
+		@InjectRepository(UserFavoriteLink)
+		private readonly favoriteLinkRepository: Repository<UserFavoriteLink>
+	) {}
+
+	async getFavoriteDeals(userId: number) {
+		const data = await this.favoriteDealRepository.find({
+			where: { user: { id: userId } },
+			relations: ['user', 'deal']
+		})
+
+		return data.map(item => item.deal.id)
+	}
+
+	async addFavoriteDeals(userId: number, dealId: number) {
+		await this.favoriteDealRepository.insert({
+			deal: { id: dealId },
+			user: { id: userId }
+		})
+	}
+
+	async deleteFavoriteDeals(userId: number, dealId: number) {
+		await this.favoriteDealRepository.delete({
+			deal: { id: dealId },
+			user: { id: userId }
+		})
+	}
+
+	async getFavoriteResources(userId: number) {
+		const data = await this.favoriteResourceRepository.find({
+			where: { user: { id: userId } },
+			relations: ['user', 'resource']
+		})
+
+		return data.map(item => item.resource.id)
+	}
+
+	async addFavoriteResources(userId: number, resourceId: number) {
+		await this.favoriteResourceRepository.insert({
+			resource: { id: resourceId },
+			user: { id: userId }
+		})
+	}
+
+	async deleteFavoriteResources(userId: number, resourceId: number) {
+		await this.favoriteResourceRepository.delete({
+			resource: { id: resourceId },
+			user: { id: userId }
+		})
+	}
+
+	async getFavoriteListings(userId: number) {
+		const data = await this.favoriteListingRepository.find({
+			where: { user: { id: userId } },
+			relations: ['user', 'listing']
+		})
+
+		return data.map(item => item.listing.id)
+	}
+
+	async addFavoriteListings(userId: number, listingId: number) {
+		await this.favoriteListingRepository.insert({
+			listing: { id: listingId },
+			user: { id: userId }
+		})
+	}
+
+	async deleteFavoriteListings(userId: number, listingId: number) {
+		await this.favoriteListingRepository.delete({
+			listing: { id: listingId },
+			user: { id: userId }
+		})
+	}
+
+	async getFavoriteLinks(userId: number) {
+		const data = await this.favoriteLinkRepository.find({
+			where: { user: { id: userId } },
+			relations: ['user', 'link']
+		})
+
+		return data.map(item => item.link.id)
+	}
+
+	async addFavoriteLinks(userId: number, linkId: number) {
+		await this.favoriteLinkRepository.insert({
+			link: { id: linkId },
+			user: { id: userId }
+		})
+	}
+
+	async deleteFavoriteLinks(userId: number, linkId: number) {
+		await this.favoriteLinkRepository.delete({
+			link: { id: linkId },
+			user: { id: userId }
+		})
+	}
+}

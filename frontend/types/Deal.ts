@@ -85,6 +85,7 @@ export interface IDealList {
   title: string | null;
   image: IDealImage | null;
   categories: EDealCategory[];
+  slug: string;
   status: EDealStatus;
   updatedAt: string;
 }

@@ -47,6 +47,14 @@ fieldset:disabled {
   @apply pointer-events-none opacity-50 select-none
 }
 
+* {
+  cursor: inherit;
+}
+
+a {
+  cursor: pointer;
+}
+
 html, body {
   overflow: visible;
 }

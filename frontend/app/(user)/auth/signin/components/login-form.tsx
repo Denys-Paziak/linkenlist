@@ -10,14 +10,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema } from "../../../../../lib/schemas/user-login-schema";
 import { ErrorAlert } from "../../../../../components/ui/error-alert";
-import { Eye, EyeOff } from "lucide-react";
-import { cn } from "../../../../../lib/utils";
 import { mutate } from "swr";
+import { Input } from "../../../../../components/ui/input";
 
-export function LoginFrom() {
+export function LoginFrom({ token }: { token: string | null }) {
   const router = useRouter();
 
-  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -49,6 +47,7 @@ export function LoginFrom() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "cf-turnstile-response": token || "",
           },
           credentials: "include",
           body: JSON.stringify(values),
@@ -56,17 +55,22 @@ export function LoginFrom() {
       );
 
       if (!response.ok) {
-        throw new Error();
+        const data = await response.json();
+
+        throw new Error(data.message);
       }
 
-      mutate("/users/self").then(() => {
-        setStatus("success");
-        router.push("/");
-      })
-    } catch {
+      setStatus("success");
+      router.push("/");
+      mutate("/users/self");
+    } catch (err) {
       setFormError(
-        "Login failed. Please check your credentials and try again."
+        (err as any).message ||
+          "Login failed. Please check your credentials and try again."
       );
+      if (window.turnstile?.reset) {
+        window.turnstile.reset();
+      }
       setStatus("error");
     }
   };
@@ -82,63 +86,22 @@ export function LoginFrom() {
     <form onSubmit={(e) => e.preventDefault()} noValidate>
       <fieldset disabled={status === "loading"} className="space-y-3">
         {formError ? <ErrorAlert message={formError} /> : null}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Email Address
-          </label>
-          <input
-            type="email"
-            {...form.register("email")}
-            className={cn(
-              "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
-              form.formState.errors.email
-                ? "border-destructive focus:border-destructive"
-                : "border-gray-300 focus:border-primary"
-            )}
-            placeholder="Enter your email"
-          />
-          {form.formState.errors.email ? (
-            <p id="email-error" className="mt-1 text-sm text-destructive">
-              {form.formState.errors.email.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              {...form.register("password")}
-              className={cn(
-                "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
-                form.formState.errors.password
-                  ? "border-destructive focus:border-destructive"
-                  : "border-gray-300 focus:border-primary"
-              )}
-              placeholder="Enter your password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5 text-foreground/50" />
-              ) : (
-                <Eye className="h-5 w-5 text-foreground/50" />
-              )}
-            </button>
-          </div>
-          {form.formState.errors.password ? (
-            <p id="password-error" className="mt-1 text-sm text-destructive">
-              {form.formState.errors.password.message}
-            </p>
-          ) : null}
-        </div>
-
+        <Input
+          label="Email Address"
+          placeholder="Enter your email"
+          type="email"
+          {...form.register("email")}
+          error={!!form.formState.errors.email}
+          errorMessage={form.formState.errors.email?.message}
+        />
+        <Input
+          label="Password"
+          placeholder="Enter your password"
+          type="password"
+          {...form.register("password")}
+          error={!!form.formState.errors.password}
+          errorMessage={form.formState.errors.password?.message}
+        />
         <ButtonSubmit
           type="button"
           status={status}

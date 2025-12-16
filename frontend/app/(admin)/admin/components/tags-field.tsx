@@ -3,7 +3,8 @@
 import useSWR from "swr";
 import { InputMultiSelect } from "@/components/ui/input-multi-select";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
-import { ILinksTag } from "../../types/Link";
+import { Label } from "../../../../components/ui/label";
+import { ILinksTag } from "../../../../types/Link";
 
 type AnyWithTags = FieldValues & { image?: string };
 
@@ -24,9 +25,7 @@ export function TagsField({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-foreground mb-2">
-        {label}
-      </label>
+      <Label>{label}</Label>
       <Controller
         name={"tags"}
         control={form.control}

@@ -57,7 +57,7 @@ export function MultiSelect({
           type="button"
           disabled={disabled}
           className={cn(
-            "flex h-auto min-h-[40px] w-full items-center justify-between rounded-md border border-input bg-background px-3 py-[.4375rem] text-sm ring-offset-background",
+            "flex h-auto min-h-[42px] w-full items-center justify-between rounded-md border border-input bg-background px-3 py-[.4375rem] text-sm ring-offset-background",
             "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50",
             className

@@ -14,6 +14,7 @@ import {
 } from "../../../../components/ui/button-submit";
 import { cn } from "../../../../lib/utils";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
+import { Input } from "../../../../components/ui/input";
 
 export default function ForgotPasswordPage() {
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
@@ -103,30 +104,14 @@ export default function ForgotPasswordPage() {
                     className="space-y-3"
                   >
                     {formError ? <ErrorAlert message={formError} /> : null}
-                    <div>
-                      <label className="block text-sm font-medium text-[#222222] mb-3">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        {...form.register("email")}
-                        className={cn(
-                          "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
-                          form.formState.errors.email
-                            ? "border-destructive focus:border-destructive"
-                            : "border-gray-300 focus:border-primary"
-                        )}
-                        placeholder="Enter your email address"
-                      />
-                      {form.formState.errors.email ? (
-                        <p
-                          id="email-error"
-                          className="mt-1 text-sm text-destructive"
-                        >
-                          {form.formState.errors.email.message}
-                        </p>
-                      ) : null}
-                    </div>
+                    <Input
+                      label="Email Address"
+                      placeholder="Enter your email"
+                      type="email"
+                      {...form.register("email")}
+                      error={!!form.formState.errors.email}
+                      errorMessage={form.formState.errors.email?.message}
+                    />
                     <ButtonSubmit
                       status={status}
                       statusText={{

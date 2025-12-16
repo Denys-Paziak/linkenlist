@@ -29,7 +29,7 @@ export function List() {
   const [selectedCategory, setSelectedCategory] = useQueryStateWithLocalStorage(
     "/deals?category",
     {
-      defaultValue: "",
+      defaultValue: "all",
       parse: (v) => parseAsString.parse(v),
       sync: true,
     }
@@ -60,7 +60,8 @@ export function List() {
   });
 
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
-  if (selectedCategory) params.set("category", selectedCategory);
+  if (selectedCategory !== 'all') params.set("category", selectedCategory);
+  if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/deals?${params.toString()}`;
   const { data, isLoading, error } = useSWR<[IDealListExtended[], number]>(key);

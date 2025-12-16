@@ -6,6 +6,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { ThrottleMessage } from '../../../decorators/throttle-message.decorator'
 import { ERoleName } from '../../../interfaces/ERoleName'
+import { UseTurnstile } from '../../turnstile/turnstile.decorator'
 import { ConfirmEmailDto } from '../dtos/ConfirmEmail.dto'
 import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
@@ -22,36 +23,22 @@ export class AuthController {
 		private readonly configService: ConfigService
 	) {}
 
+	@UseTurnstile()
 	@Post('register')
-	@ApiOperation({ summary: 'User registration' })
-	@ApiResponse({ status: 201, description: 'User successfully registered' })
-	@ApiResponse({ status: 409, description: 'A user with this email address is already registered.' })
 	async registration(@Body() dto: RegistrationDto) {
 		await this.authService.register(dto)
 	}
 
 	@Post('resend-confirmation-email')
-	@ApiOperation({ summary: 'Resend email confirmation' })
-	@ApiResponse({ status: 200, description: 'Confirmation email resent' })
-	@ApiResponse({ status: 404, description: 'User not found' })
-	@ApiResponse({ status: 400, description: 'Email is already confirmed' })
 	async resendConfirmationEmail(@Body() dto: ResendConfirmationEmailDto) {
 		await this.authService.resendConfirmationEmail(dto.email)
 	}
 
 	@Get('confirm-email')
-	@ApiOperation({ summary: 'Email confirmation' })
-	@ApiResponse({ status: 302, description: 'Email successfully confirmed' })
-	@ApiResponse({ status: 400, description: 'Invalid email confirmation token' })
 	async confirmEmail(@Query() query: ConfirmEmailDto, @Res({ passthrough: true }) response: FastifyReply) {
-		const data = await this.authService.confirmEmail(query.token)
+		try {
+			const data = await this.authService.confirmEmail(query.token)
 
-		if (typeof data === 'string') {
-			return response.redirect(
-				this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL') + (data ? '?message=' + data : ''),
-				302
-			)
-		} else {
 			response.setCookie('refresh_token', data.refreshToken, {
 				maxAge: 30 * 24 * 60 * 60,
 				httpOnly: true,
@@ -68,12 +55,15 @@ export class AuthController {
 			})
 
 			return response.redirect(this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL'), 302)
+		} catch (error) {
+			return response.redirect(
+				this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL') + '?message=' + (error as any).message,
+				302
+			)
 		}
 	}
 
 	@Get('google/login')
-	@ApiOperation({ summary: 'Start Google OAuth2 flow' })
-	@ApiResponse({ status: 302, description: 'Redirect to Google consent screen' })
 	startGoogle(@Res({ passthrough: true }) response: FastifyReply) {
 		return response.redirect(
 			this.configService.getOrThrow('SERVER_URL') + this.configService.getOrThrow('GOOGLE_LOGIN_PATH'),
@@ -82,40 +72,41 @@ export class AuthController {
 	}
 
 	@Get('google/callback')
-	@ApiOperation({ summary: 'Google Authorization' })
-	@ApiOAuth2(['google'])
-	@ApiResponse({ status: 200, description: 'Google Authentication Successful' })
-	@ApiResponse({ status: 409, description: 'User with this email is already registered' })
 	async googleCallback(@Req() request: FastifyRequest, @Res({ passthrough: true }) response: FastifyReply) {
-		const { token } = await (request as any).server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request)
+		try {
+			const { token } = await (request as any).server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request)
 
-		const data = await this.authService.googleLogin(token.id_token)
+			const data = await this.authService.googleLogin(token.id_token)
 
-		response.setCookie('refresh_token', data.refreshToken, {
-			maxAge: 30 * 24 * 60 * 60,
-			httpOnly: true,
-			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
-			sameSite: 'strict',
-			path: '/'
-		})
-		response.setCookie('access_token', data.accessToken, {
-			maxAge: 5 * 60,
-			httpOnly: true,
-			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
-			sameSite: 'strict',
-			path: '/'
-		})
+			response.setCookie('refresh_token', data.refreshToken, {
+				maxAge: 30 * 24 * 60 * 60,
+				httpOnly: true,
+				secure: this.configService.getOrThrow('NODE_ENV') === 'production',
+				sameSite: 'strict',
+				path: '/'
+			})
+			response.setCookie('access_token', data.accessToken, {
+				maxAge: 5 * 60,
+				httpOnly: true,
+				secure: this.configService.getOrThrow('NODE_ENV') === 'production',
+				sameSite: 'strict',
+				path: '/'
+			})
 
-		return response.redirect(this.configService.getOrThrow('GOOGLE_CALLBACK_FRONT_URL'), 302)
+			return response.redirect(this.configService.getOrThrow('FRONT_ORIGIN_URL'), 302)
+		} catch (error) {
+			return response.redirect(
+				this.configService.getOrThrow('GOOGLE_CALLBACK_ERROR') + '?error=' + (error as any).message,
+				302
+			)
+		}
 	}
 
+	@Post('login')
+	@UseTurnstile()
 	@Throttle({ default: { limit: 10, ttl: 5 * 60 * 1000 } })
 	@ThrottleMessage('Too many login attempts. Please try again later.')
 	@HttpCode(200)
-	@Post('login')
-	@ApiOperation({ summary: 'User login' })
-	@ApiResponse({ status: 200, description: 'Successful login' })
-	@ApiResponse({ status: 401, description: 'Invalid password or login' })
 	async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: FastifyReply) {
 		const data = await this.authService.login(dto, ERoleName.USER)
 
@@ -139,9 +130,11 @@ export class AuthController {
 
 	@HttpCode(200)
 	@Post('logout')
-	@ApiOperation({ summary: 'Logout' })
-	@ApiResponse({ status: 200, description: 'User logged out' })
-	async logout(@Res({ passthrough: true }) response: FastifyReply) {
+	async logout(@Req() request: FastifyRequest, @Res({ passthrough: true }) response: FastifyReply) {
+		const refresh_token = request.cookies['refresh_token']
+
+		await this.authService.logout(refresh_token)
+
 		response.clearCookie('refresh_token', {
 			maxAge: 30 * 24 * 60 * 60,
 			httpOnly: true,
@@ -162,8 +155,6 @@ export class AuthController {
 
 	@HttpCode(200)
 	@Post('forgot-password')
-	@ApiOperation({ summary: 'Password reset request' })
-	@ApiResponse({ status: 200, description: 'Password reset link sent to email' })
 	async forgotPassword(@Body() dto: ForgotPasswordDto) {
 		await this.authService.forgotPassword(dto)
 
@@ -172,9 +163,6 @@ export class AuthController {
 
 	@HttpCode(200)
 	@Patch('reset-password')
-	@ApiOperation({ summary: 'Reset password with token' })
-	@ApiResponse({ status: 200, description: 'Password successfully changed' })
-	@ApiResponse({ status: 400, description: 'Invalid token for password reset' })
 	async resetPassword(@Body() dto: ResetPasswordDto) {
 		await this.authService.resetPassword(dto)
 
@@ -182,9 +170,6 @@ export class AuthController {
 	}
 
 	@Post('refresh')
-	@ApiOperation({ summary: 'Update access and refresh tokens' })
-	@ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
-	@ApiResponse({ status: 401, description: 'Invalid refresh token' })
 	async refreshToken(@Req() request: FastifyRequest, @Res({ passthrough: true }) response: FastifyReply) {
 		const refresh_token = request.cookies['refresh_token']
 

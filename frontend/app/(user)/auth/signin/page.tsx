@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useQueryState, parseAsString } from "nuqs";
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LoginFrom } from "./components/login-form";
 import { RegisterForm } from "./components/register-form";
+import { Turnstile } from "../../../../components/turnstile";
 
 export default function SignInPage() {
+  const [token, setToken] = useState<string | null>(null);
+  const [registerSucces, setRegisterSucces] = useState<boolean>(false);
+
   const [tab, setTab] = useQueryState("tab", {
     parse: (v) => parseAsString.parse(v),
   });
@@ -60,19 +64,21 @@ export default function SignInPage() {
         {/* Sign In Form Container */}
         <div className="bg-white rounded-xl shadow-2xl p-4">
           {/* OAuth Buttons */}
-          <div className="space-y-3 mb-4">
-            <a
-              href={process.env.NEXT_PUBLIC_API_URL + "/auth/google/login"}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                G
-              </div>
-              <span className="text-foreground font-medium">
-                Continue with Google
-              </span>
-            </a>
-          </div>
+          {registerSucces ? null : (
+            <div className="space-y-3 mb-4">
+              <a
+                href={process.env.NEXT_PUBLIC_API_URL + "/auth/google/login"}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  G
+                </div>
+                <span className="text-foreground font-medium">
+                  Continue with Google
+                </span>
+              </a>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative mb-4">
@@ -87,84 +93,46 @@ export default function SignInPage() {
           </div>
 
           {/* Login Form */}
-          {tab === "login" ? <LoginFrom /> : null}
+          {tab === "login" ? <LoginFrom token={token} /> : null}
           {/* Registration Form */}
-          {tab === "register" ? <RegisterForm /> : null}
+          {tab === "register" ? <RegisterForm token={token} setRegisterSucces={setRegisterSucces}/> : null}
 
           {/* Additional Links */}
           <div className="mt-4 text-center space-y-3">
-            <div className="flex justify-center gap-4 text-sm">
-              {tab === "login" ? (
-                <button
-                  onClick={() => setTab("register")}
-                  className="text-foreground hover:text-accent font-medium transition-colors"
-                >
-                  Create Account
-                </button>
-              ) : (
-                <button
-                  onClick={() => setTab("login")}
-                  className="text-foreground hover:text-accent font-medium transition-colors"
-                >
-                  Already have an account? Sign In
-                </button>
-              )}
-              {tab === "login" && (
-                <>
-                  <span className="text-foreground/30">•</span>
-                  <Link
-                    href="./forgot-password"
-                    className="text-foreground hover:text-accent text-sm font-medium transition-colors"
-                  >
-                    Reset Password
-                  </Link>
-                </>
-              )}
-            </div>
+            {registerSucces ? null : (
+              <>
+                <div className="flex justify-center gap-4 text-sm">
+                  {tab === "login" ? (
+                    <button
+                      onClick={() => setTab("register")}
+                      className="text-foreground hover:text-accent font-medium transition-colors"
+                    >
+                      Create Account
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setTab("login")}
+                      className="text-foreground hover:text-accent font-medium transition-colors"
+                    >
+                      Already have an account? Sign In
+                    </button>
+                  )}
+                  {tab === "login" && (
+                    <>
+                      <span className="text-foreground/30">•</span>
+                      <Link
+                        href="./forgot-password"
+                        className="text-foreground hover:text-accent text-sm font-medium transition-colors"
+                      >
+                        Reset Password
+                      </Link>
+                    </>
+                  )}
+                </div>
 
-            {/* reCAPTCHA - Cloudflare Style */}
-            <div className="bg-accent rounded-lg p-1">
-              <div className="bg-[#2D2D2D] rounded-md p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-white font-medium">Success!</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-white font-bold text-sm tracking-wider">
-                    CLOUDFLARE
-                  </div>
-                  <div className="text-gray-400 text-xs">
-                    <a
-                      href="#privacy"
-                      className="hover:text-gray-300 transition-colors"
-                    >
-                      Privacy
-                    </a>
-                    <span className="mx-1">•</span>
-                    <a
-                      href="#terms"
-                      className="hover:text-gray-300 transition-colors"
-                    >
-                      Terms
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+                <Turnstile onToken={(token) => setToken(token)} />
+              </>
+            )}
 
             {/* Privacy Policy */}
             <p className="text-xs text-foreground/60">

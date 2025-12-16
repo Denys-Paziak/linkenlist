@@ -123,11 +123,11 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
 );
 ButtonSubmit.displayName = "ButtonSubmit";
 
-function renderStatusIcon(status: ButtonSubitStatus) {
+function renderStatusIcon(status: ButtonSubitStatus, className?: string) {
   if (status === "loading")
-    return <Loader2Icon className="animate-spin" aria-hidden="true" />;
-  if (status === "success") return <Check aria-hidden="true" />;
-  if (status === "error") return <TriangleAlert aria-hidden="true" />;
+    return <Loader2Icon className={cn("animate-spin", className)} aria-hidden="true" />;
+  if (status === "success") return <Check className={className} aria-hidden="true" />;
+  if (status === "error") return <TriangleAlert className={className} aria-hidden="true" />;
   return null;
 }
 

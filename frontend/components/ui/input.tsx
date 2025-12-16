@@ -1,91 +1,95 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { forwardRef, useState } from "react";
+import { Label } from "./label";
+import { Eye, EyeOff } from "lucide-react";
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: boolean
-  required?: boolean
-  showRequiredIndicator?: boolean
-  errorMessage?: string
-  fieldName?: string
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  error?: boolean;
+  errorMessage?: string;
+  label?: string;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, error, required, showRequiredIndicator = true, errorMessage, fieldName, ...props }, ref) => {
-    const [showTooltip, setShowTooltip] = React.useState(false)
-
-    const getTooltipMessage = () => {
-      if (error && errorMessage) {
-        return errorMessage
-      }
-      if (error && fieldName) {
-        if (
-          fieldName.toLowerCase().includes("confirm email") ||
-          fieldName.toLowerCase().includes("email confirmation")
-        ) {
-          return "Email addresses do not match. Please make sure both email fields contain the same email address."
-        }
-        if (
-          fieldName.toLowerCase().includes("confirm password") ||
-          fieldName.toLowerCase().includes("password confirmation")
-        ) {
-          return "Passwords do not match. Please make sure both password fields contain the same password."
-        }
-        return `${fieldName} is required. Please fill out this field to continue.`
-      }
-      if (error) {
-        return "This field is required. Please fill out this field to continue."
-      }
-      return "This field is required"
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, error, errorMessage, label, ...props }, ref) => {
+    if (props.type === "password") {
+      return (
+        <PasswordInput
+          className={className}
+          error={error}
+          errorMessage={errorMessage}
+          label={label}
+          {...props}
+          ref={ref}
+        />
+      );
     }
 
     return (
-      <div className="relative">
+      <div className="w-full">
+        {label ? <Label>{label}</Label> : null}
         <input
-          type={type}
           className={cn(
-            "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px]",
+            "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
             error
-              ? "border-red-500 bg-red-50 focus-visible:ring-red-500 focus-visible:border-red-500"
-              : "border-input focus-visible:ring-ring",
-            error ? "pr-12" : required && showRequiredIndicator ? "pr-8" : "",
-            className,
+              ? "border-destructive focus:border-destructive"
+              : "border-input",
+            className
           )}
           ref={ref}
-          required={required}
           {...props}
         />
-
-        {error && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <div
-              className="relative"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
-              <AlertCircle className="h-4 w-4 text-red-500 cursor-help" />
-              {showTooltip && (
-                <div className="absolute bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-white bg-gray-900 rounded-md shadow-lg z-50 whitespace-normal">
-                  {getTooltipMessage()}
-                  <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              )}
-            </div>
-            <span className="text-red-500 text-sm font-medium">*</span>
-          </div>
-        )}
-
-        {required && !error && showRequiredIndicator && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <span className="text-red-500 text-sm font-medium">*</span>
-          </div>
-        )}
+        {error && errorMessage ? (
+          <p className="mt-1 text-sm text-destructive">{errorMessage}</p>
+        ) : null}
       </div>
-    )
-  },
-)
-Input.displayName = "Input"
+    );
+  }
+);
+Input.displayName = "Input";
 
-export { Input }
+const PasswordInput = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, error, errorMessage, label, type, ...props }, ref) => {
+    const [showPassword, setShowPassword] = useState(false);
+
+    return (
+      <div className="w-full">
+        {label ? <Label>{label}</Label> : null}
+        <div className="relative">
+          <input
+            {...props}
+            className={cn(
+              "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
+              error
+                ? "border-destructive focus:border-destructive"
+                : "border-input",
+              className
+            )}
+            ref={ref}
+            type={showPassword ? "text" : "password"}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center"
+            disabled={status === "loading"}
+          >
+            {showPassword ? (
+              <Eye className="h-5 w-5 text-foreground/50" />
+            ) : (
+              <EyeOff className="h-5 w-5 text-foreground/50" />
+            )}
+          </button>
+        </div>
+        {error && errorMessage ? (
+          <p className="mt-1 text-sm text-destructive">{errorMessage}</p>
+        ) : null}
+      </div>
+    );
+  }
+);
+
+export { Input };

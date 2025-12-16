@@ -6,6 +6,7 @@ import { ILike, IsNull, Repository } from 'typeorm'
 import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EResourceStatus } from '../../../interfaces/EResourceStatus'
+import { UserFavoriteResource } from '../../favorite/entities/UserFavorite.entity'
 import { GetAllResourcesDto } from '../dtos/GetAllResources.dto'
 import { GetAllResourcesAdminDto } from '../dtos/GetAllResourcesAdmin.dto'
 import { GetSimplifiedResourceDto } from '../dtos/GetSimplifiedResource.dto'
@@ -24,29 +25,52 @@ export class ResourceQueryService {
 	) {}
 
 	async getAllResourcesAdmin(query: GetAllResourcesAdminDto) {
-		return await this.resourceRepository.findAndCount({
-			select: {
-				id: true,
-				title: true,
-				image: {
-					id: true,
-					url: true,
-					width: true,
-					height: true
-				},
-				categories: true,
-				status: true,
-				updatedAt: true,
-				createdAt: true
-			},
-			skip: (query.page - 1) * query.limit,
-			take: query.limit,
-			order: { createdAt: 'DESC' },
-			relations: ['image']
-		})
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(1, Number(query.limit ?? 16))
+		const offset = (page - 1) * limit
+
+		const qb = this.resourceRepository
+			.createQueryBuilder('d')
+			.leftJoinAndSelect('d.image', 'img')
+			.select(['d.id', 'd.title', 'd.categories', 'd.status', 'd.updatedAt', 'd.createdAt', 'd.slug', 'img'])
+			.distinct(true)
+			.skip(offset)
+			.take(limit)
+
+		// 🔍 SEARCH (FTS + trigram)
+		if (query.search && query.search.trim() !== '') {
+			const q = query.search.trim()
+
+			qb.andWhere(
+				`(
+				d.search_document @@ plainto_tsquery('simple', :q)
+				OR similarity(d.title, :q) > 0.05
+				OR similarity(d.tags_text, :q) > 0.05
+			)`,
+				{ q }
+			)
+
+			qb.addSelect(
+				`
+				GREATEST(
+					ts_rank_cd(d.search_document, plainto_tsquery('simple', :q)),
+					similarity(d.title, :q),
+					similarity(d.tags_text, :q)
+				)
+			`,
+				'relevance'
+			)
+
+			qb.orderBy('relevance', 'DESC')
+			qb.addOrderBy('d.createdAt', 'DESC')
+		} else {
+			qb.orderBy('d.createdAt', 'DESC')
+		}
+
+		return await qb.getManyAndCount()
 	}
 
-	async getAllResources(query: GetAllResourcesDto) {
+	async getAllResources(query: GetAllResourcesDto, userId?: number) {
 		const page = Math.max(1, Number(query.page ?? 1))
 		const limit = Math.max(16, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
@@ -59,7 +83,7 @@ export class ResourceQueryService {
 			`format:${query.format ?? 'all'}` +
 			`isFeatured:${query.isFeatured ?? false}`
 
-		if (!query.search) {
+		if (!query.search || query.isFavorite) {
 			const cached = await this.cacheManager.get<[Resource[], number]>(cacheKey)
 			if (cached) return cached
 		}
@@ -78,6 +102,15 @@ export class ResourceQueryService {
 		// FORMAT
 		if (query.format) {
 			qb.andWhere('l.format = :format', { format: query.format })
+		}
+
+		// FAVORITES FILTER
+		if (query.isFavorite) {
+			if (!userId) {
+				return [[], 0]
+			}
+
+			qb.innerJoin(UserFavoriteResource, 'ufd', 'ufd.resourceId = l.id AND ufd.userId = :userId', { userId })
 		}
 
 		// SELECT LIST
@@ -102,8 +135,8 @@ export class ResourceQueryService {
 			qb.andWhere(
 				`(
 						l.search_document @@ plainto_tsquery('simple', :q)
-						OR similarity(l.title, :q) > 0.15
-						OR similarity(l.tags_text, :q) > 0.15
+						OR similarity(l.title, :q) > 0.05
+						OR similarity(l.tags_text, :q) > 0.05
 					)`,
 				{ q: query.search }
 			)
@@ -150,12 +183,20 @@ export class ResourceQueryService {
 			qb.andWhere('l.format = :format', { format: query.format })
 		}
 
+		if (query.isFavorite) {
+			if (!userId) {
+				return [[], 0]
+			}
+
+			countQb.innerJoin(UserFavoriteResource, 'ufd', 'ufd.resourceId = l.id AND ufd.userId = :userId', { userId })
+		}
+
 		if (query.search && query.search.trim() !== '') {
 			countQb.andWhere(
 				`(
 						l.search_document @@ plainto_tsquery('simple', :q)
-						OR similarity(l.title, :q) > 0.15
-						OR similarity(l.tags_text, :q) > 0.15
+						OR similarity(l.title, :q) > 0.05
+						OR similarity(l.tags_text, :q) > 0.05
 					)`,
 				{ q: query.search }
 			)
@@ -166,7 +207,7 @@ export class ResourceQueryService {
 		const items = await qb.getMany()
 		const result: [Resource[], number] = [items, Number(cnt?.cnt || 0)]
 
-		if (!query.search) {
+		if (!query.search || query.isFavorite) {
 			await this.cacheManager.set(cacheKey, result, 60000)
 		}
 

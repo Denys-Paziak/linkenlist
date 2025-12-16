@@ -41,7 +41,7 @@ export function Navigation() {
               key={item.name}
               variant={isActive ? "secondary" : "ghost"}
               className={cn(
-                "w-full justify-start gap-3",
+                "w-full cursor-pointer justify-start gap-3",
                 isActive && "bg-gray-100 text-gray-900"
               )}
               asChild

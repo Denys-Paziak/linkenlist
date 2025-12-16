@@ -1,5 +1,5 @@
 import { HasUnsavedChanges } from "./has-unsaved-changes";
-import { SafeLink } from "./safe-link";
+import { LogoutButton } from "./logout-button";
 
 export function Header() {
   return (
@@ -9,12 +9,7 @@ export function Header() {
           <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
           <HasUnsavedChanges />
         </div>
-        <SafeLink
-          href="/"
-          className="text-sm text-gray-600 hover:text-gray-900"
-        >
-          ← Back to Site
-        </SafeLink>
+        <LogoutButton />
       </div>
     </header>
   );

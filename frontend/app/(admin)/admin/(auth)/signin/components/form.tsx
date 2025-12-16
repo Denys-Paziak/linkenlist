@@ -1,22 +1,17 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ButtonSubitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
-import { cn } from "../../../../../../lib/utils";
 import { ErrorAlert } from "../../../../../../components/ui/error-alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { adminLoginSchema } from "../../../../../../lib/schemas/admin-login-schema";
+import { Input } from "../../../../../../components/ui/input";
 
 export function Form() {
-  const router = useRouter();
-
-  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -59,7 +54,7 @@ export function Form() {
       }
 
       setStatus("success");
-      window.location.href = "/admin"
+      window.location.href = "/admin";
     } catch {
       setFormError(
         "Login failed. Please check your credentials and try again."
@@ -80,64 +75,22 @@ export function Form() {
       <fieldset disabled={status === "loading"} className="space-y-3">
         {formError ? <ErrorAlert message={formError} /> : null}
 
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Email Address
-          </label>
-          <input
-            type="email"
-            {...form.register("email")}
-            className={cn(
-              "w-full px-4 py-2 border rounded-lg focus:outline-none transition-colors",
-              form.formState.errors.email
-                ? "border-destructive focus:border-destructive"
-                : "border-gray-300 focus:border-primary"
-            )}
-            placeholder="Enter your email"
-          />
-          {form.formState.errors.email ? (
-            <p id="email-error" className="mt-1 text-sm text-destructive">
-              {form.formState.errors.email.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              {...form.register("password")}
-              className={cn(
-                "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
-                form.formState.errors.password
-                  ? "border-destructive focus:border-destructive"
-                  : "border-gray-300 focus:border-primary"
-              )}
-              placeholder="Enter your password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center"
-              disabled={status === "loading"}
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5 text-foreground/50" />
-              ) : (
-                <Eye className="h-5 w-5 text-foreground/50" />
-              )}
-            </button>
-          </div>
-          {form.formState.errors.password ? (
-            <p id="password-error" className="mt-1 text-sm text-destructive">
-              {form.formState.errors.password.message}
-            </p>
-          ) : null}
-        </div>
+        <Input
+          label="Email Address"
+          placeholder="Enter your email"
+          type="email"
+          {...form.register("email")}
+          error={!!form.formState.errors.email}
+          errorMessage={form.formState.errors.email?.message}
+        />
+        <Input
+          label="Password"
+          placeholder="Enter your email"
+          type={"password"}
+          {...form.register("password")}
+          error={!!form.formState.errors.email}
+          errorMessage={form.formState.errors.email?.message}
+        />
 
         <ButtonSubmit
           type="button"

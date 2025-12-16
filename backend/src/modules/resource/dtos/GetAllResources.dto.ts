@@ -47,4 +47,9 @@ export class GetAllResourcesDto {
 	@Type(() => Boolean)
 	@IsBoolean()
 	isFeatured?: boolean
+
+	@IsOptional()
+	@Type(() => Boolean)
+	@IsBoolean()
+	isFavorite?: boolean
 }

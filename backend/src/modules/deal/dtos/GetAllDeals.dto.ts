@@ -42,4 +42,9 @@ export class GetAllDealsDto {
 	@Type(() => Boolean)
 	@IsBoolean()
 	isFeatured?: boolean
+
+	@IsOptional()
+	@Type(() => Boolean)
+	@IsBoolean()
+	isFavorite?: boolean
 }

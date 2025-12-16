@@ -92,6 +92,7 @@ export interface IResourceList {
   image: IResourceImage;
   categories: EResourceCategory[];
   status: EResourceStatus;
+  slug: string;
   updatedAt: string;
 }
 

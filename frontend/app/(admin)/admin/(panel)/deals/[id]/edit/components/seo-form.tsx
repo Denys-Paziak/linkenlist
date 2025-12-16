@@ -26,6 +26,7 @@ import { EOgImageMode } from "../../../../../../../../types/shared";
 import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
 import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
 import { UploadImage } from "../../../../../../../../components/ui/upload-image";
+import { Input } from "../../../../../../../../components/ui/input";
 
 export function SeoForm() {
   const { id: dealId } = useParams();
@@ -155,26 +156,13 @@ export function SeoForm() {
 
             {/* Meta Title */}
             <div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Meta Title
-                </label>
-                <input
-                  placeholder="SEO title (auto-filled from deal title)"
-                  {...form.register("seoMetaTitle")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.seoMetaTitle
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.seoMetaTitle ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.seoMetaTitle.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Meta Title"
+                placeholder="SEO title (auto-filled from deal title)"
+                {...form.register("seoMetaTitle")}
+                error={!!form.formState.errors.seoMetaTitle}
+                errorMessage={form.formState.errors.seoMetaTitle?.message}
+              />
               <p className="text-sm text-gray-500 mt-1">
                 {form.watch("seoMetaTitle")?.length || 0}/140 characters
               </p>
@@ -182,26 +170,19 @@ export function SeoForm() {
 
             {/* Meta Description */}
             <div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Meta Description
-                </label>
-                <Textarea
-                  placeholder="SEO description (auto-filled from teaser)"
-                  {...form.register("seoMetaDescription")}
-                  rows={2}
-                  className={cn(
-                    form.formState.errors.seoMetaDescription
-                      ? "border-destructive"
-                      : ""
-                  )}
-                />
-                {form.formState.errors.seoMetaDescription ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.seoMetaDescription.message}
-                  </p>
-                ) : null}
-              </div>
+              <Textarea
+                label="Meta Description"
+                placeholder="SEO description (auto-filled from teaser)"
+                {...form.register("seoMetaDescription")}
+                rows={2}
+                className={cn(
+                  form.formState.errors.seoMetaDescription
+                    ? "border-destructive"
+                    : ""
+                )}
+                error={!!form.formState.errors.seoMetaDescription}
+                errorMessage={form.formState.errors.seoMetaDescription?.message}
+              />
               <p className="text-sm text-gray-500 mt-1">
                 {form.watch("seoMetaDescription")?.length || 0}/200 characters
               </p>
@@ -224,7 +205,7 @@ export function SeoForm() {
                           checked={field.value === EOgImageMode.USE_HERO}
                           onChange={() => field.onChange(EOgImageMode.USE_HERO)}
                         />
-                        <Label htmlFor="ogDefault" className="text-sm">
+                        <Label htmlFor="ogDefault" className="text-sm mb-0">
                           Use hero image
                         </Label>
                       </>
@@ -244,7 +225,7 @@ export function SeoForm() {
                           checked={field.value === EOgImageMode.CUSTOM}
                           onChange={() => field.onChange(EOgImageMode.CUSTOM)}
                         />
-                        <Label htmlFor="ogCustom" className="text-sm">
+                        <Label htmlFor="ogCustom" className="text-sm mb-0">
                           Upload custom image
                         </Label>
                       </>
@@ -277,26 +258,13 @@ export function SeoForm() {
             </div>
 
             {/* Canonical URL */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Canonical URL (optional)
-              </label>
-              <input
-                placeholder="https://example.com/canonical-url"
-                {...form.register("canonicalUrl")}
-                className={cn(
-                  "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                  form.formState.errors.canonicalUrl
-                    ? "border-destructive focus:border-destructive"
-                    : "border-input"
-                )}
-              />
-              {form.formState.errors.canonicalUrl ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.canonicalUrl.message}
-                </p>
-              ) : null}
-            </div>
+            <Input
+              label="Canonical URL (optional)"
+              placeholder="https://example.com/canonical-url"
+              {...form.register("canonicalUrl")}
+              error={!!form.formState.errors.canonicalUrl}
+              errorMessage={form.formState.errors.canonicalUrl?.message}
+            />
 
             {/* Allow search engine indexing */}
             <div className="flex items-center space-x-2">
@@ -310,12 +278,12 @@ export function SeoForm() {
                       checked={field.value}
                       onCheckedChange={(checked) => field.onChange(checked)}
                     />
-                    <label
+                    <Label
                       htmlFor="allowIndexing"
-                      className="text-sm text-gray-600"
+                      className="text-sm text-gray-600 mb-0"
                     >
                       Allow search engine indexing
-                    </label>
+                    </Label>
                   </>
                 )}
               />

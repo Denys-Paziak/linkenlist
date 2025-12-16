@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, Star } from "lucide-react";
+import { Search, Star } from "lucide-react";
 import { dealCategories } from "../../../../lib/schemas/deal/basic-form-schema";
 import { capitalize } from "../../../../lib/utils";
+import useSWR from "swr";
+import { IUser } from "../../../../types/User";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../../components/ui/select";
 
 interface FilterBarProps {
   searchTerm: string;
   selectedCategory: string;
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
-  showSavedOnly?: boolean;
-  onSavedToggle?: (show: boolean) => void;
+  showSavedOnly: boolean;
+  onSavedToggle: (show: boolean) => void;
 }
 
 export function FilterBar({
@@ -22,12 +30,7 @@ export function FilterBar({
   showSavedOnly = false,
   onSavedToggle,
 }: FilterBarProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleDropdownToggle = (dropdownName: string) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
-  };
+  const { data: user } = useSWR<IUser>("/users/self");
 
   const handleResetFilters = () => {
     onSearchChange("");
@@ -35,32 +38,12 @@ export function FilterBar({
     if (onSavedToggle) onSavedToggle(false);
   };
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div
-      ref={containerRef}
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-3"
-    >
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-gray-900">Search & Filter</h3>
 
-        {onSavedToggle && (
+        {user && (
           <button
             onClick={() => onSavedToggle(!showSavedOnly)}
             className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200 ${
@@ -92,44 +75,22 @@ export function FilterBar({
           />
         </div>
 
-        {/* Category Filter */}
-        <div className="relative">
-          <button
-            onClick={() => handleDropdownToggle("category")}
-            className="w-full flex items-center justify-between px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <span>{capitalize(selectedCategory) || "All Categories"}</span>
-            <ChevronDown
-              className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                activeDropdown === "category" ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {activeDropdown === "category" && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-              {["All Categories", ...dealCategories].map((category) => (
-                <button
-                  key={category}
-                  onClick={() => {
-                    onCategoryChange(
-                      category === "All Categories" ? "" : category
-                    );
-                    setActiveDropdown(null);
-                  }}
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg whitespace-nowrap ${
-                    selectedCategory === category ||
-                    (!selectedCategory && category === "All Categories")
-                      ? "bg-primary/10 text-primary"
-                      : ""
-                  }`}
-                >
-                  {capitalize(category)}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <Select
+          value={selectedCategory}
+          onValueChange={(value) => {
+            onCategoryChange(value);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {dealCategories.map((item, i) => (
+              <SelectItem key={i} value={item}>{capitalize(item)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <button
           onClick={handleResetFilters}

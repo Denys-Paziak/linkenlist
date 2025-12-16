@@ -1,6 +1,7 @@
 import {
 	BadRequestException,
 	ConflictException,
+	ForbiddenException,
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
@@ -11,9 +12,9 @@ import * as bcrypt from 'bcrypt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { IsNull, Not } from 'typeorm'
 
+import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { ETokenType } from '../../../interfaces/ETokenType'
-import { UserCommandService } from '../../../modules/user/services/user-command.service'
 import { UserSystemService } from '../../../modules/user/services/user-system.service'
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { MailService } from '../../mail/mail.service'
@@ -22,7 +23,6 @@ import { ForgotPasswordDto } from '../dtos/ForgotPassword.dto'
 import { LoginDto } from '../dtos/Login.dto'
 import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
-import { UserQueryService } from '../../user/services/user-query.service'
 
 @Injectable()
 export class AuthService {
@@ -30,7 +30,6 @@ export class AuthService {
 		private readonly tokenService: TokenService,
 		private readonly mailService: MailService,
 		private readonly userSystemService: UserSystemService,
-		private readonly userCommandService: UserCommandService,
 		private readonly configService: ConfigService
 	) {}
 
@@ -87,7 +86,12 @@ export class AuthService {
 
 		const emailConfirmedToken = await this.tokenService.generateEmailConfirmedToken(user.id)
 
-		this.mailService.sendEmailVerified(dto.email, emailConfirmedToken.token, emailConfirmedToken.expiresIn)
+		this.mailService.sendEmailVerified(
+			dto.email,
+			emailConfirmedToken.token,
+			this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
+			emailConfirmedToken.expiresIn
+		)
 	}
 
 	async resendConfirmationEmail(email: string) {
@@ -105,7 +109,12 @@ export class AuthService {
 
 		const emailConfirmedToken = await this.tokenService.generateEmailConfirmedToken(user.id)
 
-		this.mailService.sendEmailVerified(email, emailConfirmedToken.token, emailConfirmedToken.expiresIn)
+		this.mailService.sendEmailVerified(
+			email,
+			emailConfirmedToken.token,
+			this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
+			emailConfirmedToken.expiresIn
+		)
 	}
 
 	async confirmEmail(token: string) {
@@ -116,19 +125,21 @@ export class AuthService {
 			}
 		})
 
-		if (!tokenFromDB) return 'No such token or code was found or it is expired.'
+		if (!tokenFromDB) {
+			throw new BadRequestException('No such token or code was found or it is expired.')
+		}
 
 		if (!this.tokenService.validateToken(tokenFromDB)) {
-			return 'No such token or code was found or it is expired.'
+			throw new BadRequestException('No such token or code was found or it is expired.')
 		}
 
-		const result = await this.userCommandService.verifyEmail(tokenFromDB.user.id)
+		const result = await this.userSystemService.verifyEmail(tokenFromDB.user.id)
 
 		if (result.affected === 0) {
-			return 'No such user found'
+			throw new NotFoundException('No such user found')
 		}
 
-		await this.tokenService.deleteToken(tokenFromDB)
+		await this.tokenService.deleteAllUserTokens(tokenFromDB.user.id, tokenFromDB.type)
 
 		const userFromDB = await this.userSystemService.findOne({
 			where: {
@@ -141,7 +152,7 @@ export class AuthService {
 		})
 
 		if (!userFromDB) {
-			return 'No such user found'
+			throw new NotFoundException('No such user found')
 		}
 
 		const refreshToken = await this.tokenService.generateRefreshToken({
@@ -169,14 +180,16 @@ export class AuthService {
 		if (payload.exp && payload.exp * 1000 < Date.now()) throw new UnauthorizedException('ID token expired')
 		if (payload.email_verified === false) throw new UnauthorizedException('Email not verified')
 
-		let userExists = await this.userSystemService.findOne({
+		let userFromDB = await this.userSystemService.findOne({
 			where: { privateEmail: payload.email as string | undefined },
-			select: { password: true, id: true, role: true }
+			select: { password: true, id: true, role: true, banExpirationDate: true, banReason: true }
 		})
 
-		if (userExists?.password) throw new BadRequestException('This user already exists.')
+		if (userFromDB && userFromDB.banExpirationDate && userFromDB.banExpirationDate > new Date()) {
+			throw new ForbiddenException('Your account has been banned.' + ` Reason: ${userFromDB.banReason}`)
+		}
 
-		let user = userExists
+		let user = userFromDB
 
 		if (!user) {
 			const normalizeBaseusername = (payload.email as string | undefined)
@@ -204,7 +217,12 @@ export class AuthService {
 				firstName: payload.given_name as string | undefined,
 				lastName: payload.family_name as string | undefined,
 				username: username,
-				avatar: payload.picture as string | undefined,
+				avatar: {
+					width: 96,
+					height: 96,
+					url: payload.picture as string | undefined,
+					status: EFileStatus.READY
+				},
 				emailVerified: true
 			})
 		}
@@ -234,7 +252,9 @@ export class AuthService {
 			select: {
 				id: true,
 				role: true,
-				password: true
+				password: true,
+				banExpirationDate: true,
+				banReason: true
 			}
 		})
 
@@ -242,10 +262,18 @@ export class AuthService {
 			throw new UnauthorizedException('Incorrect login or password')
 		}
 
-		const refreshToken = await this.tokenService.generateRefreshToken({
-			id: userFromDB.id,
-			role: userFromDB.role
-		})
+		if (userFromDB.banExpirationDate && userFromDB.banExpirationDate > new Date()) {
+			throw new ForbiddenException('Your account has been banned.' + ` Reason: ${userFromDB.banReason}`)
+		}
+
+		const refreshToken = await this.tokenService.generateRefreshToken(
+			{
+				id: userFromDB.id,
+				role: userFromDB.role
+			},
+			undefined,
+			role === ERoleName.ADMIN ? '1d' : undefined
+		)
 		const accessToken = await this.tokenService.generateAccessToken({
 			id: userFromDB.id,
 			role: userFromDB.role
@@ -253,7 +281,7 @@ export class AuthService {
 
 		return {
 			accessToken,
-			refreshToken,
+			refreshToken
 		}
 	}
 
@@ -269,6 +297,10 @@ export class AuthService {
 			}
 		})
 		if (!userFromDB) throw new NotFoundException('This user does not exist.')
+
+		if (userFromDB.banExpirationDate && userFromDB.banExpirationDate > new Date()) {
+			throw new ForbiddenException('Your account has been banned.' + ` Reason: ${userFromDB.banReason}`)
+		}
 
 		const refreshToken = await this.tokenService.generateRefreshToken(
 			{
@@ -320,15 +352,15 @@ export class AuthService {
 
 		const hashPassword = await bcrypt.hash(dto.password, salt)
 
-		await this.tokenService.deleteToken(tokenFromDB)
+		await this.tokenService.deleteAllUserTokens(tokenFromDB.user.id, tokenFromDB.type)
 
-		const resultUpdatePassword = await this.userCommandService.updatePassword(
+		const resultUpdatePassword = await this.userSystemService.updatePassword(
 			{ id: user.id, password: Not(IsNull()) },
 			hashPassword
 		)
 
 		if (!tokenFromDB.user.emailVerified) {
-			const resultVerifyEmail = await this.userCommandService.verifyEmail(tokenFromDB.user.id)
+			const resultVerifyEmail = await this.userSystemService.verifyEmail(tokenFromDB.user.id)
 
 			if (resultVerifyEmail.affected === 0) {
 				throw new InternalServerErrorException('No such user found')
@@ -337,6 +369,14 @@ export class AuthService {
 
 		if (resultUpdatePassword.affected === 0) {
 			throw new InternalServerErrorException('No such user found')
+		}
+	}
+
+	async logout(refresh_token?: string) {
+		const token = await this.tokenService.findToken({ where: { tokenOrCode: refresh_token } })
+
+		if (token) {
+			await this.tokenService.deleteOneToken(token.id)
 		}
 	}
 }

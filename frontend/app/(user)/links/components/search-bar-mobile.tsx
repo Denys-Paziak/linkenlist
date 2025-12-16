@@ -1,8 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Search, ChevronDown } from "lucide-react";
-import { branchesOptions, categories } from "../../../../lib/schemas/link-form-schema";
+import { X, Search } from "lucide-react";
+import {
+  branchesOptions,
+  categories,
+} from "../../../../lib/schemas/link-form-schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../../components/ui/select";
+import { capitalize } from "../../../../lib/utils";
 
 interface SearchBarMobileProps {
   isOpen: boolean;
@@ -18,6 +28,14 @@ interface SearchBarMobileProps {
   onSortChange: (sort: string) => void;
 }
 
+const sortOptions = [
+  { value: "default", label: "Default" },
+  { value: "most_used", label: "Most used (clicks last 30 days)" },
+  { value: "recently_verified", label: "Recently verified" },
+  { value: "alphabetical", label: "Alphabetical" },
+  { value: "official_first", label: "Official first (.mil/.gov)" },
+];
+
 export function SearchBarMobile({
   isOpen,
   onClose,
@@ -30,34 +48,11 @@ export function SearchBarMobile({
   selectedSort,
   onSortChange,
 }: SearchBarMobileProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  const sortOptions = [
-    { value: "", label: "Default" },
-    { value: "most_used", label: "Most used (clicks last 30 days)" },
-    { value: "recently_verified", label: "Recently verified" },
-    { value: "alphabetical", label: "Alphabetical" },
-    { value: "official_first", label: "Official first (.mil/.gov)" },
-  ];
-
   const resetFilters = () => {
     onBranchChange("");
     onCategoryChange("");
     onSortChange("");
     onSearchChange("");
-    setActiveDropdown(null);
   };
 
   if (!isOpen) return null;
@@ -95,113 +90,66 @@ export function SearchBarMobile({
               />
             </div>
 
-            {/* Branch Filter */}
-            <div className="relative">
-              <button
-                onClick={() =>
-                  setActiveDropdown(
-                    activeDropdown === "branch" ? null : "branch"
-                  )
-                }
-                className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <span>{selectedBranch || "Branch"}</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {activeDropdown === "branch" && (
-                <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {["All", ...branchesOptions].map((branch) => (
-                    <button
-                      key={branch}
-                      onClick={() => {
-                        onBranchChange(branch === "All" ? "" : branch);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedBranch === branch ||
-                        (!selectedBranch && branch === "All")
-                          ? "bg-primary/10 text-primary"
-                          : ""
-                      }`}
-                    >
-                      {branch}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Select
+              value={selectedBranch}
+              onValueChange={(value) => {
+                onBranchChange(value);
+              }}
+            >
+              <SelectTrigger className="w-fit">
+                <SelectValue placeholder="Branch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {branchesOptions.map((item, i) => (
+                  <SelectItem key={i} value={item}>
+                    {capitalize(item)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            {/* Category Filter */}
-            <div className="relative">
-              <button
-                onClick={() =>
-                  setActiveDropdown(
-                    activeDropdown === "category" ? null : "category"
-                  )
-                }
-                className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <span>{selectedCategory || "Category"}</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {activeDropdown === "category" && (
-                <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {["All", ...categories].map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        onCategoryChange(category === "All" ? "" : category);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedCategory === category ||
-                        (!selectedCategory && category === "All")
-                          ? "bg-primary/10 text-primary"
-                          : ""
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => {
+                onCategoryChange(value);
+              }}
+            >
+              <SelectTrigger className="w-fit">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((item, i) => (
+                  <SelectItem key={i} value={item}>
+                    {capitalize(item)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            {/* Sort Filter */}
-            <div className="relative">
-              <button
-                onClick={() =>
-                  setActiveDropdown(activeDropdown === "sort" ? null : "sort")
-                }
-                className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <span>
-                  {sortOptions.find((opt) => opt.value === selectedSort)
-                    ?.label || "Sort"}
-                </span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {activeDropdown === "sort" && (
-                <div className="mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        onSortChange(option.value);
-                        setActiveDropdown(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                        selectedSort === option.value
-                          ? "bg-primary/10 text-primary"
-                          : ""
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Select
+              value={
+                selectedSort
+                  ? sortOptions.find((option) => option.value === selectedSort)
+                      ?.value
+                  : "Sort"
+              }
+              onValueChange={(value) => {
+                onSortChange(value);
+              }}
+            >
+              <SelectTrigger className="w-fit">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((item, i) => (
+                  <SelectItem key={i} value={item.value}>
+                    {capitalize(item.label)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Footer Buttons */}

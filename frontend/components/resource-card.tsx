@@ -7,6 +7,9 @@ import Image from "next/image";
 import { IResourceListExtended } from "../types/Resource";
 import { fetcherUser } from "../lib/fetcher";
 import { cn } from "../lib/utils";
+import { useUser } from "../contexts/user-context";
+import useSWR from "swr";
+import { IUser } from "../types/User";
 
 interface CardProps {
   data: IResourceListExtended;
@@ -37,23 +40,7 @@ export function ResourceCard({ data, isLoading = false }: CardProps) {
         )}
       />
 
-      {/* Favorite Button */}
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        className="absolute top-2 left-2 z-20 w-6 h-6 bg-white/90 hover:bg-gray-100 rounded-sm shadow-sm flex items-center justify-center transition-colors duration-200"
-        aria-label={false ? "Remove from favorites" : "Add to favorites"}
-      >
-        <Star
-          className={`w-3.5 h-3.5 transition-colors duration-200 ${
-            false
-              ? "fill-[#dc2626] text-[#dc2626]"
-              : "text-gray-400 hover:text-gray-600"
-          }`}
-        />
-      </button>
+      <FavoriteButton id={data.id} />
 
       {/* Image Container */}
       <div className="card-media-container p-2 pb-1">
@@ -146,5 +133,69 @@ export function ResourceCard({ data, isLoading = false }: CardProps) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function FavoriteButton({ id }: { id: number }) {
+  const { data: user } = useSWR<IUser>("/users/self");
+
+  const { setShowLoginModal } = useUser();
+
+  const { data, mutate } = useSWR<number[]>(
+    user ? `/favorite/resources` : null
+  );
+
+  const addFavorite = async () => {
+    try {
+      await fetcherUser(`/favorite/resources/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      mutate((draft) => [...(draft || []), id], {
+        revalidate: false,
+      });
+    } catch {}
+  };
+
+  const deleteFavorite = async () => {
+    try {
+      await fetcherUser(`/favorite/resources/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      mutate((draft) => draft?.filter((item) => item !== id), {
+        revalidate: false,
+      });
+    } catch {}
+  };
+
+  const isFavorite = data?.includes(id);
+
+  return (
+    <button
+      onClick={() => {
+        if (user) {
+          if (!isFavorite) {
+            addFavorite();
+          } else {
+            deleteFavorite();
+          }
+        } else {
+          setShowLoginModal(true);
+        }
+      }}
+      className="absolute top-2 left-2 z-20 w-6 h-6 bg-white/90 hover:bg-gray-100 rounded-sm shadow-sm flex items-center justify-center transition-colors duration-200"
+      aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+    >
+      <Star
+        className={`w-3.5 h-3.5 transition-colors duration-200 ${
+          isFavorite
+            ? "fill-[#dc2626] text-[#dc2626]"
+            : "text-gray-400 hover:text-gray-600"
+        }`}
+      />
+    </button>
   );
 }

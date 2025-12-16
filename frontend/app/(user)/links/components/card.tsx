@@ -5,6 +5,8 @@ import { Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ILink } from "../../../../types/Link";
 import { fetcherUser } from "../../../../lib/fetcher";
+import { useUser } from "../../../../contexts/user-context";
+import useSWR from "swr";
 
 interface CardProps {
   data: ILink;
@@ -38,6 +40,8 @@ export function Card({ data, isLoading }: CardProps) {
       >
         <span className="sr-only">View {data.title}</span>
       </div>
+
+      <FavoriteButton id={data.id}/>
 
       {/* Image Container with fixed aspect ratio - matching realestate cards */}
       <div className="card-media-container p-2 pb-1">
@@ -99,30 +103,71 @@ export function Card({ data, isLoading }: CardProps) {
         </div>
       </div>
 
-      {/* Favorite Button - bigger icons */}
-      <div className="absolute top-2 left-2 flex gap-1 z-20">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          className="w-6 h-6 p-0 bg-white/90 hover:bg-gray-100 rounded-sm flex items-center justify-center"
-          aria-label={false ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Star
-            className={cn(
-              "w-3.5 h-3.5",
-              false && "fill-[#dc2626] text-[#dc2626]"
-            )}
-          />
-        </button>
-      </div>
-
       {isLoading ? (
         <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
           <Loader2 className="animate-spin w-11 h-11 text-white" />
         </div>
       ) : null}
     </div>
+  );
+}
+
+function FavoriteButton({ id }: { id: number }) {
+  const { user, setShowLoginModal } = useUser();
+
+  const { data, mutate } = useSWR<number[]>(user ? `/favorite/resources` : null);
+
+  const addFavorite = async () => {
+    try {
+      await fetcherUser(`/favorite/resources/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      mutate((draft) => [...(draft || []), id], {
+        revalidate: false,
+      });
+    } catch {}
+  };
+
+  const deleteFavorite = async () => {
+    try {
+      await fetcherUser(`/favorite/resources/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      mutate((draft) => draft?.filter((item) => item !== id), {
+        revalidate: false,
+      });
+    } catch {}
+  };
+
+  const isFavorite = data?.includes(id);
+
+  return (
+    <button
+      onClick={() => {
+        if (user) {
+          if (!isFavorite) {
+            addFavorite();
+          } else {
+            deleteFavorite();
+          }
+        } else {
+          setShowLoginModal(true);
+        }
+      }}
+      className="absolute top-2 left-2 z-20 w-6 h-6 bg-white/90 hover:bg-gray-100 rounded-sm shadow-sm flex items-center justify-center transition-colors duration-200"
+      aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+    >
+      <Star
+        className={`w-3.5 h-3.5 transition-colors duration-200 ${
+          isFavorite
+            ? "fill-[#dc2626] text-[#dc2626]"
+            : "text-gray-400 hover:text-gray-600"
+        }`}
+      />
+    </button>
   );
 }

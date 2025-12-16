@@ -15,6 +15,7 @@ import { DealSystemService } from '../deal/services/deal-system.service'
 import { LinkSystemService } from '../link/services/link-system.service'
 import { ResourceSystemService } from '../resource/services/resource-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
+import { UserSystemService } from '../user/services/user-system.service'
 
 import { AttachmentJobData, ImageJobData } from './image-queue.service'
 
@@ -32,6 +33,7 @@ export class ImageProcessor extends WorkerHost {
 
 	constructor(
 		private readonly s3: S3StorageService,
+		private readonly userSystemService: UserSystemService,
 		private readonly linkSystemService: LinkSystemService,
 		private readonly dealSystemService: DealSystemService,
 		private readonly resourceSystemService: ResourceSystemService
@@ -41,6 +43,8 @@ export class ImageProcessor extends WorkerHost {
 
 	async process(job: Job<ImageJobData>) {
 		switch (job.name) {
+			case 'user-avatar':
+				return this.userAvatar(job)
 			case 'link-hero':
 				return this.linkHero(job)
 			case 'deal-hero':
@@ -58,6 +62,80 @@ export class ImageProcessor extends WorkerHost {
 			default:
 				throw new Error(`Unknown job type: ${job.name}`)
 		}
+	}
+
+	/** AVATAR для User */
+	private async userAvatar(job: Job<ImageJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for userId=${entityId}, avatarId=${entityFileId}, srcKey=${srcKey}`)
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				this.logger.warn(`Original avatar not found for userId=${entityId}, key=${srcKey}`)
+				throw new DiscardedError('Original avatar not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Обробка зображення:
+		const out = await sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({
+				width: 100,
+				height: 100,
+				fit: 'cover',
+				withoutEnlargement: true
+			})
+			.toColourspace('srgb')
+			.webp({ quality: 82, effort: 5 })
+			.toBuffer()
+
+		const meta = await sharp(out).metadata()
+
+		// 3) Ключ призначення (міняємо розширення на .webp)
+		const dstKey = replaceExt(srcKey, '.webp')
+
+		// 4) Запис до S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			uploaded = await this.s3.uploadPublic(out, 'image/webp', true, dstKey)
+		} catch (e) {
+			throw e
+		}
+
+		// 5) Оновлення БД
+		try {
+			await this.userSystemService.save({
+				id: entityId,
+				avatar: {
+					id: entityFileId,
+					processedKey: uploaded.key,
+					url: uploaded.url,
+					width: meta.width ?? 0,
+					height: meta.height ?? 0,
+					status: EFileStatus.READY
+				}
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Linked entity missing while saving result (linkId=${entityId}, linkImageId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Linked entity deleted during processing')
+			}
+			throw e
+		}
+
+		this.logger.log(`Completed avatar job ${job.id}: userId=${entityId}, avatarId=${entityFileId} -> ${uploaded?.url}`)
 	}
 
 	/** HERO для Link */

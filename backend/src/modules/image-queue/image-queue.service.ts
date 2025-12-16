@@ -18,6 +18,15 @@ export interface AttachmentJobData {
 export class ImageQueueService {
 	constructor(@InjectQueue('image') private readonly queue: Queue<ImageJobData>) {}
 
+	async enqueueUserAvatarProcess(data: ImageJobData) {
+		return await this.queue.add('user-avatar', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
+
 	async enqueueLinkHeroProcess(data: ImageJobData) {
 		return await this.queue.add('link-hero', data, {
 			attempts: 3,

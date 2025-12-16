@@ -35,6 +35,7 @@ import { IDeal } from "../../../../../../../../types/Deal";
 import { fetcherAdmin } from "../../../../../../../../lib/fetcher";
 import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
 import { useParams } from "next/navigation";
+import { Input } from "../../../../../../../../components/ui/input";
 
 export function OfferForm() {
   const { id: dealId } = useParams();
@@ -131,6 +132,8 @@ export function OfferForm() {
   };
 
   const offerEnabled = async () => {
+    setFormError(null);
+
     setStatusOfferEnabled("loading");
     try {
       await fetcherAdmin(`/admin/deals/${dealId}/offer-details/enable`, {
@@ -178,12 +181,12 @@ export function OfferForm() {
               Offer Details
             </div>
             <div className="flex items-center gap-2">
-              <label
+              <Label
                 htmlFor="offer-details-toggle"
-                className="text-sm text-gray-600"
+                className="text-sm text-gray-600 mb-0"
               >
                 Enable Section
-              </label>
+              </Label>
               <Switch
                 id="offer-details-toggle"
                 checked={data?.offerEnabled}
@@ -200,9 +203,7 @@ export function OfferForm() {
 
             {/* Deal Type */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Deal Type *
-              </label>
+              <Label>Deal Type *</Label>
               <Controller
                 name="dealType"
                 control={form.control}
@@ -218,7 +219,9 @@ export function OfferForm() {
                   >
                     <SelectTrigger
                       className={cn(
-                        form.formState.errors.dealType && "border-destructive"
+                        form.formState.errors.dealType
+                          ? "border-destructive bg-background focus:border-destructive"
+                          : "bg-background border border-input"
                       )}
                     >
                       <SelectValue placeholder="Select a category" />
@@ -242,50 +245,25 @@ export function OfferForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Original Price */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Original Price
-                </label>
-                <input
-                  placeholder="99.99"
-                  type="number"
-                  {...form.register("originalPrice")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.originalPrice
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.originalPrice ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.originalPrice.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Original Price"
+                placeholder="99.99"
+                type="number"
+                {...form.register("originalPrice")}
+                error={!!form.formState.errors.originalPrice}
+                errorMessage={form.formState.errors.originalPrice?.message}
+              />
+
               {/* Your Price */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Your Price
-                </label>
-                <input
-                  placeholder="49.99"
-                  type="number"
-                  {...form.register("yourPrice")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.yourPrice
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.yourPrice ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.yourPrice.message}
-                  </p>
-                ) : null}
-              </div>
-              {/* Deal Type */}
+              <Input
+                label="Your Price"
+                placeholder="49.99"
+                type="number"
+                {...form.register("yourPrice")}
+                error={!!form.formState.errors.yourPrice}
+                errorMessage={form.formState.errors.yourPrice?.message}
+              />
+              {/* Cadence Price */}
               <div className="pt-7">
                 <Controller
                   name="cadencePrice"
@@ -297,8 +275,9 @@ export function OfferForm() {
                     >
                       <SelectTrigger
                         className={cn(
-                          form.formState.errors.cadencePrice &&
-                            "border-destructive"
+                          form.formState.errors.cadencePrice
+                            ? "border-destructive bg-background focus:border-destructive"
+                            : "bg-background border border-input"
                         )}
                       >
                         <SelectValue />
@@ -332,47 +311,21 @@ export function OfferForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Promo Code */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Promo Code
-                </label>
-                <input
-                  placeholder="MILITARY50"
-                  {...form.register("promoCode")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.promoCode
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.promoCode ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.promoCode.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Promo Code"
+                placeholder="MILITARY50"
+                {...form.register("promoCode")}
+                error={!!form.formState.errors.promoCode}
+                errorMessage={form.formState.errors.promoCode?.message}
+              />
               {/* Where to Enter Code */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Where to Enter Code
-                </label>
-                <input
-                  placeholder="MILITARY50"
-                  {...form.register("whereToEnterCode")}
-                  className={cn(
-                    "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                    form.formState.errors.whereToEnterCode
-                      ? "border-destructive focus:border-destructive"
-                      : "border-input"
-                  )}
-                />
-                {form.formState.errors.whereToEnterCode ? (
-                  <p className="mt-1 text-sm text-destructive">
-                    {form.formState.errors.whereToEnterCode.message}
-                  </p>
-                ) : null}
-              </div>
+              <Input
+                label="Where to Enter Code"
+                placeholder="At checkout, in the promo code field"
+                {...form.register("whereToEnterCode")}
+                error={!!form.formState.errors.whereToEnterCode}
+                errorMessage={form.formState.errors.whereToEnterCode?.message}
+              />
             </div>
 
             <div>
@@ -388,7 +341,7 @@ export function OfferForm() {
                         onCheckedChange={(checked) => field.onChange(checked)}
                         disabled={loading || !data}
                       />
-                      <Label htmlFor="ongoingOffer">
+                      <Label htmlFor="ongoingOffer" className="mb-0">
                         Ongoing Offer (no expiration)
                       </Label>
                     </>
@@ -399,72 +352,33 @@ export function OfferForm() {
               {!form.watch("ongoingOffer") && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Valid From */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Valid From
-                    </label>
-                    <input
-                      {...form.register("validFrom")}
-                      type="date"
-                      className={cn(
-                        "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                        form.formState.errors.validFrom
-                          ? "border-destructive focus:border-destructive"
-                          : "border-input"
-                      )}
-                    />
-                    {form.formState.errors.validFrom ? (
-                      <p className="mt-1 text-sm text-destructive">
-                        {form.formState.errors.validFrom.message}
-                      </p>
-                    ) : null}
-                  </div>
+                  <Input
+                    label="Valid From"
+                    {...form.register("validFrom")}
+                    type="date"
+                    error={!!form.formState.errors.validFrom}
+                    errorMessage={form.formState.errors.validFrom?.message}
+                  />
                   {/* Valid Until */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Valid Until
-                    </label>
-                    <input
-                      {...form.register("validUntil")}
-                      type="date"
-                      className={cn(
-                        "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                        form.formState.errors.validUntil
-                          ? "border-destructive focus:border-destructive"
-                          : "border-input"
-                      )}
-                    />
-                    {form.formState.errors.validUntil ? (
-                      <p className="mt-1 text-sm text-destructive">
-                        {form.formState.errors.validUntil.message}
-                      </p>
-                    ) : null}
-                  </div>
+                  <Input
+                    label="Valid Until"
+                    {...form.register("validUntil")}
+                    type="date"
+                    error={!!form.formState.errors.validUntil}
+                    errorMessage={form.formState.errors.validUntil?.message}
+                  />
                 </div>
               )}
             </div>
 
             {/* Provider Display Name*/}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Provider Display Name
-              </label>
-              <input
-                {...form.register("providerDisplayName")}
-                placeholder="Leave blank to use merchant name"
-                className={cn(
-                  "flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring",
-                  form.formState.errors.providerDisplayName
-                    ? "border-destructive focus:border-destructive"
-                    : "border-input"
-                )}
-              />
-              {form.formState.errors.providerDisplayName ? (
-                <p className="mt-1 text-sm text-destructive">
-                  {form.formState.errors.providerDisplayName.message}
-                </p>
-              ) : null}
-            </div>
+            <Input
+              label=" Provider Display Name"
+              {...form.register("providerDisplayName")}
+              placeholder="Leave blank to use merchant name"
+              error={!!form.formState.errors.providerDisplayName}
+              errorMessage={form.formState.errors.providerDisplayName?.message}
+            />
 
             <ButtonSubmit
               type="button"
@@ -477,7 +391,6 @@ export function OfferForm() {
                 disabled: "Disabled",
               }}
               className="font-semibold"
-              disabled={loading || !data}
             >
               <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
               Save
