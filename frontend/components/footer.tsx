@@ -41,7 +41,7 @@ export function Footer() {
     </>
   )
 
-  const shouldShowDisclaimer = user?.footerDisclaimer
+  const shouldShowDisclaimer = (user === undefined) || user?.footerDisclaimer
 
   return (
     <>

@@ -112,14 +112,17 @@ export function List() {
                 <div
                   key={item.id}
                   className={cn(
-                    "card group  relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
+                    "card group  relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg ",
                     isValidating && "pointer-events-none",
                     !isValidating &&
                       item.status === EDealStatus.PUBLISHED &&
                       "cursor-pointer"
                   )}
                   onClick={() => {
-                    if (!isValidating && item.status === EDealStatus.PUBLISHED) {
+                    if (
+                      !isValidating &&
+                      item.status === EDealStatus.PUBLISHED
+                    ) {
                       handleCardClick(item.slug);
                     }
                   }}
@@ -216,7 +219,7 @@ export function List() {
                   </div>
 
                   {isValidating ? (
-                    <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
+                    <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/10">
                       <Loader2 className="animate-spin w-11 h-11 text-white" />
                     </div>
                   ) : null}

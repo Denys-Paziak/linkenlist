@@ -64,5 +64,5 @@ export const branchesOptions = [
   "Marines",
   "Space Force",
   "Coast Guard",
-  "DoD-wide",
+  "DoW-wide",
 ] as const;

@@ -40,7 +40,10 @@ export default function SignInPage() {
         {/* Auth Tabs */}
         <div className="flex border-b border-gray-300 mb-6">
           <button
-            onClick={() => setTab("login")}
+            onClick={() => {
+              setTab("login")
+              setRegisterSucces(false);
+            }}
             className={`flex-1 py-3 font-medium text-sm transition-colors ${
               tab === "login"
                 ? "text-accent border-b-2 border-accent"
@@ -50,7 +53,10 @@ export default function SignInPage() {
             Sign In
           </button>
           <button
-            onClick={() => setTab("register")}
+            onClick={() => {
+              setTab("register")
+              setRegisterSucces(false);
+            }}
             className={`flex-1 py-3 font-medium text-sm transition-colors ${
               tab === "register"
                 ? "text-accent border-b-2 border-accent"

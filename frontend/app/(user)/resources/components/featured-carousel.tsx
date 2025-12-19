@@ -11,7 +11,7 @@ import {
 } from "../../../../components/slider-arrow-buttons";
 
 export function FeaturedCarousel() {
-  const { data, isLoading, error, mutate } = useSWR<
+  const { data, isLoading, error } = useSWR<
     [IResourceListExtended[], number]
   >("/resources?page=1&limit=10&isFeatured=true");
 
@@ -44,19 +44,12 @@ export function FeaturedCarousel() {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
         <p className="text-red-600 font-semibold">
-          Failed to load featured deals.
+          Failed to load featured resources.
         </p>
         <p className="text-sm text-gray-500 max-w-md">
           Something went wrong while loading the deals. Please check your
           connection and try again.
         </p>
-        <button
-          type="button"
-          onClick={() => mutate()}
-          className="mt-2 inline-flex items-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-300 hover:bg-gray-100 hover:text-gray-700"
-        >
-          Try again
-        </button>
       </div>
     );
   } else if (hasDeals) {
@@ -80,11 +73,8 @@ export function FeaturedCarousel() {
   } else {
     content = (
       <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
-        <p className="text-gray-700 font-medium">
-          No featured deals available right now.
-        </p>
-        <p className="text-sm text-gray-500">
-          Please check back later for new military deals.
+        <p className="text-white font-medium">
+          No featured resources available right now.
         </p>
       </div>
     );

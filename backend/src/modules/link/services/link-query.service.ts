@@ -76,7 +76,7 @@ export class LinkQueryService {
 
 	async getAllLinks(query: GetAllLinksDto, userId?: number) {
 		const page = Math.max(1, Number(query.page ?? 1))
-		const limit = Math.max(16, Number(query.limit ?? 16))
+		const limit = Math.max(35, Number(query.limit ?? 35))
 		const offset = (page - 1) * limit
 
 		const cacheKey =
@@ -132,6 +132,7 @@ export class LinkQueryService {
 			'l.views30d',
 			'l.popularScore',
 			'l.isOfficial',
+			'l.createdAt',
 			'img',
 			't.id',
 			't.name'
@@ -182,8 +183,12 @@ export class LinkQueryService {
 					qb.orderBy('l.views30d', 'DESC')
 					break
 
-				default:
+				case 'popularity':
 					qb.orderBy('l.popularScore', 'DESC')
+					break
+
+				default:
+					qb.orderBy('l.createdAt', 'DESC')
 					break
 			}
 		}

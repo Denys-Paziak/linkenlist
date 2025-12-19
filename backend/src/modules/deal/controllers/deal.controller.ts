@@ -1,8 +1,8 @@
 import { Controller, Get, Param, Patch, Query, Req } from '@nestjs/common'
-import { Throttle } from '@nestjs/throttler'
 import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
+import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { ParamSlug } from '../../../dtos/ParamSlug.dto'
 import { ERoleName } from '../../../interfaces/ERoleName'
@@ -10,13 +10,14 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetAllDealsDto } from '../dtos/GetAllDeals.dto'
 import { DealCommandService } from '../services/deal-command.service'
 import { DealQueryService } from '../services/deal-query.service'
-import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
+import { DealSystemService } from '../services/deal-system.service'
 
 @Controller('deals')
 export class DealController {
 	constructor(
 		private readonly dealQueryService: DealQueryService,
-		private readonly dealCommandService: DealCommandService
+		private readonly dealCommandService: DealCommandService,
+		private readonly dealSystemService: DealSystemService
 	) {}
 
 	@Get(':slug')
@@ -37,10 +38,23 @@ export class DealController {
 		return await this.dealQueryService.getAllDeals(query, userFromToken?.id)
 	}
 
-	@Throttle({ default: { limit: 1, ttl: 60 * 60 * 1000 } })
+	@OptionalAuthorization()
 	@Patch(':id/add-view')
-	async addView(@Param() params: ParamId) {
-		await this.dealCommandService.addView(params.id)
+	async addView(@Req() request: FastifyRequest, @Param() params: ParamId) {
+		const dealId = Number(params.id)
+
+		const userId = (request as any).user?.id as number | undefined
+		const viewerKey = userId ? `u:${userId}` : `ip:${request.ip}`
+
+		const counted = await this.dealSystemService.markViewedOnce({
+			dealId,
+			viewerKey,
+			ttlMs: 60 * 60 * 1000
+		})
+
+		if (counted) {
+			await this.dealCommandService.addView(dealId)
+		}
 
 		return {
 			ok: true
@@ -48,14 +62,10 @@ export class DealController {
 	}
 
 	@Authorization(ERoleName.USER)
-	@Patch(':id/add-helpful')
-	async addHelpful(@Req() request: FastifyRequest, @Param() params: ParamId) {
+	@Patch(':id/toggle-helpful')
+	async toggleHelpful(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const userFromToken = request.user as ITokenUser
 
-		await this.dealCommandService.addHelpful(params.id, userFromToken.id)
-
-		return {
-			ok: true
-		}
+		return await this.dealCommandService.toggleHelpful(params.id, userFromToken.id)
 	}
 }

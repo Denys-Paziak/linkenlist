@@ -3,7 +3,7 @@ import { IDeal } from "../../../../../types/Deal";
 
 export function BasicInfo({ data }: { data: IDeal }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-border p-8">
+    <section className="bg-white rounded-lg shadow-sm border border-border p-8">
       <div className="relative mb-6">
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
           {data.title}
@@ -32,6 +32,6 @@ export function BasicInfo({ data }: { data: IDeal }) {
           </span>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

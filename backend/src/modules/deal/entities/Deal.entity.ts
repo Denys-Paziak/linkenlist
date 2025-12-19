@@ -18,6 +18,7 @@ import { EDealCategory } from '../../../interfaces/EDealCategory'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EDealType } from '../../../interfaces/EDealType'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
+import { Comment } from '../../comment/entities/Comment.entity'
 import { Resource } from '../../resource/entities/Resource.entity'
 
 import { DealImage } from './DealImage.entity'
@@ -184,6 +185,9 @@ export class Deal {
 
 	@Column({ type: 'int', default: 1, name: 'popular_score' })
 	popularScore: number
+
+	@OneToMany(() => Comment, comment => comment.pageDeal)
+	comments: Comment[]
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

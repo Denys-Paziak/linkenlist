@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DeepPartial, FindOneOptions, Repository } from 'typeorm'
 
@@ -16,11 +17,23 @@ export class ResourceSystemService {
 		private readonly resourceRepository: Repository<Resource>,
 		@InjectRepository(ResourceImage)
 		private readonly resourceImageRepository: Repository<ResourceImage>,
-		@InjectRepository(ResourceSection)
-		private readonly resourceSection: Repository<ResourceSection>,
 		@InjectRepository(ResourceSectionAttachment)
-		private readonly resourceSectionAttachmentRepository: Repository<ResourceSectionAttachment>
+		private readonly resourceSectionAttachmentRepository: Repository<ResourceSectionAttachment>,
+		@Inject(CACHE_MANAGER)
+		private readonly cache: Cache
 	) {}
+
+	async markViewedOnce(params: { dealId: number; viewerKey: string; ttlMs: number }): Promise<boolean> {
+		const { dealId, viewerKey, ttlMs } = params
+		const key = `resource:view:${dealId}:${viewerKey}`
+
+		const already = await this.cache.get<string>(key)
+		if (already) return false
+
+		await this.cache.set(key, '1', ttlMs)
+
+		return true
+	}
 
 	async findResource(options: FindOneOptions<Resource>) {
 		return await this.resourceRepository.findOne(options)

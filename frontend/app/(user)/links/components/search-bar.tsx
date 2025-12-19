@@ -34,6 +34,7 @@ interface SearchBarProps {
 
 const sortOptions = [
   { value: "default", label: "Default" },
+  { value: "popularity", label: "By popularity" },
   { value: "most_used", label: "Most used (clicks last 30 days)" },
   { value: "recently_verified", label: "Recently verified" },
   { value: "alphabetical", label: "Alphabetical" },
@@ -56,9 +57,9 @@ export function SearchBar({
   const { data: user } = useSWR<IUser>("/users/self");
 
   const resetFilters = () => {
-    if (onBranchChange) onBranchChange("");
-    if (onCategoryChange) onCategoryChange("");
-    if (onSortChange) onSortChange("");
+    if (onBranchChange) onBranchChange("all");
+    if (onCategoryChange) onCategoryChange("all");
+    if (onSortChange) onSortChange("default");
     onChange("");
   };
 

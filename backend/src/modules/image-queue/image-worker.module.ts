@@ -21,6 +21,7 @@ import { TokenModule } from '../token/token.module'
 import { UserModule } from '../user/user.module'
 
 import { ImageProcessor } from './image.processor'
+import { CommentModule } from '../comment/comment.module'
 
 @Module({
 	imports: [
@@ -39,7 +40,8 @@ import { ImageProcessor } from './image.processor'
 		UserModule,
 		ListingModule,
 		TokenModule,
-		MailModule
+		MailModule,
+		CommentModule
 	],
 	providers: [ImageProcessor, S3StorageService]
 })

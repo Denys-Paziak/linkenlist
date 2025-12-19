@@ -14,17 +14,21 @@ export function Helpful({ data }: { data: IDeal }) {
 
   const { setShowLoginModal } = useUser();
 
-  const { data: helpful } = useSWR<number[]>(`/deals/${data.id}/helpful`);
+  const { data: helpful, mutate } = useSWR<number[]>(
+    `/deals/${data.id}/helpful`
+  );
 
   const [showFireworks, setShowFireworks] = useState(false);
 
   const addHelpful = async () => {
     setShowFireworks(true);
     try {
-      await fetcherUser(`/deals/${data.id}/add-helpful`, {
+      const res = await fetcherUser(`/deals/${data.id}/toggle-helpful`, {
         method: "PATCH",
         credentials: "include",
       });
+
+      mutate(res, false);
     } catch {}
 
     setTimeout(() => setShowFireworks(false), 1000);
@@ -57,15 +61,13 @@ export function Helpful({ data }: { data: IDeal }) {
                 size="sm"
                 onClick={() => {
                   if (user) {
-                    if (!isHelpful) {
                       addHelpful();
                       setShowFireworks(true);
-                    }
                   } else {
                     setShowLoginModal(true);
                   }
                 }}
-                disabled={isHelpful}
+                disabled={showFireworks}
                 className={`flex items-center gap-2 transition-all duration-200 ${
                   isHelpful
                     ? "bg-green-600 hover:bg-green-700 text-white"

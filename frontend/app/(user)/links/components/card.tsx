@@ -7,6 +7,7 @@ import { ILink } from "../../../../types/Link";
 import { fetcherUser } from "../../../../lib/fetcher";
 import { useUser } from "../../../../contexts/user-context";
 import useSWR from "swr";
+import { IUser } from "../../../../types/User";
 
 interface CardProps {
   data: ILink;
@@ -16,7 +17,10 @@ interface CardProps {
 export function Card({ data, isLoading }: CardProps) {
   const handleCardClick = async () => {
     try {
-      await fetcherUser(`/links/${data.id}/add-view`, { method: "PATCH" });
+      await fetcherUser(`/links/${data.id}/add-view`, {
+        method: "PATCH",
+        credentials: "include",
+      });
     } catch {}
 
     window.open(data.url, "_blank", "noopener noreferrer");
@@ -41,7 +45,7 @@ export function Card({ data, isLoading }: CardProps) {
         <span className="sr-only">View {data.title}</span>
       </div>
 
-      <FavoriteButton id={data.id}/>
+      <FavoriteButton id={data.id} />
 
       {/* Image Container with fixed aspect ratio - matching realestate cards */}
       <div className="card-media-container p-2 pb-1">
@@ -104,7 +108,7 @@ export function Card({ data, isLoading }: CardProps) {
       </div>
 
       {isLoading ? (
-        <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/30">
+        <div className="absolute z-30 flex items-center justify-center inset-0 bg-black/10">
           <Loader2 className="animate-spin w-11 h-11 text-white" />
         </div>
       ) : null}
@@ -113,9 +117,13 @@ export function Card({ data, isLoading }: CardProps) {
 }
 
 function FavoriteButton({ id }: { id: number }) {
-  const { user, setShowLoginModal } = useUser();
+  const { data: user } = useSWR<IUser>("/users/self");
 
-  const { data, mutate } = useSWR<number[]>(user ? `/favorite/resources` : null);
+  const { setShowLoginModal } = useUser();
+
+  const { data, mutate } = useSWR<number[]>(
+    user ? `/favorite/resources` : null
+  );
 
   const addFavorite = async () => {
     try {

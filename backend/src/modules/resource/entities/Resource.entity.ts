@@ -16,13 +16,14 @@ import {
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 import { EResourceCategory } from '../../../interfaces/EResourceCategory'
 import { EResourceFormat } from '../../../interfaces/EResourceFormat'
+import { EResourceStatus } from '../../../interfaces/EResourceStatus'
+import { Comment } from '../../comment/entities/Comment.entity'
+import { Deal } from '../../deal/entities/Deal.entity'
 
 import { ResourceImage } from './ResourceImage.entity'
 import { ResourceRelated } from './ResourceRelated.entity'
 import { ResourceSection } from './ResourceSection.entity'
 import { ResourceTag } from './ResourceTag.entity'
-import { EResourceStatus } from '../../../interfaces/EResourceStatus'
-import { Deal } from '../../deal/entities/Deal.entity'
 
 @Entity('resources')
 @Unique(['slug'])
@@ -56,7 +57,7 @@ export class Resource {
 	tags: ResourceTag[]
 
 	@Column({ type: 'text', name: 'tags_text', default: '' })
-  	tagsText: string
+	tagsText: string
 
 	@Column({ type: 'boolean', default: false, name: 'is_featured' })
 	isFeatured: boolean
@@ -129,6 +130,9 @@ export class Resource {
 	@Column({ type: 'int', default: 1, name: 'popular_score' })
 	popularScore: number
 
+	@OneToMany(() => Comment, comment => comment.pageResource)
+	comments: Comment[]
+
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()
 	createdAt: Date
@@ -137,5 +141,5 @@ export class Resource {
 	updatedAt: Date
 
 	@Column({ type: 'tsvector', select: false, nullable: true })
-  	search_document: any
+	search_document: any
 }

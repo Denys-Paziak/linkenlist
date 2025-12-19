@@ -8,7 +8,7 @@ import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state
 import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 import { useDebounce } from "use-debounce";
 import useSWR from "swr";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { IResourceListExtended } from "../../../../types/Resource";
 import { ResourceCard } from "../../../../components/resource-card";
@@ -25,6 +25,15 @@ export function List() {
   const [debouncedSearch] = useDebounce(searchQuery, 700, {
     leading: true,
   });
+
+  const [selectedSort, setSelectedSort] = useQueryStateWithLocalStorage(
+    "/resources?sort",
+    {
+      defaultValue: "default",
+      parse: (v) => parseAsString.parse(v),
+      sync: true,
+    }
+  );
 
   const [selectedCategory, setSelectedCategory] = useQueryStateWithLocalStorage(
     "/resources?category",
@@ -71,6 +80,7 @@ export function List() {
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
   if (selectedCategory !== "all") params.set("category", selectedCategory);
   if (selectedFormat !== "all") params.set("format", selectedFormat);
+  if (selectedSort !== "default") params.set("sort", selectedSort);
   if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/resources?${params.toString()}`;
@@ -90,17 +100,21 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    if (page !== 1) {
-      setPage(1);
-    }
+     window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleChangeSearch = (search: string) => {
     setSearchQuery(search);
+  };
+
+  useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
-  };
+  }, [limit, searchQuery, selectedCategory, selectedFormat, showFavoritesOnly]);
 
   return (
     <>
@@ -149,6 +163,8 @@ export function List() {
                 onFormatChange={setSelectedFormat}
                 showSavedOnly={showFavoritesOnly}
                 onSavedToggle={setShowFavoritesOnly}
+                selectedSort={selectedSort}
+                onSortChange={setSelectedSort}
               />
             </div>
 
@@ -250,6 +266,8 @@ export function List() {
         onCategoryChange={setSelectedCategory}
         selectedFormat={selectedFormat}
         onFormatChange={setSelectedFormat}
+        selectedSort={selectedSort}
+        onSortChange={setSelectedSort}
       />
     </>
   );

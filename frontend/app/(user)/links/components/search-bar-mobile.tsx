@@ -30,6 +30,7 @@ interface SearchBarMobileProps {
 
 const sortOptions = [
   { value: "default", label: "Default" },
+  { value: "popularity", label: "By popularity" },
   { value: "most_used", label: "Most used (clicks last 30 days)" },
   { value: "recently_verified", label: "Recently verified" },
   { value: "alphabetical", label: "Alphabetical" },
@@ -49,9 +50,9 @@ export function SearchBarMobile({
   onSortChange,
 }: SearchBarMobileProps) {
   const resetFilters = () => {
-    onBranchChange("");
-    onCategoryChange("");
-    onSortChange("");
+    if (onBranchChange) onBranchChange("all");
+    if (onCategoryChange) onCategoryChange("all");
+    if (onSortChange) onSortChange("default");
     onSearchChange("");
   };
 

@@ -38,7 +38,7 @@ export function DeleteDialog({
     setDeleteMode(method);
 
     try {
-      const response = await fetcherAdmin("/admin/deals/" + itemToDelete.id, {
+      await fetcherAdmin("/admin/deals/" + itemToDelete.id, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -49,18 +49,13 @@ export function DeleteDialog({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error();
-      }
-
       setStatus("success");
       handleSuccessDelete();
       setTimeout(() => {
         setStatus("idle");
       }, 2000);
-    } catch {
-      const msg = "Unable to remove the link.";
-      setErrors(msg);
+    } catch (err: any) {
+      setErrors(err?.message ?? "Unable to remove the link.");
       setStatus("error");
     }
   };

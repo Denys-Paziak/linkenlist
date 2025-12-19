@@ -9,7 +9,7 @@ import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 import { useDebounce } from "use-debounce";
 import useSWR from "swr";
 import { IDealListExtended } from "../../../../types/Deal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { DealCard } from "../../../../components/deal-card";
 
@@ -42,6 +42,15 @@ export function List() {
       sync: true,
     });
 
+  const [selectedSort, setSelectedSort] = useQueryStateWithLocalStorage(
+    "/deals?sort",
+    {
+      defaultValue: "default",
+      parse: (v) => parseAsString.parse(v),
+      sync: true,
+    }
+  );
+
   const [page, setPage] = useQueryStateWithLocalStorage("/deals?page", {
     defaultValue: 1,
     parse: (v) => parseAsInteger.parse(v),
@@ -60,7 +69,8 @@ export function List() {
   });
 
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
-  if (selectedCategory !== 'all') params.set("category", selectedCategory);
+  if (selectedCategory !== "all") params.set("category", selectedCategory);
+  if (selectedSort !== "default") params.set("sort", selectedSort);
   if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/deals?${params.toString()}`;
@@ -79,17 +89,21 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    if (page !== 1) {
-      setPage(1);
-    }
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleChangeSearch = (search: string) => {
     setSearchQuery(search);
+  };
+
+  useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
-  };
+  }, [limit, searchQuery, selectedCategory, showFavoritesOnly, selectedSort]);
 
   return (
     <>
@@ -136,6 +150,8 @@ export function List() {
                 onCategoryChange={setSelectedCategory}
                 showSavedOnly={showFavoritesOnly}
                 onSavedToggle={setShowFavoritesOnly}
+                selectedSort={selectedSort}
+                onSortChange={setSelectedSort}
               />
             </div>
 
@@ -231,6 +247,8 @@ export function List() {
         onSearchChange={handleChangeSearch}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        selectedSort={selectedSort}
+        onSortChange={setSelectedSort}
       />
     </>
   );

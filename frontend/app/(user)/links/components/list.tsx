@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProposalLinkModal } from "@/components/proposal-link-modal";
-import { ScrollButtons } from "@/components/scroll-buttons";
 import { Star, Filter, Loader2 } from "lucide-react";
 import { parseAsString, parseAsBoolean, parseAsInteger } from "nuqs";
 
@@ -70,7 +69,7 @@ export function List() {
   });
 
   const [limit, setLimit] = useQueryStateWithLocalStorage("/links?limit", {
-    defaultValue: 16,
+    defaultValue: 35,
     parse: (v) => parseAsInteger.parse(v),
     sync: true,
   });
@@ -103,17 +102,28 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-    if (page !== 1) {
-      setPage(1);
-    }
+     window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleChangeSearch = (search: string) => {
     setSearchQuery(search);
+  };
+
+  useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
-  };
+  }, [
+    limit,
+    searchQuery,
+    selectedBranch,
+    selectedCategory,
+    selectedSort,
+    showFavoritesOnly,
+  ]);
 
   return (
     <>
@@ -194,8 +204,8 @@ export function List() {
           )}
 
           {(debouncedSearch.length >= 2 ||
-            selectedBranch ||
-            selectedCategory ||
+            selectedBranch !== "all" ||
+            selectedCategory !== "all" ||
             showFavoritesOnly) && (
             <div className="mb-4 px-2">
               <p className="text-sm text-muted-foreground">
@@ -244,7 +254,7 @@ export function List() {
             page,
           }}
           totalPages={totalPages}
-          pageSizeOptions={[8, 16, 32, 64]}
+          pageSizeOptions={[35, 70, 140]}
           className="pt-6 px-8"
         />
       </main>

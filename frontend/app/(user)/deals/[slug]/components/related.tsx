@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { DealCard } from "../../../../../components/deal-card";
 import { IDeal, IDealListExtended } from "../../../../../types/Deal";
 import { Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export function Related({
   dealData,
@@ -14,18 +15,38 @@ export function Related({
   related?: IDeal["relatedManual"];
   autoMode: boolean;
 }) {
-  const params = new URLSearchParams({
-    page: "1",
-    limit: "4",
-    search: dealData.tags.map((item) => item.name).join(" "),
-    category: dealData.categories[0],
+  const [searchParams, setSearchParams] = useState(() => {
+    const params = new URLSearchParams({
+      page: "1",
+      limit: "4",
+      category: dealData.categories[0],
+    });
+
+    if (dealData.tags.length !== 0) {
+      params.append("search", dealData.tags.map((item) => item.name).join(" "));
+    }
+    return params.toString();
   });
 
   const { data, isLoading } = useSWR<[IDealListExtended[], number]>(
-    autoMode ? `/deals?${params.toString()}` : null
+    autoMode ? `/deals?${searchParams}` : null
   );
 
-  const filteredAutoData = data?.[0]?.filter((item) => item.id !== dealData.id);
+  const filteredAutoData = useMemo(() => {
+    return data?.[0]?.filter((item) => item.id !== dealData.id);
+  }, [data, dealData]);
+
+  useEffect(() => {
+    if (filteredAutoData && filteredAutoData.length === 0) {
+      const fallbackParams = new URLSearchParams({
+        page: "1",
+        limit: "4",
+        category: dealData.categories[0],
+      });
+
+      setSearchParams(fallbackParams.toString());
+    }
+  }, [filteredAutoData]);
 
   if (isLoading) {
     return (
@@ -50,8 +71,6 @@ export function Related({
               ?.map((relatedDeal) => (
                 <DealCard key={relatedDeal.id} data={relatedDeal} />
               ))
-          : !filteredAutoData?.length
-          ? "No Related Deals"
           : null}
         {!autoMode
           ? related
@@ -59,7 +78,8 @@ export function Related({
               ?.map((relatedDeal) => (
                 <DealCard key={relatedDeal.id} data={relatedDeal.target} />
               ))
-          : !related?.length
+          : null}
+        {!filteredAutoData?.length && !related?.length
           ? "No Related Deals"
           : null}
       </div>

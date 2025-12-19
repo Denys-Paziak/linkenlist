@@ -5,7 +5,7 @@ import { IDeal } from "../../../../types/Deal";
 import { BasicInfo } from "./components/basic-info";
 import { OfferDetails } from "./components/offer-details";
 import { Helpful } from "./components/helpful";
-import { Comments } from "./components/comments";
+import { Comments } from "./components/comments/comments";
 import { Related } from "./components/related";
 import { Featured } from "./components/featured";
 import { HeroImage } from "./components/hero-image";
@@ -25,9 +25,9 @@ function getDeal(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params
+  const { slug } = await params;
   const deal = (await getDeal(slug)) as IDeal;
 
   if (!deal) {
@@ -97,9 +97,9 @@ export async function generateMetadata({
 export default async function DealDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params
+  const { slug } = await params;
   const deal = (await getDeal(slug)) as IDeal;
 
   if (!deal) {
@@ -155,9 +155,13 @@ export default async function DealDetailPage({
 
               <Helpful data={deal} />
 
-              <Comments />
+              <Comments data={deal} />
 
-              <Related dealData={deal} related={deal.relatedManual} autoMode={deal.relatedAutoMode} />
+              <Related
+                dealData={deal}
+                related={deal.relatedManual}
+                autoMode={deal.relatedAutoMode}
+              />
             </div>
           </main>
         </div>

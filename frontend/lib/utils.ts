@@ -57,7 +57,7 @@ export function isoToDatetimeLocal(
   const minutes = pad(date.getMinutes());
 
   // формат для input[type="datetime-local"]
-  return `${year}-${month}-${day} ${inTime ? `T${hours}:${minutes}` : ""}`;
+  return `${year}-${month}-${day} ${inTime ? `${hours}:${minutes}` : ""}`;
 }
 
 export const capitalize = (str: string) =>
@@ -78,4 +78,42 @@ export function getFileTypeLabel(ext: string): string {
   };
 
   return map[normalized] ?? "Unknown File";
+}
+
+type TimeUnit = {
+  name: string
+  seconds: number
+}
+
+const TIME_UNITS: TimeUnit[] = [
+  { name: "year", seconds: 60 * 60 * 24 * 365 },
+  { name: "month", seconds: 60 * 60 * 24 * 30 },
+  { name: "day", seconds: 60 * 60 * 24 },
+  { name: "hour", seconds: 60 * 60 },
+  { name: "minute", seconds: 60 },
+  { name: "second", seconds: 1 }
+]
+
+export function timeAgo(
+  input: Date | string | number,
+  now: Date = new Date()
+): string {
+  const date = new Date(input)
+  const diffInSeconds = Math.floor(
+    (now.getTime() - date.getTime()) / 1000
+  )
+
+  if (diffInSeconds < 0) {
+    return "just now"
+  }
+
+  for (const unit of TIME_UNITS) {
+    const value = Math.floor(diffInSeconds / unit.seconds)
+
+    if (value >= 1) {
+      return `${value} ${unit.name}${value > 1 ? "s" : ""} ago`
+    }
+  }
+
+  return "just now"
 }

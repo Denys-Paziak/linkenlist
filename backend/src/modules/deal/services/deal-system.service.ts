@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DeepPartial, FindOneOptions, Repository } from 'typeorm'
 
@@ -16,11 +17,23 @@ export class DealSystemService {
 		private readonly dealRepository: Repository<Deal>,
 		@InjectRepository(DealImage)
 		private readonly dealImageRepository: Repository<DealImage>,
-		@InjectRepository(DealSection)
-		private readonly dealSection: Repository<DealSection>,
 		@InjectRepository(DealSectionAttachment)
-		private readonly dealSectionAttachmentRepository: Repository<DealSectionAttachment>
+		private readonly dealSectionAttachmentRepository: Repository<DealSectionAttachment>,
+		@Inject(CACHE_MANAGER)
+		private readonly cache: Cache
 	) {}
+
+	async markViewedOnce(params: { dealId: number; viewerKey: string; ttlMs: number }): Promise<boolean> {
+		const { dealId, viewerKey, ttlMs } = params
+		const key = `deal:view:${dealId}:${viewerKey}`
+
+		const already = await this.cache.get<string>(key)
+		if (already) return false
+
+		await this.cache.set(key, '1', ttlMs)
+
+		return true
+	}
 
 	async findDeal(options: FindOneOptions<Deal>) {
 		return await this.dealRepository.findOne(options)

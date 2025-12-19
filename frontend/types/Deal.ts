@@ -1,4 +1,4 @@
-import { IResource } from "./Resource";
+import { IResource, IResourceListExtended } from "./Resource";
 import { EOgImageMode } from "./shared";
 
 export enum EDealStatus {
@@ -70,7 +70,7 @@ export interface IDealTag {
 
 export interface IDealRelated {
   id: number;
-  target: IDeal;
+  target: IDealListExtended;
 }
 
 export interface IDealSimple {
@@ -104,6 +104,7 @@ export interface IDealListExtended {
   popularScore: number;
   updatedAt: string;
   isFeatured: boolean;
+  commentsCount: number;
 }
 
 export interface IDeal {
@@ -157,7 +158,7 @@ export interface IDeal {
 
   commentsEnabled: boolean;
 
-  featuredResource: IResource | null;
+  featuredResource: IResourceListExtended | null;
 
   helpful30d: number;
   totalViews: number;

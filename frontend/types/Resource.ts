@@ -1,4 +1,4 @@
-import { IDeal } from "./Deal";
+import { IDeal, IDealListExtended } from "./Deal";
 import { EOgImageMode } from "./shared";
 
 export enum EResourceCategory {
@@ -47,6 +47,7 @@ export interface IResourceListExtended {
   popularScore: number;
   updatedAt: string;
   isFeatured: boolean;
+  commentsCount: number;
 }
 
 export interface IResourceTag {
@@ -83,7 +84,7 @@ export interface IResourceSection {
 
 export interface IResourceRelated {
   id: number;
-  target: IResource;
+  target: IResourceListExtended;
 }
 
 export interface IResourceList {
@@ -130,7 +131,7 @@ export interface IResource {
 
   commentsEnabled: boolean;
 
-  featuredDeal: IDeal | null;
+  featuredDeal: IDealListExtended | null;
 
   helpful30d: number;
   totalViews: number;

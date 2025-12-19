@@ -44,7 +44,7 @@ export class AuthService {
 			}
 		})
 
-		if (userExist?.emailVerified && userExist.password) throw new ConflictException('This user already exists.')
+		if (userExist?.emailVerified) throw new ConflictException('This user already exists.')
 
 		const salt = await bcrypt.genSalt(10)
 

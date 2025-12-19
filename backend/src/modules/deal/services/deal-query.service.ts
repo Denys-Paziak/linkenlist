@@ -3,6 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ILike, IsNull, Repository } from 'typeorm'
 
+import { ECommentStatus } from '../../../interfaces/ECommentStatus'
 import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { EDealStatus } from '../../../interfaces/EDealStatus'
 import { EResourceStatus } from '../../../interfaces/EResourceStatus'
@@ -92,10 +93,18 @@ export class DealQueryService {
 			.leftJoinAndSelect('l.image', 'img')
 			.leftJoinAndSelect('l.tags', 't')
 			.where('l.status = :status', { status: EDealStatus.PUBLISHED })
+			.loadRelationCountAndMap('l.commentsCount', 'l.comments', 'c', subQb =>
+				subQb.andWhere('c.status = :cs', { cs: ECommentStatus.APPROVED })
+			)
 
 		// CATEGORY
 		if (query.category) {
 			qb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		// IS FEATURED
+		if (query.isFeatured) {
+			qb.andWhere('l.isFeatured = :isFeatured', { isFeatured: true })
 		}
 
 		// FAVORITES FILTER
@@ -119,6 +128,7 @@ export class DealQueryService {
 			'l.totalHelpful',
 			'l.outboundUrl',
 			'l.isFeatured',
+			'l.createdAt',
 			'img',
 			't.id',
 			't.name'
@@ -146,18 +156,21 @@ export class DealQueryService {
 				'relevance'
 			)
 
-			if (query.isFeatured) {
-				qb.orderBy('l.isFeatured', 'DESC')
-				qb.addOrderBy('relevance', 'DESC')
-			} else {
-				qb.orderBy('relevance', 'DESC')
-			}
-		} else {
-			if (query.isFeatured) {
-				qb.orderBy('l.isFeatured', 'DESC')
-				qb.addOrderBy('l.popularScore', 'DESC')
-			} else {
-				qb.orderBy('l.popularScore', 'DESC')
+			qb.orderBy('l.isFeatured', 'DESC')
+			qb.addOrderBy('relevance', 'DESC')
+		}
+
+		// СОРТУВАННЯ (лише якщо не search)
+		if (!query.search) {
+			switch (query.sort) {
+				case 'popularity':
+					qb.orderBy('l.isFeatured', 'DESC')
+					qb.addOrderBy('l.popularScore', 'DESC')
+					break
+				default:
+					qb.orderBy('l.isFeatured', 'DESC')
+					qb.addOrderBy('l.createdAt', 'DESC')
+					break
 			}
 		}
 
@@ -171,6 +184,10 @@ export class DealQueryService {
 
 		if (query.category) {
 			countQb.andWhere(':category = ANY(l.categories)', { category: query.category })
+		}
+
+		if (query.isFeatured) {
+			countQb.andWhere('l.isFeatured = :isFeatured', { isFeatured: true })
 		}
 
 		if (query.isFavorite) {

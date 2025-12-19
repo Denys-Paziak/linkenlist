@@ -12,8 +12,8 @@ export class GetAllLinksDto {
 	search?: string
 
 	@IsOptional()
-	@IsEnum(['most_used', 'recently_verified', 'alphabetical', 'official_first'])
-	sort?: 'most_used' | 'recently_verified' | 'alphabetical' | 'official_first'
+	@IsEnum(['most_used', 'recently_verified', 'alphabetical', 'official_first', 'popularity'])
+	sort?: 'most_used' | 'recently_verified' | 'alphabetical' | 'official_first' | 'popularity'
 
 	@IsOptional()
 	@IsEnum(ELinkCategory)

@@ -274,7 +274,7 @@ export function Section({
                 Attach File
               </Button>
               <span className="text-xs text-gray-500">
-                PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (max 10MB)
+                PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (max 50MB)
               </span>
             </div>
 

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import useSWR from "swr";
 import { ResourceCard } from "../../../../../components/resource-card";
@@ -7,6 +7,7 @@ import {
   IResourceListExtended,
 } from "../../../../../types/Resource";
 import { Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export function Related({
   resourceData,
@@ -17,20 +18,38 @@ export function Related({
   related?: IResource["relatedManual"];
   autoMode: boolean;
 }) {
-  const params = new URLSearchParams({
-    page: "1",
-    limit: "4",
-    search: resourceData.tags.map((item) => item.name).join(" "),
-    category: resourceData.categories[0],
+  const [searchParams, setSearchParams] = useState(() => {
+    const params = new URLSearchParams({
+      page: "1",
+      limit: "4",
+      category: resourceData.categories[0],
+    });
+
+    if (resourceData.tags.length !== 0) {
+      params.append("search", resourceData.tags.map((item) => item.name).join(" "));
+    }
+    return params.toString();
   });
 
   const { data, isLoading } = useSWR<[IResourceListExtended[], number]>(
-    autoMode ? `/resources?${params.toString()}` : null
+    autoMode ? `/resources?${searchParams}` : null
   );
 
-  const filteredAutoData = data?.[0]?.filter(
-    (item) => item.id !== resourceData.id
-  );
+  const filteredAutoData = useMemo(() => {
+    return data?.[0]?.filter((item) => item.id !== resourceData.id);
+  }, [data, resourceData]);
+
+  useEffect(() => {
+    if (filteredAutoData && filteredAutoData.length === 0) {
+      const fallbackParams = new URLSearchParams({
+        page: "1",
+        limit: "4",
+        category: resourceData.categories[0],
+      });
+
+      setSearchParams(fallbackParams.toString());
+    }
+  }, [filteredAutoData]);
 
   if (isLoading) {
     return (
@@ -57,8 +76,6 @@ export function Related({
               ?.map((relatedDeal) => (
                 <ResourceCard key={relatedDeal.id} data={relatedDeal} />
               ))
-          : !filteredAutoData?.length
-          ? "No Related Resources"
           : null}
         {!autoMode
           ? related
@@ -66,8 +83,9 @@ export function Related({
               ?.map((relatedDeal) => (
                 <ResourceCard key={relatedDeal.id} data={relatedDeal.target} />
               ))
-          : !related?.length
-          ? "No Related Resources"
+          : null}
+        {!filteredAutoData?.length && !related?.length
+          ? "No Related Deals"
           : null}
       </div>
     </div>

@@ -12,12 +12,14 @@ import { ButtonSubitStatus, ButtonSubmit } from "./ui/button-submit";
 import { ErrorAlert } from "./ui/error-alert";
 import { cn } from "../lib/utils";
 import { mutate } from "swr";
+import { Turnstile } from "./turnstile";
 
 export function LoginModal() {
   const { showLoginModal, setShowLoginModal } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [token, setToken] = useState<string | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -48,6 +50,7 @@ export function LoginModal() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "cf-turnstile-response": token || "",
           },
           credentials: "include",
           body: JSON.stringify(values),
@@ -60,9 +63,9 @@ export function LoginModal() {
 
       mutate("/users/self").then((data) => {
         setStatus("success");
-        form.reset()
-        setShowLoginModal(false)
-      })
+        form.reset();
+        setShowLoginModal(false);
+      });
     } catch {
       setFormError(
         "Login failed. Please check your credentials and try again."
@@ -80,7 +83,10 @@ export function LoginModal() {
 
   return (
     <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-      <DialogContent aria-describedby="login form" className="w-[95vw] max-w-sm sm:max-w-md bg-white rounded-xl border border-primary/30">
+      <DialogContent
+        aria-describedby="login form"
+        className="w-[95vw] max-w-sm sm:max-w-md bg-white rounded-xl border border-primary/30"
+      >
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl font-bold text-[#222222] flex items-center justify-between">
             Sign in.
@@ -215,48 +221,7 @@ export function LoginModal() {
             </div>
 
             {/* reCAPTCHA - Cloudflare Style */}
-            <div className="bg-accent rounded-lg p-1">
-              <div className="bg-[#2D2D2D] rounded-md p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-white font-medium">Success!</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-white font-bold text-sm tracking-wider">
-                    CLOUDFLARE
-                  </div>
-                  <div className="text-gray-400 text-xs">
-                    <a
-                      href="#privacy"
-                      className="hover:text-gray-300 transition-colors"
-                    >
-                      Privacy
-                    </a>
-                    <span className="mx-1">•</span>
-                    <a
-                      href="#terms"
-                      className="hover:text-gray-300 transition-colors"
-                    >
-                      Terms
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Turnstile onToken={(token) => setToken(token)} />
 
             {/* Privacy Policy */}
             <p className="text-xs text-foreground/60">

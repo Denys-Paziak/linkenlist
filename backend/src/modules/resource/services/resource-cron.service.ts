@@ -73,7 +73,6 @@ export class ResourceCronService {
                     j.views_30d,
                     j.total_helpful,
                     j.helpful_30d,
-                    -- нормалізовані метрики [0..1]
                     (j.views_30d::numeric   / mx.max_views_30d)   AS views_norm,
                     (j.helpful_30d::numeric / mx.max_helpful_30d) AS helpful_norm,
                     GREATEST(

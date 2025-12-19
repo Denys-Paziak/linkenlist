@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import { ScrollButtons } from "@/components/scroll-buttons";
 import { BasicInfo } from "./components/basic-info";
 import { Helpful } from "./components/helpful";
-import { Comments } from "./components/comments";
 import { Related } from "./components/related";
 import { Featured } from "./components/featured";
 import { HeroImage } from "./components/hero-image";
@@ -12,6 +11,7 @@ import { MarkdownSection } from "../../../../components/markdown-section/markdow
 import Link from "next/link";
 import { ScrollProgress } from "./components/scroll-progress";
 import { IResource } from "../../../../types/Resource";
+import { Comments } from "./components/comments/comments";
 
 export const dynamicParams = true;
 
@@ -152,7 +152,7 @@ export default async function ResourceDetailPage({
 
               <Helpful data={resource} />
 
-              <Comments />
+              <Comments data={resource}/>
 
               <Related resourceData={resource} autoMode={resource.relatedAutoMode} related={resource.relatedManual} />
             </div>

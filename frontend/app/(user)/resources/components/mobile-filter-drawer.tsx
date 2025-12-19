@@ -23,7 +23,14 @@ interface MobileFilterDrawer {
   onCategoryChange: (value: string) => void;
   selectedFormat: string;
   onFormatChange: (value: string) => void;
+  selectedSort: string;
+  onSortChange: (sort: string) => void;
 }
+
+const sortOptions = [
+  { value: "default", label: "Default" },
+  { value: "popularity", label: "By popularity" },
+];
 
 export function MobileFilterDrawer({
   isOpen,
@@ -34,9 +41,12 @@ export function MobileFilterDrawer({
   onCategoryChange,
   selectedFormat,
   onFormatChange,
+  selectedSort,
+  onSortChange,
 }: MobileFilterDrawer) {
   const resetFilters = () => {
-    onCategoryChange("");
+    onCategoryChange("all");
+    onFormatChange("all");
     onSearchChange("");
   };
 
@@ -105,6 +115,29 @@ export function MobileFilterDrawer({
               {resourceFormats.map((item, i) => (
                 <SelectItem key={i} value={item}>
                   {capitalize(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={
+              selectedSort
+                ? sortOptions.find((option) => option.value === selectedSort)
+                    ?.value
+                : "Sort"
+            }
+            onValueChange={(value) => {
+              onSortChange(value);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((item, i) => (
+                <SelectItem key={i} value={item.value}>
+                  {capitalize(item.label)}
                 </SelectItem>
               ))}
             </SelectContent>

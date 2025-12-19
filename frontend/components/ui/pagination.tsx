@@ -89,7 +89,7 @@ const PaginationPrevious = ({
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span className="hidden sm:inline">Previous</span>
+    <span className="hidden sm:inline">Prev</span>
   </PaginationLink>
 );
 PaginationPrevious.displayName = "PaginationPrevious";
@@ -119,7 +119,10 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-7 sm:w-10 items-center justify-center", className)}
+    className={cn(
+      "flex h-9 w-7 sm:w-10 items-center justify-center",
+      className
+    )}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
@@ -198,10 +201,10 @@ function Pagination({
   className,
 }: {
   handlePageChange: (page: number) => void;
-  handleLimitPageChange: (limit: number) => void;
+  handleLimitPageChange?: (limit: number) => void;
   pagination: {
     page: number;
-    limit: number;
+    limit?: number;
   };
   totalPages: number;
   pageSizeOptions?: number[];
@@ -225,8 +228,7 @@ function Pagination({
 
     if (current <= 3) {
       pages.push(1, 2, 3, 4, 5, "ellipsis-end", totalPages);
-    }
-    else if (current >= totalPages - 2) {
+    } else if (current >= totalPages - 2) {
       pages.push(
         1,
         "ellipsis-start",
@@ -236,8 +238,7 @@ function Pagination({
         totalPages - 1,
         totalPages
       );
-    }
-    else {
+    } else {
       pages.push(
         1,
         "ellipsis-start",
@@ -322,13 +323,15 @@ function Pagination({
           </PaginationItem>
         </PaginationContent>
       </PaginationContainer>
-      <PaginationPageSize
-        value={pagination.limit}
-        onChange={(limit) => handleLimitPageChange(limit)}
-        label="Items per page"
-        className="justify-self-center sm:justify-self-end order-2 sm:order-none"
-        options={pageSizeOptions}
-      />
+      {handleLimitPageChange ? (
+        <PaginationPageSize
+          value={pagination.limit || 10}
+          onChange={(limit) => handleLimitPageChange(limit)}
+          label="Items per page"
+          className="justify-self-center sm:justify-self-end order-2 sm:order-none"
+          options={pageSizeOptions}
+        />
+      ) : null}
     </div>
   );
 }

@@ -12,6 +12,10 @@ export class GetAllResourcesDto {
 	search?: string
 
 	@IsOptional()
+	@IsEnum(['popularity'])
+	sort?: 'popularity'
+
+	@IsOptional()
 	@IsEnum(EResourceCategory)
 	category?: EResourceCategory
 

@@ -33,7 +33,9 @@ import { DealRelated } from '../entities/DealRelated.entity'
 import { DealSection } from '../entities/DealSection.entity'
 import { DealSectionAttachment } from '../entities/DealSectionAttachment.entity'
 import { DealTag } from '../entities/DealTag.entity'
+
 import { DealQueryService } from './deal-query.service'
+import { DailyMetric } from '../../metrics/entities/Metrics.entity'
 
 @Injectable()
 export class DealCommandService {
@@ -734,13 +736,61 @@ export class DealCommandService {
 		await this.metricsSystemService.addView(EDailyMetricType.DEAL_VIEW, dealId)
 	}
 
-	async addHelpful(dealId: number, userId: number) {
-		const helpful = await this.dealQueryService.getDealHelpful(dealId)
+	async toggleHelpful(dealId: number, userId: number) {
+		await this.dataSource.transaction(async manager => {
+			const del = await manager
+				.getRepository(DailyMetric)
+				.createQueryBuilder()
+				.delete()
+				.from(DailyMetric)
+				.where('user = :userId AND metricType = :metricType AND entityId = :entityId', {
+					userId,
+					metricType: EDailyMetricType.DEAL_HELPFUL,
+					entityId: dealId
+				})
+				.execute()
 
-		if (!helpful.includes(userId)) {
-			await this.metricsSystemService.addHelpful(EDailyMetricType.DEAL_HELPFUL, dealId, userId)
-	
-			await this.dealRepository.increment({ id: dealId }, 'totalHelpful', 1)
-		}
+			const deleted = del.affected ?? 0
+
+			if (deleted > 0) {
+				await manager
+					.getRepository(Deal)
+					.createQueryBuilder()
+					.update(Deal)
+					.set({
+						totalHelpful: () => 'GREATEST(total_helpful - :dec, 0)'
+					})
+					.where('id = :id', { id: dealId })
+					.setParameters({ dec: deleted })
+					.execute()
+
+				return
+			}
+
+			await manager
+				.getRepository(DailyMetric)
+				.createQueryBuilder()
+				.insert()
+				.into(DailyMetric)
+				.values({
+					metricType: EDailyMetricType.DEAL_HELPFUL,
+					entityId: dealId,
+					user: { id: userId },
+					day: new Date().toISOString().slice(0, 10)
+				})
+				.execute()
+
+			await manager
+				.getRepository(Deal)
+				.createQueryBuilder()
+				.update(Deal)
+				.set({
+					totalHelpful: () => 'total_helpful + 1'
+				})
+				.where('id = :id', { id: dealId })
+				.execute()
+		})
+
+		return await this.dealQueryService.getDealHelpful(dealId)
 	}
 }

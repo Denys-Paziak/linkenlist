@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
 import { DataSource, EntityManager, Not, Repository } from 'typeorm'
 
+import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { EOgImageMode } from '../../../interfaces/EOgImageMode'
 import { EResourceStatus } from '../../../interfaces/EResourceStatus'
@@ -10,7 +11,10 @@ import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedFile, IUploadedImage } from '../../../interfaces/IUploadedFile'
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
+import { Deal } from '../../deal/entities/Deal.entity'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { DailyMetric } from '../../metrics/entities/Metrics.entity'
+import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
 import { ChangePosContentSectionsDto } from '../dtos/ChangePosContentSections.dto'
@@ -20,6 +24,7 @@ import { SaveBasicInformationDto } from '../dtos/SaveBasicInformation.dto'
 import { SaveContentSectionDto } from '../dtos/SaveContentSection.dto'
 import { SaveSEODto } from '../dtos/SaveSEO.dto'
 import { SetSelectRelatedDto } from '../dtos/SetSelectRelated.dto'
+import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
 import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { Resource } from '../entities/Resource.entity'
 import { ResourceImage } from '../entities/ResourceImage.entity'
@@ -27,10 +32,7 @@ import { ResourceRelated } from '../entities/ResourceRelated.entity'
 import { ResourceSection } from '../entities/ResourceSection.entity'
 import { ResourceSectionAttachment } from '../entities/ResourceSectionAttachment.entity'
 import { ResourceTag } from '../entities/ResourceTag.entity'
-import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
-import { EDailyMetricType } from '../../../interfaces/EDailyMetricType'
-import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
-import { Deal } from '../../deal/entities/Deal.entity'
+
 import { ResourceQueryService } from './resource-query.service'
 
 @Injectable()
@@ -49,7 +51,7 @@ export class ResourceCommandService {
 		private readonly scheduleQueueService: ScheduleQueueService,
 		private readonly s3StorageService: S3StorageService,
 		private readonly metricsSystemService: MetricsSystemService,
-		private readonly resourceQueryService: ResourceQueryService,
+		private readonly resourceQueryService: ResourceQueryService
 	) {}
 
 	private async saveImage(file: IMultipartFile, resourceId: number): Promise<IUploadedImage> {
@@ -209,7 +211,7 @@ export class ResourceCommandService {
 				}
 			}
 
-			if (typeof dto.featuredDealId === "number") {
+			if (typeof dto.featuredDealId === 'number') {
 				manager.getRepository(Deal).save({
 					id: dto.featuredDealId,
 					featuredDeal: { id: resourceId }
@@ -233,7 +235,7 @@ export class ResourceCommandService {
 				seoMetaDescription: seoMetaDescription(),
 				categories: dto.categories,
 				format: dto.format,
-				featuredDeal: typeof dto.featuredDealId === "number" ? { id: dto.featuredDealId } : dto.featuredDealId,
+				featuredDeal: typeof dto.featuredDealId === 'number' ? { id: dto.featuredDealId } : dto.featuredDealId,
 				image:
 					newImage !== undefined
 						? {
@@ -681,13 +683,61 @@ export class ResourceCommandService {
 		await this.metricsSystemService.addView(EDailyMetricType.RESOURCE_VIEW, resourceId)
 	}
 
-	async addHelpful(resourceId: number, userId: number) {
-		const helpful = await this.resourceQueryService.getResourceHelpful(resourceId)
+	async toggleHelpful(resourceId: number, userId: number) {
+		await this.dataSource.transaction(async manager => {
+			const del = await manager
+				.getRepository(DailyMetric)
+				.createQueryBuilder()
+				.delete()
+				.from(DailyMetric)
+				.where('user = :userId AND metricType = :metricType AND entityId = :entityId', {
+					userId,
+					metricType: EDailyMetricType.RESOURCE_HELPFUL,
+					entityId: resourceId
+				})
+				.execute()
 
-		if (!helpful.includes(userId)) {
-			await this.metricsSystemService.addHelpful(EDailyMetricType.RESOURCE_HELPFUL, resourceId, userId)
-	
-			await this.resourceRepository.increment({ id: resourceId }, 'totalHelpful', 1)
-		}
+			const deleted = del.affected ?? 0
+
+			if (deleted > 0) {
+				await manager
+					.getRepository(Resource)
+					.createQueryBuilder()
+					.update(Resource)
+					.set({
+						totalHelpful: () => 'GREATEST(total_helpful - :dec, 0)'
+					})
+					.where('id = :id', { id: resourceId })
+					.setParameters({ dec: deleted })
+					.execute()
+
+				return
+			}
+
+			await manager
+				.getRepository(DailyMetric)
+				.createQueryBuilder()
+				.insert()
+				.into(DailyMetric)
+				.values({
+					metricType: EDailyMetricType.RESOURCE_HELPFUL,
+					entityId: resourceId,
+					user: { id: userId },
+					day: new Date().toISOString().slice(0, 10)
+				})
+				.execute()
+
+			await manager
+				.getRepository(Resource)
+				.createQueryBuilder()
+				.update(Resource)
+				.set({
+					totalHelpful: () => 'total_helpful + 1'
+				})
+				.where('id = :id', { id: resourceId })
+				.execute()
+		})
+
+		return await this.resourceQueryService.getResourceHelpful(resourceId)
 	}
 }

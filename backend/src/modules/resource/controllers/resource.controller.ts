@@ -11,12 +11,14 @@ import { GetAllResourcesDto } from '../dtos/GetAllResources.dto'
 import { ResourceCommandService } from '../services/resource-command.service'
 import { ResourceQueryService } from '../services/resource-query.service'
 import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
+import { ResourceSystemService } from '../services/resource-system.service'
 
 @Controller('resources')
 export class ResourceController {
 	constructor(
 		private readonly resourceQueryService: ResourceQueryService,
-		private readonly resourceCommandService: ResourceCommandService
+		private readonly resourceCommandService: ResourceCommandService,
+		private readonly resourceSystemService: ResourceSystemService
 	) {}
 
 	@Get(':slug')
@@ -37,10 +39,23 @@ export class ResourceController {
 		return await this.resourceQueryService.getAllResources(query, userFromToken?.id)
 	}
 
-	@Throttle({ default: { limit: 1, ttl: 60 * 60 * 1000 } })
+	@OptionalAuthorization()
 	@Patch(':id/add-view')
-	async addView(@Param() params: ParamId) {
-		await this.resourceCommandService.addView(params.id)
+	async addView(@Req() request: FastifyRequest,@Param() params: ParamId) {
+		const dealId = Number(params.id)
+
+		const userId = (request as any).user?.id as number | undefined
+		const viewerKey = userId ? `u:${userId}` : `ip:${request.ip}`
+
+		const counted = await this.resourceSystemService.markViewedOnce({
+			dealId,
+			viewerKey,
+			ttlMs: 60 * 60 * 1000
+		})
+
+		if (counted) {
+			await this.resourceCommandService.addView(dealId)
+		}
 
 		return {
 			ok: true
@@ -48,14 +63,10 @@ export class ResourceController {
 	}
 
 	@Authorization(ERoleName.USER)
-	@Patch(':id/add-helpful')
-	async addHelpful(@Req() request: FastifyRequest, @Param() params: ParamId) {
+	@Patch(':id/toggle-helpful')
+	async toggleHelpful(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const userFromToken = request.user as ITokenUser
 
-		await this.resourceCommandService.addHelpful(params.id, userFromToken.id)
-
-		return {
-			ok: true
-		}
+		return await this.resourceCommandService.toggleHelpful(params.id, userFromToken.id)
 	}
 }

@@ -20,7 +20,14 @@ interface FilterBarProps {
   onCategoryChange: (value: string) => void;
   showSavedOnly: boolean;
   onSavedToggle: (show: boolean) => void;
+  selectedSort: string;
+  onSortChange: (sort: string) => void;
 }
+
+const sortOptions = [
+  { value: "default", label: "Default" },
+  { value: "popularity", label: "By popularity" },
+];
 
 export function FilterBar({
   searchTerm,
@@ -29,6 +36,8 @@ export function FilterBar({
   onCategoryChange,
   showSavedOnly = false,
   onSavedToggle,
+  selectedSort,
+  onSortChange,
 }: FilterBarProps) {
   const { data: user } = useSWR<IUser>("/users/self");
 
@@ -87,7 +96,32 @@ export function FilterBar({
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {dealCategories.map((item, i) => (
-              <SelectItem key={i} value={item}>{capitalize(item)}</SelectItem>
+              <SelectItem key={i} value={item}>
+                {capitalize(item)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={
+            selectedSort
+              ? sortOptions.find((option) => option.value === selectedSort)
+                  ?.value
+              : "Sort"
+          }
+          onValueChange={(value) => {
+            onSortChange(value);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((item, i) => (
+              <SelectItem key={i} value={item.value}>
+                {capitalize(item.label)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
