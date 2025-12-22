@@ -1,33 +1,36 @@
-'use client'
-
 import { BookOpen, Home, LinkIcon, Tag } from "lucide-react";
 import Link from "next/link";
 import { FloatingCommentCards } from "./floating-comment-cards";
-import { useEffect, useState } from "react";
 
-export function Hero() {
-  const [scrollY, setScrollY] = useState(0)
+function getTitle() {
+  return fetch(process.env.API_INTERNAL_URL + "/setting/general-settings", {
+    next: { revalidate: 60 * 60 },
+  }).then((r) => r.json());
+}
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY)
+function getComments() {
+  return fetch(
+    process.env.API_INTERNAL_URL + "/setting/homepage-testimonials",
+    {
+      next: { revalidate: 60 * 60 },
     }
+  ).then((r) => r.json());
+}
 
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+export async function Hero() {
+  const dataTitle = await getTitle();
+  const dataComments = await getComments();
 
   return (
     <section className="relative min-h-[350px] md:min-h-[700px] bg-gray-50 flex items-center justify-center py-4 overflow-hidden md:py-16">
       <div className="text-center max-w-6xl mx-auto px-4 relative z-10">
         <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-6 leading-tight text-gray-800">
-          Linking Military Community
+          {dataTitle?.title || "Linking Military Community"}
         </h1>
 
         <p className="text-base md:text-xl lg:text-2xl mb-4 md:mb-8 text-gray-600 max-w-4xl mx-auto leading-relaxed">
-          Military-focused Real Estate marketplace, Direct Links to the
-          <br className="hidden md:block" />
-          military websites, Resources and Deals linked for you.
+          {dataTitle?.description ??
+            "Military-focused Real Estate marketplace, Direct Links to the military websites, Resources and Deals linked for you."}
         </p>
 
         <div className="max-w-4xl mx-auto relative z-20 mt-4 md:mt-8">
@@ -93,8 +96,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Floating Comment Cards with Scroll-Based Animation */}
-      <FloatingCommentCards scrollY={scrollY} />
+      <FloatingCommentCards data={dataComments} />
     </section>
   );
 }

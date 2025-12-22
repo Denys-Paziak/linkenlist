@@ -29,6 +29,7 @@ import { UserModule } from './user/user.module'
 import { MetricsModule } from './metrics/metrics.module'
 import { TurnstileModule } from './turnstile/turnstile.module';
 import { CommentModule } from './comment/comment.module';
+import { SettingModule } from './setting/setting.module';
 
 @Module({
 	imports: [
@@ -55,7 +56,8 @@ import { CommentModule } from './comment/comment.module';
 		ScheduleQueueModule,
 		ScheduleWorkerModule,
 		TurnstileModule,
-		CommentModule
+		CommentModule,
+		SettingModule
 	],
 	controllers: [AppController],
 	providers: [

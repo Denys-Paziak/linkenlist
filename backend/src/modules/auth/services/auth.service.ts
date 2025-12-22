@@ -328,7 +328,7 @@ export class AuthService {
 		if (userFromDB) {
 			const { token, expiresIn } = await this.tokenService.generateForgotPasswordToken(userFromDB.id)
 
-			this.mailService.sendEmailForgotPassword(dto.email, token, expiresIn)
+			this.mailService.sendEmailForgotPassword(dto.email, token, expiresIn + "min.")
 		}
 	}
 

@@ -1,22 +1,7 @@
-"use client"
-
-import { useEffect } from "react"
 import Link from "next/link"
 import { ScrollButtons } from "@/components/scroll-buttons"
 
 export default function PrivacyPolicy() {
-  // Auto-scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
@@ -36,126 +21,126 @@ export default function PrivacyPolicy() {
           <div className="w-full max-w-4xl mx-auto px-4 py-6">
             <h2 className="text-xl font-bold text-[#222222] mb-4">Quick Links</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-              <button
-                onClick={() => scrollToSection("introduction")}
+              <Link
+                href={"#introduction"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">1. Introduction</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("information-we-collect")}
+              </Link>
+              <Link
+                href={"#information-we-collect"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">2. Information We Collect</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("how-we-collect")}
+              </Link>
+              <Link
+                href={"#how-we-collect"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">3. How We Collect Information</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("cookies-tracking")}
+              </Link>
+              <Link
+                href={"#cookies-tracking"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">4. Cookies and Tracking</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("data-retention")}
+              </Link>
+              <Link
+                href={"#data-retention"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">5. Data Retention</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("data-security")}
+              </Link>
+              <Link
+                href={"#data-security"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">6. Data Security</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("childrens-privacy")}
+              </Link>
+              <Link
+                href={"#childrens-privacy"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">7. Children's Privacy</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("your-rights")}
+              </Link>
+              <Link
+                href={"#your-rights"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">8. Your Rights and Choices</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("do-not-track")}
+              </Link>
+              <Link
+                href={"#do-not-track"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">9. Do Not Track</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("california-residents")}
+              </Link>
+              <Link
+                href={"#california-residents"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">10. California Residents</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("international-transfers")}
+              </Link>
+              <Link
+                href={"#international-transfers"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">11. International Transfers</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("updates-contact")}
+              </Link>
+              <Link
+                href={"#updates-contact"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">12. Updates & Contact</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("mobile-applications")}
+              </Link>
+              <Link
+                href={"#mobile-applications"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">13. Mobile Applications</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("third-party-services")}
+              </Link>
+              <Link
+                href={"#third-party-services"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">14. Third-Party Services</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("legal-disclosures")}
+              </Link>
+              <Link
+                href={"#legal-disclosures"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">15. Legal Disclosures</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("marketing-optout")}
+              </Link>
+              <Link
+                href={"#marketing-optout"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">16. Marketing & Opt-Out</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("state-specific-rights")}
+              </Link>
+              <Link
+                href={"#state-specific-rights"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">17. State-Specific Rights</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("shine-the-light")}
+              </Link>
+              <Link
+                href={"#shine-the-light"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">18. Shine the Light</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("legal-disclaimer")}
+              </Link>
+              <Link
+                href={"#legal-disclaimer"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">19. Legal Disclaimer</span>
-              </button>
-              <button
-                onClick={() => scrollToSection("security-antibot")}
+              </Link>
+              <Link
+                href={"#security-antibot"}
                 className="text-left p-3 bg-gray-50 hover:bg-primary/10 rounded-lg transition-colors border border-gray-200 hover:border-primary/30"
               >
                 <span className="font-medium text-[#222222]">20. Security & Anti-Bot</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -178,8 +163,8 @@ export default function PrivacyPolicy() {
                   </p>
                   <p>
                     This Policy applies to information collected through{" "}
-                    <a href="https://www.linkenlist.com" className="text-primary hover:underline">
-                      www.linkenlist.com
+                    <a href={process.env.NEXT_PUBLIC_SITE_URL} className="text-primary hover:underline">
+                      {process.env.NEXT_PUBLIC_SITE_URL}
                     </a>
                     , our affiliated domains, and any future mobile or web applications. It also extends to
                     communications sent to us via email, contact forms, or social media, as well as information

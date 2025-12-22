@@ -189,7 +189,7 @@ export default function ForgotPasswordPage() {
 
               <div>
                 <Link
-                  href="./privacy"
+                  href="/privacy"
                   className="text-[#222222]/60 hover:text-primary text-sm transition-colors"
                 >
                   Privacy Policy

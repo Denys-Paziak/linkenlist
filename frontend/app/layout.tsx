@@ -1,8 +1,8 @@
-import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import type { ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,30 +12,11 @@ export const metadata: Metadata = {
     "Find direct links to your military websites faster. Your trusted directory for official military and Department of Defense resources.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  if (typeof window !== "undefined") {
-    const originalError = console.error;
-    console.error = (...args) => {
-      if (
-        args[0]?.includes?.("MetaMask") ||
-        args[0]?.includes?.("ChromeTransport")
-      ) {
-        return; // Suppress MetaMask errors
-      }
-      originalError.apply(console, args);
-    };
-  }
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={`${inter.className}`}>
-        <NuqsAdapter>
-          {children}
-        </NuqsAdapter>
+        <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
   );
