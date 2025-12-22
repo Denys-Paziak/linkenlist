@@ -5,6 +5,8 @@ import { WhyLinkEnlist } from "./components/why-linkenlist";
 import { FeaturedResources } from "./components/featured-resources";
 import { AboutUs } from "./components/about-us";
 
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
