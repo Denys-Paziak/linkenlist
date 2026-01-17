@@ -15,7 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
-  type ButtonSubitStatus,
+  type ButtonSubmitStatus,
   ButtonSubmit,
 } from "@/components/ui/button-submit";
 import { ErrorAlert } from "@/components/ui/error-alert";
@@ -34,7 +34,7 @@ import { Input } from "../../../../../../components/ui/input";
 import { Label } from "../../../../../../components/ui/label";
 
 export function CreateForm() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [statusMode, setStatusMode] = useState<"publish" | "draft">("publish");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -129,9 +129,9 @@ export function CreateForm() {
     }
   }, [status]);
 
-  const publishBtnStatus: ButtonSubitStatus =
+  const publishBtnStatus: ButtonSubmitStatus =
     statusMode === "publish" ? status : "idle";
-  const draftBtnStatus: ButtonSubitStatus =
+  const draftBtnStatus: ButtonSubmitStatus =
     statusMode === "draft" ? status : "idle";
 
   const loading = status === "loading";

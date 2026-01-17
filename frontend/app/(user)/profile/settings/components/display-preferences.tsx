@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   renderStatusIcon,
 } from "../../../../../components/ui/button-submit";
 import { Switch } from "../../../../../components/ui/switch";
@@ -12,7 +12,7 @@ import { mutate } from "swr";
 import { ErrorAlert } from "../../../../../components/ui/error-alert";
 
 export function DisplayPreferences({ user }: { user?: IUser }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const switchFooterDisclaimer = async () => {

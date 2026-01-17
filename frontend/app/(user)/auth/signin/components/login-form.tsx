@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../components/ui/button-submit";
 import { useForm } from "react-hook-form";
@@ -16,7 +16,7 @@ import { Input } from "../../../../../components/ui/input";
 export function LoginFrom({ token }: { token: string | null }) {
   const router = useRouter();
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
 

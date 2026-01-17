@@ -62,7 +62,7 @@ export class ResourceSystemService {
 		return await this.resourceImageRepository.exists({ where: { id, status } })
 	}
 
-	async updatImageStatus(id: number, status: EFileStatus) {
+	async updateImageStatus(id: number, status: EFileStatus) {
 		await this.resourceImageRepository.update(id, { status })
 	}
 

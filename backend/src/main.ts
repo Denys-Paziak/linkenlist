@@ -5,7 +5,6 @@ import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 import { AppModule } from './modules/app.module'
 
@@ -13,8 +12,12 @@ async function bootstrap() {
 	const app = await NestFactory.create<NestFastifyApplication>(
 		AppModule,
 		new FastifyAdapter({
-			trustProxy: true
-		})
+			trustProxy: true,
+			bodyLimit: 1_048_576
+		}),
+		{
+			rawBody: true
+		}
 	)
 
 	const config = app.get(ConfigService)
@@ -44,10 +47,6 @@ async function bootstrap() {
 
 		callbackUri: config.getOrThrow<string>('GOOGLE_CALLBACK_URL')
 	})
-
-	const configSwagger = new DocumentBuilder().setTitle('LinkEnlist API').setVersion('1.0').build()
-	const documentFactory = () => SwaggerModule.createDocument(app, configSwagger)
-	SwaggerModule.setup('api', app, documentFactory)
 
 	await app.listen({ port: config.getOrThrow<number>('SERVER_PORT'), host: '0.0.0.0' })
 }

@@ -52,7 +52,7 @@ export function MultiSelect({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button
+        <button 
           ref={triggerRef}
           type="button"
           disabled={disabled}

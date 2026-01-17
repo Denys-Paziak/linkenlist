@@ -3,7 +3,7 @@
 import { CheckCircle, Eye, Trash2 } from "lucide-react";
 import { Card, CardContent } from "../../../../../../../components/ui/card";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import { CommentDeleteDialog } from "./delete-dialog";
@@ -55,7 +55,7 @@ export function ApproveButton({
   selectedComments: number[];
   setSelectedComments?: (value: number[]) => void;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const approve = async () => {
     setStatus("loading");
@@ -114,7 +114,7 @@ export function HideButton({
   selectedComments: number[];
   setSelectedComments?: (value: number[]) => void;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const hiden = async () => {
     setStatus("loading");

@@ -62,4 +62,17 @@ export class ScheduleQueueService {
 			removeOnFail: false
 		})
 	}
+
+	async userFreeListingCredit(data: ScheduleJobData) {
+		const executeAt = new Date(data.runAt)
+		const delay = executeAt.getTime() - Date.now()
+
+		return await this.queue.add('user-free-listing-credit', data, {
+			attempts: 3,
+			delay: delay,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
 }

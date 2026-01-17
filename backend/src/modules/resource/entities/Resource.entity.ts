@@ -27,6 +27,9 @@ import { ResourceTag } from './ResourceTag.entity'
 
 @Entity('resources')
 @Unique(['slug'])
+@Index('resources_search_document_gin_idx', { synchronize: false })
+@Index('resources_title_trgm_gin_idx',  { synchronize: false })
+@Index('resources_tags_text_trgm_gin_idx',  { synchronize: false })
 export class Resource {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -56,8 +59,7 @@ export class Resource {
 	@JoinTable({ name: 'resource_tags_join' })
 	tags: ResourceTag[]
 
-	@Column({ type: 'text', name: 'tags_text', default: '' })
-	tagsText: string
+	
 
 	@Column({ type: 'boolean', default: false, name: 'is_featured' })
 	isFeatured: boolean
@@ -140,6 +142,15 @@ export class Resource {
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 
-	@Column({ type: 'tsvector', select: false, nullable: true })
+	@Column({ type: 'text', name: 'tags_text', default: '' })
+	tagsText: string
+
+	@Column({ type: 'tsvector', select: false,
+		asExpression: `
+			setweight(to_tsvector('english', coalesce("title", '')), 'A') ||
+			setweight(to_tsvector('english', coalesce("teaser", '')), 'B') ||
+			setweight(to_tsvector('english', coalesce("tags_text", '')), 'C')
+		`,
+		generatedType: 'STORED' })
 	search_document: any
 }

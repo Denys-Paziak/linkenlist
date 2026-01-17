@@ -3,13 +3,15 @@ import { ConfigService } from '@nestjs/config'
 import { days } from '@nestjs/throttler'
 import { InjectRepository } from '@nestjs/typeorm'
 import * as bcrypt from 'bcrypt'
-import { DataSource, Repository, UpdateResult } from 'typeorm'
+import { DataSource, Or, Repository, UpdateResult } from 'typeorm'
 
 import { ParamId } from '../../../dtos/ParamId.dto'
+import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { ETokenType } from '../../../interfaces/ETokenType'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedImage } from '../../../interfaces/IUploadedFile'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { Listing } from '../../listing/entities/Listing.entity'
 import { MailService } from '../../mail/mail.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { Token } from '../../token/entities/Token.entity'
@@ -160,6 +162,16 @@ export class UserCommandService {
 			await manager.delete(Token, {
 				user: { id: userId }
 			})
+
+			await manager
+				.createQueryBuilder()
+				.update(Listing)
+				.set({ status: EListingStatus.REJECTED })
+				.where('ownerId = :userId', { userId })
+				.andWhere('status IN (:...statuses)', {
+					statuses: [EListingStatus.ACTIVE, EListingStatus.PENDING]
+				})
+				.execute()
 		})
 	}
 
@@ -209,12 +221,14 @@ export class UserCommandService {
 
 		const emailConfirmedToken = await this.tokenService.generateChangeEmailConfirmedToken(userId, dto.newEmail)
 
-		this.mailService.sendEmailVerified(
-			dto.newEmail,
-			emailConfirmedToken.token,
-			this.configService.getOrThrow('CONFIRM_NEW_EMAIL_URL'),
-			emailConfirmedToken.expiresIn
-		)
+		try {
+			this.mailService.sendEmailVerified(
+				dto.newEmail,
+				emailConfirmedToken.token,
+				this.configService.getOrThrow('CONFIRM_NEW_EMAIL_URL'),
+				emailConfirmedToken.expiresIn
+			)
+		} catch {}
 	}
 
 	async confirmNewEmail(token: string) {

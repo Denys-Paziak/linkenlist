@@ -10,7 +10,7 @@ import {
 import { Section } from "./components/section";
 import useSWR from "swr";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../components/ui/button-submit";
 import { useEffect, useState } from "react";
@@ -25,7 +25,7 @@ import {
 export function ContentForm() {
   const { id: resourceId } = useParams();
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR<IResource>(

@@ -17,7 +17,7 @@ import useSWR from "swr";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../components/ui/button-submit";
 import { EOgImageMode } from "../../../../../../../../types/shared";
@@ -35,7 +35,7 @@ export function SeoForm() {
     resourceId ? `/admin/resources/${resourceId}` : null
   );
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 

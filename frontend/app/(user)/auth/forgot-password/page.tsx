@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema } from "../../../../lib/schemas/forgot-password-schema";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../components/ui/button-submit";
 import { cn } from "../../../../lib/utils";
@@ -17,7 +17,7 @@ import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { Input } from "../../../../components/ui/input";
 
 export default function ForgotPasswordPage() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
 

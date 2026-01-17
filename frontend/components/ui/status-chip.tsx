@@ -1,6 +1,6 @@
 import { cn } from "../../lib/utils";
 
-type TStatus = "draft" | "scheduled" | "published" | "expired" | "archived"
+export type TStatus = "draft" | "scheduled" | "published" | "expired" | "archived"
 
 export function StatusChip({
   text,

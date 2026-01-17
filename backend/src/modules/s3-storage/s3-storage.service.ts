@@ -21,7 +21,7 @@ export class S3StorageService {
 		this.bucket = this.configService.getOrThrow<string>('S3_BUCKET')
 		this.publicBase = this.configService.getOrThrow<string>('S3_PUBLIC_BASE') || null
 		this.isPath = String(this.configService.getOrThrow<string>('S3_FORCE_PATH_STYLE')).toLowerCase() === 'true'
-		this.region = this.configService.getOrThrow<string>('S3_REGION')
+		this.region = this.configService.getOrThrow<string>('AWS_REGION')
 	}
 
 	private buildKey(path: string, originalName: string) {

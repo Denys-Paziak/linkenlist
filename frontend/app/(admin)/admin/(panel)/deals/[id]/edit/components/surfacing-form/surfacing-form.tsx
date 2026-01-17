@@ -15,7 +15,7 @@ import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { IDeal } from "../../../../../../../../../types/Deal";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   renderStatusIcon,
 } from "../../../../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../../../../components/ui/error-alert";
@@ -31,9 +31,9 @@ export function SurfacingForm() {
   );
 
   const [statusSwitchMode, setStatusSwitchMode] =
-    useState<ButtonSubitStatus>("idle");
+    useState<ButtonSubmitStatus>("idle");
   const [statusFeatured, setStatusFeatured] =
-    useState<ButtonSubitStatus>("idle");
+    useState<ButtonSubmitStatus>("idle");
 
   const [showBrowser, setShowBrowser] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);

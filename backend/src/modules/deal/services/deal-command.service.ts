@@ -42,8 +42,6 @@ export class DealCommandService {
 	constructor(
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
-		@InjectRepository(DealImage)
-		private readonly dealImageRepository: Repository<DealImage>,
 		@InjectRepository(DealSection)
 		private readonly dealSectionRepository: Repository<DealSection>,
 		@InjectRepository(DealRelated)
@@ -437,15 +435,15 @@ export class DealCommandService {
 		}
 
 		if (newAttachments.length && updated.attachments?.length) {
-			updated.attachments.forEach((item: DealSectionAttachment) => {
+			for (const item of updated.attachments) {
 				if (item.status === EFileStatus.QUEUED) {
-					this.imageQueueService.enqueueDealAttachmentProcess({
+					await this.imageQueueService.enqueueDealAttachmentProcess({
 						entityId: updated.id,
 						entityFileId: item.id,
 						srcKey: item.originalKey || ''
 					})
 				}
-			})
+			}
 		}
 	}
 

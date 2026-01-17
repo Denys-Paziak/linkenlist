@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { PropertyCard } from "@/components/property-card"
+import { PropertyCard } from "@/components/realestate-card"
 import {
   Building2,
   Search,

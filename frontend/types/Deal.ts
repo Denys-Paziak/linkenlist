@@ -1,4 +1,4 @@
-import { IResource, IResourceListExtended } from "./Resource";
+import { IResourceListExtended } from "./Resource";
 import { EOgImageMode } from "./shared";
 
 export enum EDealStatus {

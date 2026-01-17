@@ -14,7 +14,7 @@ export default function NotFound() {
             The resorce you're looking for doesn't exist or has been removed.
           </p>
           <Link
-            href="/deals"
+            href="/resources"
             className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
           >
             Back to All Resorces

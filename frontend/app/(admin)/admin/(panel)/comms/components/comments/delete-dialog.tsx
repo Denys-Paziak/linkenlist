@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { fetcherAdmin } from "../../../../../../../lib/fetcher";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import { mutate } from "swr";
@@ -27,7 +27,7 @@ export function CommentDeleteDialog({
   selectedComments: number[];
   handleSuccess: () => void;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string>("");
 
   const handleConfirmDelete = async () => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../../../../../../components/ui/button";
 import { DialogFooter } from "../../../../../../components/ui/dialog";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../components/ui/error-alert";
@@ -18,7 +18,7 @@ export function ForceLogoutForm({
   onCancel: () => void;
   user: IUserTable;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const submitForm = async () => {

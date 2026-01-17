@@ -47,17 +47,19 @@ export class LinkQueryService {
 		if (query.search && query.search.trim() !== '') {
 			qb.andWhere(
 				`(
-					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.05
-					OR similarity(l.tags_text, :q) > 0.05
+					l.search_document @@ plainto_tsquery('english', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR word_similarity(l.description, :q) > 0.07
+					OR similarity(l.tags_text, :q) > 0.15
 				)`,
 				{ q: query.search }
 			)
 
 			qb.addSelect(
 				`GREATEST(
-					ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+					ts_rank_cd(l.search_document, plainto_tsquery('english', :q)),
 					similarity(l.title, :q),
+					word_similarity(l.description, :q),
 					similarity(l.tags_text, :q)
 				)`,
 				'relevance'
@@ -132,6 +134,7 @@ export class LinkQueryService {
 			'l.views30d',
 			'l.popularScore',
 			'l.isOfficial',
+			'l.updatedAt',
 			'l.createdAt',
 			'img',
 			't.id',
@@ -142,9 +145,10 @@ export class LinkQueryService {
 		if (query.search && query.search.trim() !== '') {
 			qb.andWhere(
 				`(
-					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.05
-					OR similarity(l.tags_text, :q) > 0.05
+					l.search_document @@ plainto_tsquery('english', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR word_similarity(l.description, :q) > 0.07
+					OR similarity(l.tags_text, :q) > 0.15
 				)`,
 				{ q: query.search }
 			)
@@ -152,8 +156,9 @@ export class LinkQueryService {
 			qb.addSelect(
 				`
 					GREATEST(
-						ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+						ts_rank_cd(l.search_document, plainto_tsquery('english', :q)),
 						similarity(l.title, :q),
+						word_similarity(l.description, :q),
 						similarity(l.tags_text, :q)
 					)
 				`,
@@ -188,7 +193,7 @@ export class LinkQueryService {
 					break
 
 				default:
-					qb.orderBy('l.createdAt', 'DESC')
+					qb.orderBy('l.updatedAt', 'DESC')
 					break
 			}
 		}
@@ -220,8 +225,9 @@ export class LinkQueryService {
 		if (query.search && query.search.trim() !== '') {
 			countQb.andWhere(
 				`(
-					l.search_document @@ plainto_tsquery('simple', :q)
+					l.search_document @@ plainto_tsquery('english', :q)
 					OR similarity(l.title, :q) > 0.15
+					OR word_similarity(l.description, :q) > 0.07
 					OR similarity(l.tags_text, :q) > 0.15
 				)`,
 				{ q: query.search }

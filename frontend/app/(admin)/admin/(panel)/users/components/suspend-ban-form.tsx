@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "../../../../../../components/ui/select";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { Controller, useForm } from "react-hook-form";
@@ -34,7 +34,7 @@ export function SuspendBanForm({
   user: IUserTable;
   mutate: KeyedMutator<[IUserTable[], number]>;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

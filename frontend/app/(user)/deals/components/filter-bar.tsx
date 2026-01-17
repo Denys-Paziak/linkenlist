@@ -44,7 +44,7 @@ export function FilterBar({
   const handleResetFilters = () => {
     onSearchChange("");
     onCategoryChange("all");
-    if (onSavedToggle) onSavedToggle(false);
+    onSortChange("default")
   };
 
   return (

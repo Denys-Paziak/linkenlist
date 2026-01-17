@@ -17,7 +17,7 @@ import { ApproveButton, DeleteButton, HideButton } from "./batch-actions";
 import { mutate } from "swr";
 import { fetcherAdmin } from "../../../../../../../lib/fetcher";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
@@ -108,7 +108,7 @@ export function CommentDetailDialog({
 }
 
 function ReplyForm({ comment }: { comment: ICommentAdmin }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

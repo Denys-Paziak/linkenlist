@@ -122,12 +122,12 @@ function FavoriteButton({ id }: { id: number }) {
   const { setShowLoginModal } = useUser();
 
   const { data, mutate } = useSWR<number[]>(
-    user ? `/favorite/resources` : null
+    user ? `/favorite/links` : null
   );
 
   const addFavorite = async () => {
     try {
-      await fetcherUser(`/favorite/resources/${id}`, {
+      await fetcherUser(`/favorite/links/${id}`, {
         method: "POST",
         credentials: "include",
       });
@@ -140,7 +140,7 @@ function FavoriteButton({ id }: { id: number }) {
 
   const deleteFavorite = async () => {
     try {
-      await fetcherUser(`/favorite/resources/${id}`, {
+      await fetcherUser(`/favorite/links/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

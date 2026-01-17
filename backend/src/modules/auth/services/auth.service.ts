@@ -73,7 +73,7 @@ export class AuthService {
 		let user = userExist
 
 		if (user) {
-			user = await this.userSystemService.update(user.id, {
+			await this.userSystemService.update(user.id, {
 				password: hashPassword
 			})
 		} else {
@@ -86,12 +86,14 @@ export class AuthService {
 
 		const emailConfirmedToken = await this.tokenService.generateEmailConfirmedToken(user.id)
 
-		this.mailService.sendEmailVerified(
-			dto.email,
-			emailConfirmedToken.token,
-			this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
-			emailConfirmedToken.expiresIn
-		)
+		try {
+			this.mailService.sendEmailVerified(
+				dto.email,
+				emailConfirmedToken.token,
+				this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
+				emailConfirmedToken.expiresIn
+			)
+		} catch {}
 	}
 
 	async resendConfirmationEmail(email: string) {
@@ -109,12 +111,14 @@ export class AuthService {
 
 		const emailConfirmedToken = await this.tokenService.generateEmailConfirmedToken(user.id)
 
-		this.mailService.sendEmailVerified(
-			email,
-			emailConfirmedToken.token,
-			this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
-			emailConfirmedToken.expiresIn
-		)
+		try {
+			this.mailService.sendEmailVerified(
+				email,
+				emailConfirmedToken.token,
+				this.configService.getOrThrow('CONFIRM_EMAIL_URL'),
+				emailConfirmedToken.expiresIn
+			)
+		} catch {}
 	}
 
 	async confirmEmail(token: string) {
@@ -328,7 +332,9 @@ export class AuthService {
 		if (userFromDB) {
 			const { token, expiresIn } = await this.tokenService.generateForgotPasswordToken(userFromDB.id)
 
-			this.mailService.sendEmailForgotPassword(dto.email, token, expiresIn + "min.")
+			try {
+				this.mailService.sendEmailForgotPassword(dto.email, token, expiresIn + 'min.')
+			} catch {}
 		}
 	}
 

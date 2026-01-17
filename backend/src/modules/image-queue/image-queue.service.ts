@@ -89,4 +89,13 @@ export class ImageQueueService {
 			removeOnFail: false
 		})
 	}
+
+	async enqueueListingPhotoProcess(data: ImageJobData) {
+		return await this.queue.add('listing-photo', data, {
+			attempts: 3,
+			backoff: { type: 'exponential', delay: 5_000 },
+			removeOnComplete: true,
+			removeOnFail: false
+		})
+	}
 }

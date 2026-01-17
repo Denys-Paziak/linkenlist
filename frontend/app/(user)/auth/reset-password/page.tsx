@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../components/ui/button-submit";
 import { useForm } from "react-hook-form";
@@ -17,7 +17,7 @@ import { Input } from "../../../../components/ui/input";
 export default function ResetPasswordPage() {
   const [token] = useQueryState("token");
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
 

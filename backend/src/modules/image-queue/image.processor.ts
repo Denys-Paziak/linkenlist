@@ -13,6 +13,7 @@ import { EFileStatus } from '../../interfaces/EFileStatus'
 import { replaceExt } from '../../utils/replace-ext.utils'
 import { DealSystemService } from '../deal/services/deal-system.service'
 import { LinkSystemService } from '../link/services/link-system.service'
+import { ListingSystemService } from '../listing/services/listing-system.service'
 import { ResourceSystemService } from '../resource/services/resource-system.service'
 import { S3StorageService } from '../s3-storage/s3-storage.service'
 import { UserSystemService } from '../user/services/user-system.service'
@@ -36,7 +37,8 @@ export class ImageProcessor extends WorkerHost {
 		private readonly userSystemService: UserSystemService,
 		private readonly linkSystemService: LinkSystemService,
 		private readonly dealSystemService: DealSystemService,
-		private readonly resourceSystemService: ResourceSystemService
+		private readonly resourceSystemService: ResourceSystemService,
+		private readonly listingSystemService: ListingSystemService
 	) {
 		super()
 	}
@@ -59,6 +61,8 @@ export class ImageProcessor extends WorkerHost {
 				return this.resourceOgImage(job)
 			case 'resource-attachment':
 				return this.resourceAttachment(job)
+			case 'listing-photo':
+				return this.listingPhoto(job)
 			default:
 				throw new Error(`Unknown job type: ${job.name}`)
 		}
@@ -150,7 +154,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: image already PROCESSED (linkImageId=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.linkSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.linkSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: LinkImage ${entityFileId} not found before processing`)
@@ -165,9 +169,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.linkSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for linkImageId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
@@ -238,7 +239,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: image already PROCESSED (dealImageId=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.dealSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: DealImage ${entityFileId} not found before processing`)
@@ -253,9 +254,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for dealImageId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
@@ -326,7 +324,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: image already PROCESSED (dealImageId=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.dealSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: DealOgImage ${entityFileId} not found before processing`)
@@ -341,9 +339,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.dealSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for dealImageId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
@@ -455,9 +450,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.dealSystemService.updateAttachmentStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for dealAttachmentId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original file not found in S3')
 			}
@@ -521,7 +513,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: image already PROCESSED (resourceImageId=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.resourceSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: ResourceImage ${entityFileId} not found before processing`)
@@ -536,9 +528,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for resourceImageId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
@@ -609,7 +598,7 @@ export class ImageProcessor extends WorkerHost {
 				this.logger.log(`Skip job ${job.id}: image already PROCESSED (resourceImageId=${entityFileId})`)
 				return { ok: true, skipped: true }
 			}
-			await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.PROCESSING)
+			await this.resourceSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
 		} catch (e) {
 			if (isNotFoundError(e)) {
 				this.logger.warn(`Skip: ResourceOgImage ${entityFileId} not found before processing`)
@@ -624,9 +613,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.resourceSystemService.updatImageStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for resourceImageId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original image not found in S3')
 			}
@@ -740,9 +726,6 @@ export class ImageProcessor extends WorkerHost {
 			input = await this.s3.getObjectAsBuffer(srcKey)
 		} catch (e: any) {
 			if (isNoSuchKey(e)) {
-				try {
-					await this.resourceSystemService.updateAttachmentStatus(entityFileId, EFileStatus.FAILED)
-				} catch {}
 				this.logger.warn(`Original not found for resourceAttachmentId=${entityFileId}, key=${srcKey}`)
 				throw new DiscardedError('Original file not found in S3')
 			}
@@ -794,6 +777,88 @@ export class ImageProcessor extends WorkerHost {
 		this.logger.log(`Completed attachment job ${job.id}: attachmentId=${entityFileId} -> ${uploaded?.url}`)
 	}
 
+	private async listingPhoto(job: Job<ImageJobData>) {
+		const { entityId, entityFileId, srcKey } = job.data
+		this.logger.log(`Start job ${job.id} for listingId=${entityId}, listingImageId=${entityFileId}, srcKey=${srcKey}`)
+
+		// 0) Ідемпотентність та перехід у PROCESSING
+		try {
+			const alreadyQueued = await this.listingSystemService.isImageStatus(entityFileId, EFileStatus.QUEUED)
+			if (!alreadyQueued) {
+				this.logger.log(`Skip job ${job.id}: image already PROCESSED (listingImageId=${entityFileId})`)
+				return { ok: true, skipped: true }
+			}
+			await this.listingSystemService.updateImageStatus(entityFileId, EFileStatus.PROCESSING)
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(`Skip: ListingImage ${entityFileId} not found before processing`)
+				throw new DiscardedError(`ListingImage ${entityFileId} not found`)
+			}
+			throw e
+		}
+
+		// 1) Отримати оригінал
+		let input: Buffer
+		try {
+			input = await this.s3.getObjectAsBuffer(srcKey)
+		} catch (e: any) {
+			if (isNoSuchKey(e)) {
+				this.logger.warn(`Original not found for listingImageId=${entityFileId}, key=${srcKey}`)
+				throw new DiscardedError('Original image not found in S3')
+			}
+			throw e
+		}
+
+		// 2) Обробка зображення (великий hero)
+		const out = await sharp(input, { failOn: 'none' })
+			.rotate()
+			.resize({ width: 2560, fit: 'inside', withoutEnlargement: true })
+			.toColourspace('srgb')
+			.webp({ quality: 82, effort: 5 })
+			.toBuffer()
+
+		const meta = await sharp(out).metadata()
+
+		// 3) Ключ призначення
+		const dstKey = replaceExt(srcKey, '-PR.webp')
+
+		// 4) Запис до S3
+		let uploaded: { key: string; url: string } | null = null
+		try {
+			uploaded = await this.s3.uploadPublic(out, 'image/webp', true, dstKey)
+		} catch (e) {
+			throw e
+		}
+
+		// 5) Оновлення БД
+		try {
+			await this.listingSystemService.updateListingPhoto(entityFileId, {
+				id: entityFileId,
+				processedKey: uploaded.key,
+				url: uploaded.url,
+				width: meta.width ?? 0,
+				height: meta.height ?? 0,
+				status: EFileStatus.READY
+			})
+		} catch (e) {
+			if (isNotFoundError(e)) {
+				this.logger.warn(
+					`Listing entity missing while saving result (listingId=${entityId}, listingImageId=${entityFileId}). Cleaning up S3...`
+				)
+				try {
+					if (uploaded?.key) await this.s3.delete(uploaded.key)
+				} catch (delErr) {
+					this.logger.warn(`Cleanup failed for key=${uploaded?.key}: ${(delErr as Error).message}`)
+				}
+				throw new DiscardedError('Listing entity deleted during processing')
+			}
+
+			throw e
+		}
+
+		this.logger.log(`Completed job ${job.id}: listingImageId=${entityFileId} -> ${uploaded.url}`)
+	}
+
 	/** Глобальний обробник падінь */
 	@OnWorkerEvent('failed')
 	async onFailed(job: Job<ImageJobData>, err: Error) {
@@ -809,11 +874,31 @@ export class ImageProcessor extends WorkerHost {
 		}
 
 		try {
-			// Відмічаємо FAILED тим сервісом, до якого належить job
-			if (job.name === 'link-hero') {
-				await this.linkSystemService.updatImageStatus(id, EFileStatus.FAILED)
-			} else {
-				await this.dealSystemService.updatImageStatus(id, EFileStatus.FAILED)
+			switch (job.name) {
+				case 'link-hero':
+					await this.linkSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
+				case 'deal-hero':
+					await this.dealSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
+				case 'deal-og-image':
+					await this.dealSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
+				case 'deal-attachment':
+					await this.dealSystemService.updateAttachmentStatus(id, EFileStatus.FAILED)
+					break
+				case 'resource-hero':
+					await this.resourceSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
+				case 'resource-og-image':
+					await this.resourceSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
+				case 'resource-attachment':
+					await this.resourceSystemService.updateAttachmentStatus(id, EFileStatus.FAILED)
+					break
+				case 'listing-photo':
+					await this.listingSystemService.updateImageStatus(id, EFileStatus.FAILED)
+					break
 			}
 		} catch {
 			/* сутність може не існувати */

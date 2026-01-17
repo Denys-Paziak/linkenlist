@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../components/ui/button-submit";
 import { Controller, useForm } from "react-hook-form";
@@ -46,7 +46,7 @@ export function PublishingForm() {
     resourceId ? `/admin/resources/${resourceId}` : null
   );
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

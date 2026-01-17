@@ -15,7 +15,7 @@ import {
 import { Input } from "../../../../../../components/ui/input";
 import { Textarea } from "../../../../../../components/ui/textarea";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../components/ui/error-alert";
@@ -40,7 +40,7 @@ export function HomepageTestimonials() {
     "/setting/homepage-testimonials"
   );
 
-  const [statusSave, setStatusSave] = useState<ButtonSubitStatus>("idle");
+  const [statusSave, setStatusSave] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<HomepageTestimonialsForm>({

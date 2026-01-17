@@ -24,10 +24,10 @@ export class User {
 	id: number
 
 	@Column({ name: 'first_name', type: 'varchar', length: 150, nullable: true })
-	firstName: string | null
+	firstName?: string | null
 
 	@Column({ name: 'last_name', type: 'varchar', length: 150, nullable: true })
-	lastName: string | null
+	lastName?: string | null
 
 	@Column({ name: 'username', type: 'varchar', length: 255, unique: true })
 	username: string

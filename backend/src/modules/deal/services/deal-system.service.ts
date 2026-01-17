@@ -62,7 +62,7 @@ export class DealSystemService {
 		return await this.dealImageRepository.exists({ where: { id, status } })
 	}
 
-	async updatImageStatus(id: number, status: EFileStatus) {
+	async updateImageStatus(id: number, status: EFileStatus) {
 		await this.dealImageRepository.update(id, { status })
 	}
 

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postCommentSchema } from "../../../../../../../lib/schemas/post-comment-schema";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
@@ -49,7 +49,7 @@ export function EditForm({
   setEditingComment: (id: number | null) => void;
   mutate: SWRInfiniteKeyedMutator<[IComment[], number][]>;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

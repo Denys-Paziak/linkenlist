@@ -34,6 +34,7 @@ export class UserQueryService {
 			publicEmail: userFromDB.publicEmail,
 			phone: userFromDB.phone,
 			footerDisclaimer: userFromDB.footerDisclaimer,
+			freeListingCredit: userFromDB.freeListingCredit,
 			updatedAt: userFromDB.updatedAt,
 			createdAt: userFromDB.createdAt
 		}

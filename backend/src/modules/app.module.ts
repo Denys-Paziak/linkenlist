@@ -14,22 +14,23 @@ import { getThrottlerConfig } from '../configs/throttler.config'
 
 import { AppController } from './app.controller'
 import { AuthModule } from './auth/auth.module'
+import { CommentModule } from './comment/comment.module'
 import { DealModule } from './deal/deal.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { ImageQueueModule } from './image-queue/image-queue.module'
 import { LinkModule } from './link/link.module'
 import { ListingModule } from './listing/listing.module'
 import { MailModule } from './mail/mail.module'
+import { MetricsModule } from './metrics/metrics.module'
 import { ResourceModule } from './resource/resource.module'
 import { S3StorageModule } from './s3-storage/s3-storage.module'
 import { ScheduleQueueModule } from './schedule-queue/schedule-queue.module'
 import { ScheduleWorkerModule } from './schedule-queue/schedule-worker.module'
+import { SettingModule } from './setting/setting.module'
+import { StripeModule } from './stripe/stripe.module'
 import { TokenModule } from './token/token.module'
+import { TurnstileModule } from './turnstile/turnstile.module'
 import { UserModule } from './user/user.module'
-import { MetricsModule } from './metrics/metrics.module'
-import { TurnstileModule } from './turnstile/turnstile.module';
-import { CommentModule } from './comment/comment.module';
-import { SettingModule } from './setting/setting.module';
 
 @Module({
 	imports: [
@@ -57,7 +58,8 @@ import { SettingModule } from './setting/setting.module';
 		ScheduleWorkerModule,
 		TurnstileModule,
 		CommentModule,
-		SettingModule
+		SettingModule,
+		StripeModule
 	],
 	controllers: [AppController],
 	providers: [

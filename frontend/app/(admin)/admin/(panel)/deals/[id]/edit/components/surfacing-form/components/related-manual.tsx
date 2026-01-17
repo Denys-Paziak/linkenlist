@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../../components/ui/button-submit";
 import { StatusChip } from "../../../../../../../../../../components/ui/status-chip";
-import { IDeal } from "../../../../../../../../../../types/Deal";
+import { IDealListExtended } from "../../../../../../../../../../types/Deal";
 import { fetcherAdmin } from "../../../../../../../../../../lib/fetcher";
 import { useParams } from "next/navigation";
 import { mutate } from "swr";
 
-export function RelatedManual({ data }: { data: IDeal }) {
+export function RelatedManual({ data }: { data: IDealListExtended }) {
   const { id: dealId } = useParams();
 
-  const [statusRemoved, setStatusRemoved] = useState<ButtonSubitStatus>("idle");
+  const [statusRemoved, setStatusRemoved] = useState<ButtonSubmitStatus>("idle");
 
   const deleteSelected = async () => {
     setStatusRemoved("loading");

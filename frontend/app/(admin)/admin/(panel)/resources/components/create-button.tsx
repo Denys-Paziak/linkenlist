@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { fetcherAdmin } from "../../../../../../lib/fetcher";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function CreateButton() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const router = useRouter();
 
   const createResource = async () => {

@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { mockListings } from "../../../../data/mock-listings";
-import { PropertyCard } from "../../../../components/property-card";
+import { PropertyCard } from "../../../../components/realestate-card";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

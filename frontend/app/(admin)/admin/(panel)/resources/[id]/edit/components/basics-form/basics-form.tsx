@@ -12,7 +12,7 @@ import {
 import { Textarea } from "../../../../../../../../../components/ui/textarea";
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../components/ui/button-submit";
 import { useForm } from "react-hook-form";
@@ -52,7 +52,7 @@ export function BasicsForm() {
     resourceId ? `/admin/resources/${resourceId}` : null
   );
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [featuredDeal, setFeaturedDeal] = useState<IDealSimple | null>(null);
   const [formError, setFormError] = useState<string | null>(null);

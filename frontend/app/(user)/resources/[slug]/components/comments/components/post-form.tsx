@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../../../../../../components/ui/button";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,7 @@ export function PostForm({
   resourceId: number;
   mutate: SWRInfiniteKeyedMutator<[IComment[], number][]>;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

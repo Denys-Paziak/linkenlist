@@ -28,6 +28,9 @@ import { DealTag } from './DealTag.entity'
 
 @Entity('deals')
 @Unique(['slug'])
+@Index('deals_search_document_gin_idx', { synchronize: false })
+@Index('deals_title_trgm_gin_idx',  { synchronize: false })
+@Index('deals_tags_text_trgm_gin_idx',  { synchronize: false })
 export class Deal {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -53,9 +56,6 @@ export class Deal {
 	@ManyToMany(() => DealTag, { cascade: ['insert'] })
 	@JoinTable({ name: 'deal_tags_join' })
 	tags: DealTag[]
-
-	@Column({ type: 'text', name: 'tags_text', default: '' })
-	tagsText: string
 
 	@Column({ type: 'boolean', default: false, name: 'is_featured' })
 	isFeatured: boolean
@@ -196,6 +196,18 @@ export class Deal {
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 
-	@Column({ type: 'tsvector', select: false, nullable: true })
+	@Column({ type: 'text', name: 'tags_text', default: '', })
+	tagsText: string
+ 
+	@Column({
+		type: 'tsvector',
+		select: false,
+		asExpression: `
+			setweight(to_tsvector('english', coalesce("title", '')), 'A') ||
+			setweight(to_tsvector('english', coalesce("teaser", '')), 'B') ||
+			setweight(to_tsvector('english', coalesce("tags_text", '')), 'C')
+		`,
+		generatedType: 'STORED'
+	})
 	search_document: any
 }

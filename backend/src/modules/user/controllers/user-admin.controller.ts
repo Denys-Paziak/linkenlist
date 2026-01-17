@@ -1,20 +1,16 @@
 import { Body, Controller, Get, Param, Patch, Query, Req } from '@nestjs/common'
-import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { ITokenUser } from '../../../interfaces/ITokenUser'
-import { GetAllDealsAdminDto } from '../../deal/dtos/GetAllDealsAdmin.dto'
 import { BanUserDto } from '../dtos/BanUser.dto'
 import { GetAllUsersDto } from '../dtos/GetAllUsers.dto'
 import { ResetPasswordForUserDto } from '../dtos/ResetPasswordForUser.dto'
 import { UserCommandService } from '../services/user-command.service'
 import { UserQueryService } from '../services/user-query.service'
 
-@ApiCookieAuth()
-@ApiTags('Users Admin')
 @Controller('admin/users')
 export class AdminUserController {
 	constructor(

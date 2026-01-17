@@ -18,7 +18,7 @@ import {
 } from "../../../../../../../../components/ui/select";
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
   renderStatusIcon,
 } from "../../../../../../../../components/ui/button-submit";
@@ -44,9 +44,9 @@ export function OfferForm() {
     dealId ? `/admin/deals/${dealId}` : null
   );
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [statusOfferEnabled, setStatusOfferEnabled] =
-    useState<ButtonSubitStatus>("idle");
+    useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

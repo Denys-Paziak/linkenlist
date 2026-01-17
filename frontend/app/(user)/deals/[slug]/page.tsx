@@ -16,10 +16,15 @@ import { ScrollProgress } from "./components/scroll-progress";
 
 export const dynamicParams = true;
 
-function getDeal(slug: string) {
-  return fetch(process.env.API_INTERNAL_URL + "/deals/" + slug, {
-    next: { revalidate: 5 * 60 },
-  }).then((r) => r.json());
+async function getDeal(slug: string) {
+  const res = await fetch(`${process.env.API_INTERNAL_URL}/deals/${slug}`, {
+      next: { revalidate: 5 * 60 },
+    });
+  
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+  
+    return (await res.json()) as IDeal;
 }
 
 export async function generateMetadata({
@@ -47,8 +52,8 @@ export async function generateMetadata({
   const isIndexable = deal.allowIndexing === true;
 
   return {
-    title: deal.title,
-    description: deal.teaser,
+    title: deal.seoMetaTitle,
+    description: deal.seoMetaDescription,
 
     alternates: isIndexable
       ? {

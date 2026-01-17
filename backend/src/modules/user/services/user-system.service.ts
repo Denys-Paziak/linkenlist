@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { DeepPartial, FindOneOptions, FindOptionsWhere, Repository } from 'typeorm'
 
 import { User } from '../entities/User.entity'
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js'
 
 @Injectable()
 export class UserSystemService {
@@ -34,15 +35,11 @@ export class UserSystemService {
 		return user
 	}
 
-	async update(id: number, data: Partial<Omit<User, 'id'>>) {
-		await this.userRepository.update(id, data)
+	async update(id: number, data: QueryDeepPartialEntity<Omit<User, 'id'>>) {
+		return await this.userRepository.update(id, data)
+	}
 
-		const user = await this.userRepository.findOne({
-			where: { id }
-		})
-
-		if (!user) throw new InternalServerErrorException('User update failed')
-
-		return user
+	async increment(conditions: FindOptionsWhere<User>, propertyPath: string, value: number | string) {
+		return await this.userRepository.increment(conditions, propertyPath, value)
 	}
 }

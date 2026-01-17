@@ -3,7 +3,7 @@ import { Button } from "../../../../../../components/ui/button";
 import { IUserTable } from "../../../../../../types/User";
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { fetcherAdmin } from "../../../../../../lib/fetcher";
@@ -19,8 +19,8 @@ export default function FreeListingCredit({
   disabled: boolean;
   mutate: KeyedMutator<[IUserTable[], number]>;
 }) {
-  const [statusGrant, setStatusGrant] = useState<ButtonSubitStatus>("idle");
-  const [statusRevoke, setStatusRevoke] = useState<ButtonSubitStatus>("idle");
+  const [statusGrant, setStatusGrant] = useState<ButtonSubmitStatus>("idle");
+  const [statusRevoke, setStatusRevoke] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const grant = async () => {

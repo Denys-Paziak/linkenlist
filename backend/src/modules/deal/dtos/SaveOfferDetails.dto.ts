@@ -1,6 +1,5 @@
 import {
 	IsBoolean,
-	IsDefined,
 	IsEnum,
 	IsISO8601,
 	IsNumber,
@@ -10,7 +9,6 @@ import {
 	MaxLength,
 	Min,
 	Validate,
-	ValidateIf,
 	ValidationArguments,
 	ValidatorConstraint,
 	ValidatorConstraintInterface

@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useSWR from "swr";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { fetcherAdmin } from "../../../../../../lib/fetcher";
@@ -27,8 +27,8 @@ export function EmailTemplates() {
     passwordReset: string | null;
   }>("/admin/setting/email-templates");
 
-  const [statusSave, setStatusSave] = useState<ButtonSubitStatus>("idle");
-  const [statusReset, setStatusReset] = useState<ButtonSubitStatus>("idle");
+  const [statusSave, setStatusSave] = useState<ButtonSubmitStatus>("idle");
+  const [statusReset, setStatusReset] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

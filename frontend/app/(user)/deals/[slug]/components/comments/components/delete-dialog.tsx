@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "../../../../../../../components/ui/button";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../components/ui/button-submit";
 import {
@@ -25,7 +25,7 @@ export function DeleteDialog({
   handleSuccessDelete: () => void;
   commentId: number | null;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string>("");
 
   const handleConfirmDelete = async () => {

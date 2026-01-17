@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../../components/ui/error-alert";
@@ -12,7 +12,7 @@ import { adminLoginSchema } from "../../../../../../lib/schemas/admin-login-sche
 import { Input } from "../../../../../../components/ui/input";
 
 export function Form() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const [formError, setFormError] = useState<string | null>(null);
   

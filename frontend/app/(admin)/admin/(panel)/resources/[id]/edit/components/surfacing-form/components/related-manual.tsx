@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../../components/ui/button-submit";
 import { StatusChip } from "../../../../../../../../../../components/ui/status-chip";
 import { fetcherAdmin } from "../../../../../../../../../../lib/fetcher";
 import { useParams } from "next/navigation";
 import { mutate } from "swr";
-import { IResource } from "../../../../../../../../../../types/Resource";
+import { IResourceListExtended } from "../../../../../../../../../../types/Resource";
 
-export function RelatedManual({ data }: { data: IResource }) {
+export function RelatedManual({ data }: { data: IResourceListExtended }) {
   const { id: resourceId } = useParams();
 
-  const [statusRemoved, setStatusRemoved] = useState<ButtonSubitStatus>("idle");
+  const [statusRemoved, setStatusRemoved] = useState<ButtonSubmitStatus>("idle");
 
   const deleteSelected = async () => {
     setStatusRemoved("loading");

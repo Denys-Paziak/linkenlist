@@ -1,9 +1,10 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+
+import { EFileStatus } from '../../../interfaces/EFileStatus'
 
 import { Listing } from './Listing.entity'
 
 @Entity('listing_photos')
-@Index(['listing', 'position'], { unique: true })
 export class ListingPhoto {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -11,15 +12,29 @@ export class ListingPhoto {
 	@ManyToOne(() => Listing, l => l.photos, { onDelete: 'CASCADE' })
 	listing: Listing
 
-	@Column({ type: 'int' }) position: number
+	@Column({ type: 'int' })
+	position: number
 
-	@Column({ name: 'original_url', type: 'text' }) originalUrl: string
-	@Column({ name: 'thumb_url', type: 'text', nullable: true }) thumbUrl?: string | null
-	@Column({ name: 'card_url', type: 'text', nullable: true }) cardUrl?: string | null
-	@Column({ name: 'hero_url', type: 'text', nullable: true }) heroUrl?: string | null
+	@Column({ type: 'text' })
+	url: string
 
-	@Column({ type: 'text', nullable: true }) caption?: string | null
-	@Column({ name: 'is_cover', type: 'boolean', default: false }) isCover: boolean
+	@Column({ type: 'text', name: 'original_key', nullable: true, select: false })
+	originalKey?: string | null
+
+	@Column({ type: 'text', name: 'processed_key', nullable: true, select: false })
+	processedKey?: string | null
+
+	@Column({ type: 'int' })
+	width: number
+
+	@Column({ type: 'int' })
+	height: number
+
+	@Column({ type: 'enum', enum: EFileStatus, default: EFileStatus.QUEUED })
+	status: EFileStatus
+
+	@Column({ type: 'text', nullable: true })
+	caption?: string | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	createdAt: Date

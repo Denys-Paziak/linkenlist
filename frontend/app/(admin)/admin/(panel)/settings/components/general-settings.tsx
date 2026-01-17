@@ -14,7 +14,7 @@ import useSWR from "swr";
 import { generalSettingsSchema } from "../../../../../../lib/schemas/general-settings-schema";
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../components/ui/button-submit";
 import { fetcherAdmin } from "../../../../../../lib/fetcher";
@@ -26,8 +26,8 @@ export function GeneralSettings() {
     description: string | null;
   }>("/setting/general-settings");
 
-  const [statusSave, setStatusSave] = useState<ButtonSubitStatus>("idle");
-  const [statusReset, setStatusReset] = useState<ButtonSubitStatus>("idle");
+  const [statusSave, setStatusSave] = useState<ButtonSubmitStatus>("idle");
+  const [statusReset, setStatusReset] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

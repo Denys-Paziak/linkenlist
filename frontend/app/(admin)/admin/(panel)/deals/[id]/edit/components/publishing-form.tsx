@@ -20,7 +20,7 @@ import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { IDeal } from "../../../../../../../../types/Deal";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../components/ui/button-submit";
 import { Controller, useForm } from "react-hook-form";
@@ -46,7 +46,7 @@ export function PublishingForm() {
     dealId ? `/admin/deals/${dealId}` : null
   );
 
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({

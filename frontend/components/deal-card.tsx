@@ -11,15 +11,19 @@ import { useUser } from "../contexts/user-context";
 import useSWR from "swr";
 import { IUser } from "../types/User";
 
-interface CardProps {
+export function DealCard({
+  data,
+  isLoading = false,
+}: {
   data: IDealListExtended;
   isLoading?: boolean;
-}
-
-export function DealCard({ data, isLoading = false }: CardProps) {
+}) {
   const handleExternalClick = async () => {
     try {
-      await fetcherUser(`/deals/${data.id}/add-view`, { method: "PATCH", credentials: "include" });
+      await fetcherUser(`/deals/${data.id}/add-view`, {
+        method: "PATCH",
+        credentials: "include",
+      });
     } catch {}
 
     window.open(data.outboundUrl, "_blank", "noopener,noreferrer");
@@ -27,7 +31,10 @@ export function DealCard({ data, isLoading = false }: CardProps) {
 
   const handleCardClick = async () => {
     try {
-      await fetcherUser(`/deals/${data.id}/add-view`, { method: "PATCH", credentials: "include" });
+      await fetcherUser(`/deals/${data.id}/add-view`, {
+        method: "PATCH",
+        credentials: "include",
+      });
     } catch {}
   };
 

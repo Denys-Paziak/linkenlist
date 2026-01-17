@@ -15,10 +15,15 @@ import { Comments } from "./components/comments/comments";
 
 export const dynamicParams = true;
 
-function getResource(slug: string) {
-  return fetch(process.env.API_INTERNAL_URL + "/resources/" + slug, {
+async function getResource(slug: string) {
+  const res = await fetch(`${process.env.API_INTERNAL_URL}/resources/${slug}`, {
     next: { revalidate: 5 * 60 },
-  }).then((r) => r.json());
+  });
+
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+
+  return (await res.json()) as IResource;
 }
 
 export async function generateMetadata({
@@ -46,8 +51,8 @@ export async function generateMetadata({
   const isIndexable = resource.allowIndexing === true;
 
   return {
-    title: resource.title,
-    description: resource.teaser,
+    title: resource.seoMetaTitle,
+    description: resource.seoMetaDescription,
 
     alternates: isIndexable
       ? {
@@ -152,9 +157,13 @@ export default async function ResourceDetailPage({
 
               <Helpful data={resource} />
 
-              <Comments data={resource}/>
+              <Comments data={resource} />
 
-              <Related resourceData={resource} autoMode={resource.relatedAutoMode} related={resource.relatedManual} />
+              <Related
+                resourceData={resource}
+                autoMode={resource.relatedAutoMode}
+                related={resource.relatedManual}
+              />
             </div>
           </main>
         </div>

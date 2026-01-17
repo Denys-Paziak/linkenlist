@@ -63,12 +63,11 @@ export function List() {
   if (debouncedSearch.length >= 2) params.set("search", debouncedSearch);
 
   const key = `/admin/resources?${params.toString()}`;
-  const { data, mutate, isValidating, error } = useSWR<[IResourceList[], number]>(
-    key,
-    {
-      revalidateIfStale: true,
-    }
-  );
+  const { data, mutate, isValidating, error } = useSWR<
+    [IResourceList[], number]
+  >(key, {
+    revalidateIfStale: true,
+  });
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
 
   const handleCardClick = (slug: string) => {
@@ -91,6 +90,13 @@ export function List() {
     }
   };
 
+  const handleChangeSearch = (search: string) => {
+    setSearchQuery(search);
+    if (page !== 1) {
+      setPage(1);
+    }
+  };
+
   return (
     <>
       <Card>
@@ -101,7 +107,7 @@ export function List() {
               type="text"
               placeholder="Search resources..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleChangeSearch(e.target.value)}
               className="flex w-fit rounded-md border border-input bg-background px-3 pr-2 pl-8 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-[42px] focus-visible:ring-ring"
             />
           </div>

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userLoginSchema } from "../lib/schemas/user-login-schema";
-import { ButtonSubitStatus, ButtonSubmit } from "./ui/button-submit";
+import { ButtonSubmitStatus, ButtonSubmit } from "./ui/button-submit";
 import { ErrorAlert } from "./ui/error-alert";
 import { cn } from "../lib/utils";
 import { mutate } from "swr";
@@ -18,7 +18,7 @@ export function LoginModal() {
   const { showLoginModal, setShowLoginModal } = useUser();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [token, setToken] = useState<string | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);

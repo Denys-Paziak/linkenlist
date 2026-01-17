@@ -81,9 +81,9 @@ export function getFileTypeLabel(ext: string): string {
 }
 
 type TimeUnit = {
-  name: string
-  seconds: number
-}
+  name: string;
+  seconds: number;
+};
 
 const TIME_UNITS: TimeUnit[] = [
   { name: "year", seconds: 60 * 60 * 24 * 365 },
@@ -91,37 +91,103 @@ const TIME_UNITS: TimeUnit[] = [
   { name: "day", seconds: 60 * 60 * 24 },
   { name: "hour", seconds: 60 * 60 },
   { name: "minute", seconds: 60 },
-  { name: "second", seconds: 1 }
-]
+  { name: "second", seconds: 1 },
+];
 
 export function timeAgo(
   input: Date | string | number,
   now: Date = new Date()
 ): string {
-  const date = new Date(input)
-  const diffInSeconds = Math.floor(
-    (now.getTime() - date.getTime()) / 1000
-  )
+  const date = new Date(input);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 0) {
-    return "just now"
+    return "just now";
   }
 
   for (const unit of TIME_UNITS) {
-    const value = Math.floor(diffInSeconds / unit.seconds)
+    const value = Math.floor(diffInSeconds / unit.seconds);
 
     if (value >= 1) {
-      return `${value} ${unit.name}${value > 1 ? "s" : ""} ago`
+      return `${value} ${unit.name}${value > 1 ? "s" : ""} ago`;
     }
   }
 
-  return "just now"
+  return "just now";
 }
 
 export const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+};
+
+type DateInput = Date | string | number;
+
+interface FormatDateDiffOptions {
+  maxUnits?: number;
+  includeDays?: boolean;
+}
+
+export function formatDateDiff(
+  from: DateInput,
+  to: DateInput = new Date(),
+  options: FormatDateDiffOptions = {}
+): string {
+  const { maxUnits = 3, includeDays = true } = options;
+
+  const start = new Date(from);
+  const end = new Date(to);
+
+  if (start > end) return "0 days";
+
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  let days = end.getDate() - start.getDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  const parts: string[] = [];
+
+  if (years > 0) parts.push(`${years} year${years > 1 ? "s" : ""}`);
+  if (months > 0) parts.push(`${months} month${months > 1 ? "s" : ""}`);
+  if (includeDays && days > 0) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+
+  return parts.slice(0, maxUnits).join(" ") || "0 days";
+}
+
+export function formatDurationFromMonths(totalMonths: number): string {
+  if (!Number.isInteger(totalMonths) || totalMonths < 0) {
+    throw new Error("totalMonths must be a non-negative integer");
+  }
+
+  if (totalMonths === 0) {
+    return "0 months";
+  }
+
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+
+  const parts: string[] = [];
+
+  if (years > 0) {
+    parts.push(`${years} ${years === 1 ? "year" : "years"}`);
+  }
+
+  if (months > 0) {
+    parts.push(`${months} ${months === 1 ? "month" : "months"}`);
+  }
+
+  return parts.join(" ");
+}

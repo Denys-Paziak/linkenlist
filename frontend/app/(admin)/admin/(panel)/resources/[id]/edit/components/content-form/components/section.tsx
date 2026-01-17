@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Switch } from "../../../../../../../../../../components/ui/switch";
 import { Button } from "../../../../../../../../../../components/ui/button";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../../components/ui/button-submit";
 import { Controller, useForm } from "react-hook-form";
@@ -51,7 +51,7 @@ export function Section({
 }) {
   const { id: resourceId } = useParams();
 
-  const [statusSave, setStatusSave] = useState<ButtonSubitStatus>("idle");
+  const [statusSave, setStatusSave] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const [attached, setAttached] = useState<IFileData[]>([]);
@@ -338,10 +338,10 @@ function Actions({
 }) {
   const { id: resourceId } = useParams();
 
-  const [statusRemove, setStatusRemove] = useState<ButtonSubitStatus>("idle");
-  const [statusMoveUp, setStatusMoveUp] = useState<ButtonSubitStatus>("idle");
+  const [statusRemove, setStatusRemove] = useState<ButtonSubmitStatus>("idle");
+  const [statusMoveUp, setStatusMoveUp] = useState<ButtonSubmitStatus>("idle");
   const [statusMoveDown, setStatusMoveDown] =
-    useState<ButtonSubitStatus>("idle");
+    useState<ButtonSubmitStatus>("idle");
 
   const removeSection = async () => {
     setStatusRemove("loading");

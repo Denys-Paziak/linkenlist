@@ -15,7 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
-  type ButtonSubitStatus,
+  type ButtonSubmitStatus,
   ButtonSubmit,
 } from "@/components/ui/button-submit";
 import { ErrorAlert } from "@/components/ui/error-alert";
@@ -36,7 +36,7 @@ import { TagsField } from "../../../../../components/tags-field";
 import { Input } from "../../../../../../../../components/ui/input";
 
 export function EditForm({ linkId }: { linkId: string }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [statusMode, setStatusMode] = useState<"publish" | "draft">("publish");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -148,9 +148,9 @@ export function EditForm({ linkId }: { linkId: string }) {
     }
   }, [status]);
 
-  const publishBtnStatus: ButtonSubitStatus =
+  const publishBtnStatus: ButtonSubmitStatus =
     statusMode === "publish" ? status : "idle";
-  const draftBtnStatus: ButtonSubitStatus =
+  const draftBtnStatus: ButtonSubmitStatus =
     statusMode === "draft" ? status : "idle";
 
   const loading = isValidating || status === "loading";

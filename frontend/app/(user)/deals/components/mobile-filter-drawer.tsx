@@ -40,6 +40,7 @@ export function MobileFilterDrawer({
   const resetFilters = () => {
     onCategoryChange("all");
     onSearchChange("");
+    onSortChange("default")
   };
 
   if (!isOpen) return null;

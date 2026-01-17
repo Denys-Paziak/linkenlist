@@ -10,6 +10,7 @@ export interface IUser {
   company: string | null;
   phone: string | null;
   footerDisclaimer: boolean;
+  freeListingCredit: number;
   updatedAt: string;
   createdAt: string;
 }

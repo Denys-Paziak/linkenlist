@@ -16,7 +16,7 @@ import {
   Home,
 } from "lucide-react";
 import { useScrollManager } from "@/lib/scroll-manager";
-import { ButtonSubitStatus, renderStatusIcon } from "./ui/button-submit";
+import { ButtonSubmitStatus, renderStatusIcon } from "./ui/button-submit";
 import { fetcherUser } from "../lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { IUser } from "../types/User";
@@ -454,7 +454,7 @@ export function Header() {
 }
 
 function LogOutButton() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const handleLogout = async () => {
     setStatus("loading");

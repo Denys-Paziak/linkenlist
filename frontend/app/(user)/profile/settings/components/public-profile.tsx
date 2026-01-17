@@ -5,7 +5,7 @@ import { IUser } from "../../../../../types/User";
 import { Button } from "../../../../../components/ui/button";
 import { useEffect, useState } from "react";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../components/ui/button-submit";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ import { mutate } from "swr";
 import { Input } from "../../../../../components/ui/input";
 
 export function PublicProfile({ user }: { user?: IUser }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 

@@ -20,7 +20,11 @@ import { LinkImage } from './LinkImage.entity'
 import { LinkTag } from './LinkTag.entity'
 
 @Entity('links')
-export class Link {
+@Index('links_search_document_gin_idx', { synchronize: false })
+@Index('links_title_trgm_gin_idx', { synchronize: false })
+@Index('links_tags_text_trgm_gin_idx', { synchronize: false })
+@Index('links_description_trgm_gin_idx', { synchronize: false })
+export class Link { 
 	@PrimaryGeneratedColumn()
 	id: number
 
@@ -45,9 +49,6 @@ export class Link {
 	@ManyToMany(() => LinkTag)
 	@JoinTable({ name: 'link_tags_join' })
 	tags: LinkTag[]
-
-	@Column({ type: 'text', name: 'tags_text', default: '' })
-	tagsText: string
 
 	@Column({ type: 'enum', enum: ELinkBranch, array: true })
 	branches: ELinkBranch[]
@@ -83,6 +84,18 @@ export class Link {
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 
-	@Column({ type: 'tsvector', select: false, nullable: true,  })
+	@Column({ type: 'text', name: 'tags_text', default: '' })
+	tagsText: string
+
+	@Column({
+		type: 'tsvector',
+		select: false,
+		asExpression: `
+			setweight(to_tsvector('english', coalesce("title", '')), 'A') ||
+			setweight(to_tsvector('english', coalesce("description", '')), 'B') ||
+			setweight(to_tsvector('english', coalesce("tags_text", '')), 'C')
+		`,
+		generatedType: 'STORED'
+	})
 	search_document: any
 }

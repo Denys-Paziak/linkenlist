@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { StatusChip } from "../../../../../../../../../../components/ui/status-chip";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../../../components/ui/button-submit";
 import { fetcherAdmin } from "../../../../../../../../../../lib/fetcher";
@@ -64,7 +64,7 @@ export function ResourcesBrowser({
 
   const [selectItems, setSelectItems] = useState<number[]>([]);
 
-  const [statusAdding, setStatusAdding] = useState<ButtonSubitStatus>("idle");
+  const [statusAdding, setStatusAdding] = useState<ButtonSubmitStatus>("idle");
 
   const addSelected = async () => {
     setStatusAdding("loading");

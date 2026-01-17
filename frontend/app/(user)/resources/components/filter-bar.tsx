@@ -52,6 +52,7 @@ export function FilterBar({
     onSearchChange("");
     onCategoryChange("all");
     onFormatChange("all");
+    onSortChange("default")
   };
 
   return (

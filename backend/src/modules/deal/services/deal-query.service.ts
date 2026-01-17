@@ -44,9 +44,9 @@ export class DealQueryService {
 
 			qb.andWhere(
 				`(
-				d.search_document @@ plainto_tsquery('simple', :q)
-				OR similarity(d.title, :q) > 0.05
-				OR similarity(d.tags_text, :q) > 0.05
+				d.search_document @@ plainto_tsquery('english', :q)
+				OR similarity(d.title, :q) > 0.15
+				OR similarity(d.tags_text, :q) > 0.15
 			)`,
 				{ q }
 			)
@@ -54,7 +54,7 @@ export class DealQueryService {
 			qb.addSelect(
 				`
 				GREATEST(
-					ts_rank_cd(d.search_document, plainto_tsquery('simple', :q)),
+					ts_rank_cd(d.search_document, plainto_tsquery('english', :q)),
 					similarity(d.title, :q),
 					similarity(d.tags_text, :q)
 				)
@@ -80,7 +80,7 @@ export class DealQueryService {
 			'deals:list|' +
 			`page:${page}|` +
 			`limit:${limit}|` +
-			`cat:${query.category ?? 'all'}` +
+			`cat:${query.category ?? 'all'}|` +
 			`isFeatured:${query.isFeatured ?? false}`
 
 		if (!query.search || query.isFavorite) {
@@ -138,9 +138,9 @@ export class DealQueryService {
 		if (query.search && query.search.trim() !== '') {
 			qb.andWhere(
 				`(
-					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.05
-					OR similarity(l.tags_text, :q) > 0.05
+					l.search_document @@ plainto_tsquery('english', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
 				)`,
 				{ q: query.search }
 			)
@@ -148,7 +148,7 @@ export class DealQueryService {
 			qb.addSelect(
 				`
 					GREATEST(
-						ts_rank_cd(l.search_document, plainto_tsquery('simple', :q)),
+						ts_rank_cd(l.search_document, plainto_tsquery('english', :q)),
 						similarity(l.title, :q),
 						similarity(l.tags_text, :q)
 					)
@@ -201,9 +201,9 @@ export class DealQueryService {
 		if (query.search && query.search.trim() !== '') {
 			countQb.andWhere(
 				`(
-					l.search_document @@ plainto_tsquery('simple', :q)
-					OR similarity(l.title, :q) > 0.05
-					OR similarity(l.tags_text, :q) > 0.05
+					l.search_document @@ plainto_tsquery('english', :q)
+					OR similarity(l.title, :q) > 0.15
+					OR similarity(l.tags_text, :q) > 0.15
 				)`,
 				{ q: query.search }
 			)

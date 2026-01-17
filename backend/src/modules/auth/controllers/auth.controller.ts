@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpCode, Patch, Post, Query, Req, Res } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ApiOAuth2, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
@@ -15,7 +14,6 @@ import { ResendConfirmationEmailDto } from '../dtos/ResendConfirmationEmail.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
 import { AuthService } from '../services/auth.service'
 
-@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
 	constructor(

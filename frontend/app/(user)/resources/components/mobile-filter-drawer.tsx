@@ -48,6 +48,7 @@ export function MobileFilterDrawer({
     onCategoryChange("all");
     onFormatChange("all");
     onSearchChange("");
+    onSortChange("default")
   };
 
   if (!isOpen) return null;

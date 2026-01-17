@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { PropertyCard } from "@/components/property-card"
+import { PropertyCard } from "@/components/realestate-card"
 import {
   Dialog,
   DialogContent,

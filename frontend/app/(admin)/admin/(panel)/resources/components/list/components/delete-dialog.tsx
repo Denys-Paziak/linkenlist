@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "../../../../../../../../components/ui/button";
 import {
-  ButtonSubitStatus,
+  ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../../../../components/ui/button-submit";
 import {
@@ -28,7 +28,7 @@ export function DeleteDialog({
   handleSuccessDelete: () => void;
   itemToDelete: ILink;
 }) {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string>("");
   const [deleteMode, setDeleteMode] = useState<"soft" | "hard">("soft");
 
@@ -65,8 +65,8 @@ export function DeleteDialog({
     }
   };
 
-  const softMode: ButtonSubitStatus = deleteMode === "soft" ? status : "idle";
-  const hardMode: ButtonSubitStatus = deleteMode === "hard" ? status : "idle";
+  const softMode: ButtonSubmitStatus = deleteMode === "soft" ? status : "idle";
+  const hardMode: ButtonSubmitStatus = deleteMode === "hard" ? status : "idle";
 
   return (
     <Dialog open={showDeleteDialog} onOpenChange={() => handleCancelDelete()}>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ButtonSubitStatus, renderStatusIcon } from "../../../../components/ui/button-submit";
+import { ButtonSubmitStatus, renderStatusIcon } from "../../../../components/ui/button-submit";
 
 export function LogoutButton() {
-  const [status, setStatus] = useState<ButtonSubitStatus>("idle");
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
 
   const logout = async (e: React.FormEvent) => {
     e.preventDefault();
