@@ -482,7 +482,8 @@ export class DealCommandService {
 			url: uploadedImage.url,
 			originalKey: uploadedImage.key,
 			width: uploadedImage.width || 0,
-			height: uploadedImage.height || 0
+			height: uploadedImage.height || 0,
+			status: EFileStatus.READY
 		})
 
 		const updated = await this.dealSectionImagesRepository.findOne({
@@ -501,6 +502,7 @@ export class DealCommandService {
 				originalKey: true
 			}
 		})
+
 		if (!image) throw new NotFoundException('Content section image not found.')
 
 		await this.dealSectionImagesRepository.delete(imageId)

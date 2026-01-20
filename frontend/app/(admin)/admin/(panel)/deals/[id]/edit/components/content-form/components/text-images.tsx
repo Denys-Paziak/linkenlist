@@ -6,7 +6,7 @@ import {
   IDealImage,
   IDealSection,
 } from "../../../../../../../../../../types/Deal";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ButtonSubmit,
   ButtonSubmitStatus,
@@ -22,7 +22,6 @@ export function TextImages({ section }: { section: IDealSection }) {
   const [images, setImages] = useState<IDealImage[]>(section.images || []);
 
   const [statusSave, setStatusSave] = useState<ButtonSubmitStatus>("idle");
-  const [statusDelete, setStatusDelete] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
   const uploadImage = async (file: File) => {
@@ -51,42 +50,22 @@ export function TextImages({ section }: { section: IDealSection }) {
     }
   };
 
-  const removeImage = async (id: number) => {
-    setFormError(null);
-
-    setStatusDelete("loading");
-    try {
-      await fetcherAdmin(
-        `/admin/deals/${dealId}/content-section/${section.id}/text-image/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      setStatusDelete("success");
-      setImages((state) => state.filter((img) => img.id !== id));
-    } catch (err: any) {
-      setStatusDelete("error");
-      setFormError(err?.message ?? "Delete failed");
-    }
-  };
+  const removeImage = useCallback(async (id: number) => {
+    setImages((state) => state.filter((img) => img.id !== id));
+  }, []);
+  const setFormErrorCallback = useCallback((msg: string | null) => {
+    setFormError(msg);
+  }, []);
 
   useEffect(() => {
     if (statusSave === "success" || statusSave === "error") {
       const timer = setTimeout(() => setStatusSave("idle"), 2000);
       return () => clearTimeout(timer);
     }
-    if (statusDelete === "success" || statusDelete === "error") {
-      const timer = setTimeout(() => setStatusDelete("idle"), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [statusSave, statusDelete]);
-
-  const loading = statusSave === "loading";
+  }, [statusSave]);
 
   return (
-    <fieldset disabled={loading || !section}>
+    <fieldset disabled={statusSave === "loading" || !section}>
       <div className="space-y-3">
         {formError ? <ErrorAlert message={formError} /> : null}
 
@@ -125,51 +104,100 @@ export function TextImages({ section }: { section: IDealSection }) {
         {images && images.length > 0 && (
           <div className="space-y-2">
             {images.map((file, fileIndex) => (
-              <div
+              <TextImage
                 key={fileIndex}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-10">
-                    <Image
-                      src={file.url}
-                      alt=""
-                      width={file.width}
-                      height={file.height}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                   <p className="text-sm font-medium">{file.url}</p>
-                  <Copy
-                    className="w-4 cursor-pointer active:w-3 transition-all"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(file.url);
-                        console.log("Скопійовано");
-                      } catch (e) {
-                        console.error("Copy failed", e);
-                      }
-                    }}
-                  />
-                </div>
-                {statusDelete === "loading" ? (
-                  <span className="text-sm text-gray-500">Deleting...</span>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeImage(file.id)}
-                    className="h-6 w-6 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+                data={file}
+                dealId={String(dealId)}
+                sectionId={section.id}
+                removeImage={removeImage}
+                setFormError={setFormErrorCallback}
+              />
             ))}
           </div>
         )}
       </div>
     </fieldset>
+  );
+}
+
+function TextImage({
+  data,
+  dealId,
+  sectionId,
+  removeImage,
+  setFormError,
+}: {
+  data: IDealImage;
+  dealId: string;
+  sectionId: number;
+  removeImage: (id: number) => void;
+  setFormError: (msg: string | null) => void;
+}) {
+  const [statusDelete, setStatusDelete] = useState<ButtonSubmitStatus>("idle");
+
+  const removeImageHandle = async (id: number) => {
+    setFormError(null);
+
+    setStatusDelete("loading");
+    try {
+      await fetcherAdmin(
+        `/admin/deals/${dealId}/content-section/${sectionId}/text-image/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+
+      setStatusDelete("success");
+      removeImage(id);
+    } catch (err: any) {
+      setStatusDelete("error");
+      setFormError(err?.message ?? "Delete failed");
+    }
+  };
+
+  useEffect(() => {
+    if (statusDelete === "success" || statusDelete === "error") {
+      const timer = setTimeout(() => setStatusDelete("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusDelete]);
+
+  return (
+    <div className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
+      <div className="flex items-center gap-4">
+        <div className="h-10">
+          <Image
+            src={data.url}
+            alt=""
+            width={data.width}
+            height={data.height}
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <p className="text-sm font-medium">{data.url}</p>
+        <Copy
+          className="w-4 cursor-pointer active:w-3 transition-all"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(data.url);
+            } catch {}
+          }}
+        />
+      </div>
+      {statusDelete === "loading" ? (
+        <span className="text-sm text-gray-500">Deleting...</span>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => removeImageHandle(data.id)}
+          className="h-6 w-6 p-0"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 }
