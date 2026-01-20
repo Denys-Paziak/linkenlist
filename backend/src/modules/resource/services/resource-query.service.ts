@@ -280,6 +280,7 @@ export class ResourceQueryService {
 
 			.leftJoinAndSelect('resource.sections', 'section')
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
+			.leftJoinAndSelect('section.images', 'sectionImages')
 
 			.leftJoinAndSelect('resource.relatedManual', 'related')
 			.leftJoinAndSelect('related.target', 'relatedTarget')

@@ -3,7 +3,9 @@ import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
+import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
+import { ParamSlug } from '../../../dtos/ParamSlug.dto'
 import { MultipartInterceptor } from '../../../interceptors/multipart.interceptor'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
@@ -11,12 +13,13 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { MultipartOptions } from '../../../utils/file.util'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { GetAllListingsDto } from '../dtos/GetAllListings.dto'
+import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
 import { InitListingDto } from '../dtos/InitListing.dto'
 import { SaveListingDto } from '../dtos/SaveListing.dto'
 import { ListingCommandService } from '../services/listing-command.service'
 import { ListingQueryService } from '../services/listing-query.service'
-import { ParamSlug } from '../../../dtos/ParamSlug.dto'
+import { ListingSystemService } from '../services/listing-system.service'
 
 const IMAGE_MAX_MB = 15
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -26,7 +29,8 @@ const ACCEPT_IMAGES = /(image\/(jpeg|png|webp))$/
 export class ListingController {
 	constructor(
 		private readonly listingCommandService: ListingCommandService,
-		private readonly listingQueryService: ListingQueryService
+		private readonly listingQueryService: ListingQueryService,
+		private readonly listingSystemService: ListingSystemService
 	) {}
 
 	@Authorization(ERoleName.USER)
@@ -153,5 +157,33 @@ export class ListingController {
 	@Get(':slug')
 	async getOneListing(@Param() params: ParamSlug) {
 		return await this.listingQueryService.getOneListing(params.slug)
+	}
+
+	@Get('bah-rates')
+	async getBahRates(@Query() query: GetBAHRatesDto) {
+		return await this.listingQueryService.getBahRates(query)
+	}
+
+	@OptionalAuthorization()
+	@Patch(':id/add-view')
+	async addView(@Req() request: FastifyRequest, @Param() params: ParamId) {
+		const listingId = Number(params.id)
+
+		const userId = (request as any).user?.id as number | undefined
+		const viewerKey = userId ? `u:${userId}` : `ip:${request.ip}`
+
+		const counted = await this.listingSystemService.markViewedOnce({
+			listingId,
+			viewerKey,
+			ttlMs: 10 * 60 * 60 * 1000
+		})
+
+		if (counted) {
+			await this.listingCommandService.addView(listingId)
+		}
+
+		return {
+			ok: true
+		}
 	}
 }

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ECommentStatus, IComment } from "../../../../../../../types/Comment";
-import { cn, timeAgo } from "../../../../../../../lib/utils";
+import { cn, getInitials, timeAgo } from "../../../../../../../lib/utils";
 import { ThumbsDown, ThumbsUp, ChevronDown, ChevronUp } from "lucide-react";
 import { fetcherUser } from "../../../../../../../lib/fetcher";
 import useSWRInfinite, { SWRInfiniteKeyedMutator } from "swr/infinite";
@@ -40,7 +40,7 @@ export function Comment({
     data: {
       deleteId: number;
       replyMutate: SWRInfiniteKeyedMutator<[IComment[], number][]> | null;
-    } | null
+    } | null,
   ) => void;
 }) {
   const limit = 5;
@@ -49,7 +49,7 @@ export function Comment({
 
   const getKey = (
     pageIndex: number,
-    previousPageData?: [IComment[], number]
+    previousPageData?: [IComment[], number],
   ) => {
     if (!repliesOpen) return null;
     if (previousPageData && previousPageData[0]?.length === 0) return null;
@@ -73,7 +73,7 @@ export function Comment({
 
   const replies = useMemo(
     () => (repliesPages ? repliesPages.flatMap((p) => p[0]) : []),
-    [repliesPages]
+    [repliesPages],
   );
 
   const isInitialRepliesLoading =
@@ -102,11 +102,9 @@ export function Comment({
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
-            (
-              (comment?.user?.firstName?.[0] || "") +
-              "" +
-              (comment?.user?.lastName?.[0] || "")
-            ).toUpperCase()
+            getInitials(
+              `${comment?.user?.firstName || ""} ${comment?.user?.lastName || ""}`,
+            )
           )}
         </div>
 
@@ -145,15 +143,19 @@ export function Comment({
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            <LikeButton comment={comment} mutate={mutate} />
-            <DislikedButton comment={comment} mutate={mutate} />
+            {ownerId && (
+              <>
+                <LikeButton comment={comment} mutate={mutate} />
+                <DislikedButton comment={comment} mutate={mutate} />
 
-            <button
-              onClick={() => setReplyingComment(comment.id)}
-              className="text-gray-500 hover:text-white hover:bg-gray-700 text-xs transition-all duration-200 px-2 py-1 rounded-md"
-            >
-              Reply
-            </button>
+                <button
+                  onClick={() => setReplyingComment(comment.id)}
+                  className="text-gray-500 hover:text-white hover:bg-gray-700 text-xs transition-all duration-200 px-2 py-1 rounded-md"
+                >
+                  Reply
+                </button>
+              </>
+            )}
 
             {ownerId === comment.user.id && (
               <button
@@ -201,7 +203,7 @@ export function Comment({
           className={cn(
             "mt-4  space-y-4 border-l-2 border-gray-200",
             depth <= 2 ? "ml-10" : "",
-            depth <= 1 ? "pl-4" : "pl-1"
+            depth <= 1 ? "pl-4" : "pl-1",
           )}
         >
           {replyingId === comment.id && (
@@ -300,7 +302,7 @@ export function LikeButton({
             return [updatedItems, total];
           });
         },
-        { revalidate: false }
+        { revalidate: false },
       );
 
       await fetcherUser(`/comments/${comment.id}/like`, {
@@ -359,7 +361,7 @@ export function DislikedButton({
             return [updatedItems, total];
           });
         },
-        { revalidate: false }
+        { revalidate: false },
       );
 
       await fetcherUser(`/comments/${comment.id}/dislike`, {

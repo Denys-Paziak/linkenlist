@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { parse } from 'csv-parse/sync'
 import { DataSource, In, Not, Repository } from 'typeorm'
 
 import { EFileStatus } from '../../../interfaces/EFileStatus'
@@ -7,6 +8,7 @@ import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { EPackageType } from '../../../interfaces/EPackageType'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { IUploadedImage } from '../../../interfaces/IUploadedFile'
+import { formatLocalDateYYYYMMDD } from '../../../utils/format-local-date-YYYYMMDD'
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
@@ -17,11 +19,11 @@ import { User } from '../../user/entities/User.entity'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { InitListingDto } from '../dtos/InitListing.dto'
 import { SaveListingDto } from '../dtos/SaveListing.dto'
+import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
 import { ListingPhoto } from '../entities/ListingPhoto.entity'
-
-import { ListingSystemService } from './listing-system.service'
-import { formatLocalDateYYYYMMDD } from '../../../utils/format-local-date-YYYYMMDD'
+import { BahZipMapping } from '../entities/MHA.entity'
+import { chunk, isObject, PAYGRADE_MAP, toMoneyString, toYear } from '../utils/import-bah'
 
 @Injectable()
 export class ListingCommandService {
@@ -31,8 +33,9 @@ export class ListingCommandService {
 		private readonly s3StorageService: S3StorageService,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly stripeSystemService: StripeSystemService,
-		private readonly listingSystemService: ListingSystemService,
 		private readonly scheduleQueueService: ScheduleQueueService,
+		@InjectRepository(BahRate)
+		private readonly bahRateRepo: Repository<BahRate>,
 		private readonly dataSource: DataSource
 	) {}
 
@@ -89,9 +92,9 @@ export class ListingCommandService {
 			.execute()
 	}
 
-	private async generateSlugUnique(title: string) {
+	private async generateSlugUnique(id: number, title: string) {
 		let slug = generateSlug(title)
-		const exists = await this.listingRepository.exists({ where: { slug } })
+		const exists = await this.listingRepository.exists({ where: { slug, id: Not(id) } })
 		if (exists) slug = `${slug}-${generateRandomSuffix()}`
 		return slug
 	}
@@ -187,7 +190,7 @@ export class ListingCommandService {
 		let slug: string | undefined
 
 		if (dto.listingDetails?.title) {
-			slug = await this.generateSlugUnique(dto.listingDetails.title)
+			slug = await this.generateSlugUnique(listingId, dto.listingDetails.title)
 		}
 
 		await this.dataSource.transaction(async manager => {
@@ -198,6 +201,7 @@ export class ListingCommandService {
 					id: true,
 					status: true,
 					package: true,
+					title: true,
 					photos: {
 						id: true,
 						originalKey: true,
@@ -207,6 +211,10 @@ export class ListingCommandService {
 			})
 
 			if (!listing) throw new NotFoundException('Listing not found.')
+
+			if (listing.title === dto.listingDetails?.title) {
+				slug = undefined
+			}
 
 			if (photos !== undefined) {
 				const remainedIds = photos.map(item => item.id)
@@ -251,7 +259,7 @@ export class ListingCommandService {
 				}
 			}
 
-			const dateAvailable = data.pricing?.dateAvailable;
+			const dateAvailable = data.pricing?.dateAvailable
 			await manager.getRepository(Listing).save({
 				id: listingId,
 				owner: { id: userId },
@@ -272,7 +280,7 @@ export class ListingCommandService {
 			if (listing.status === EListingStatus.ACTIVE) {
 				const updatedListing = await manager.getRepository(Listing).findOne({
 					where: { id: listingId, owner: { id: userId } },
-					relations: ['photos'],
+					relations: ['photos']
 				})
 				if (!updatedListing) throw new NotFoundException('Listing not found.')
 
@@ -573,5 +581,170 @@ export class ListingCommandService {
 		if (!res.affected) {
 			throw new BadRequestException('Only active listing or listing awaiting approval can be deactivated.')
 		}
+	}
+
+	async importBahRatesFromJson(
+		file: IMultipartFile,
+		opts?: { dryRun?: boolean }
+	): Promise<{
+		dryRun: boolean
+		totalRecordsPrepared: number
+		uniqueKey: string
+		sample: Array<Pick<BahRate, 'year' | 'mhaCode' | 'locationName' | 'paygrade' | 'withDependents' | 'monthlyAmount'>>
+	}> {
+		// 1) parse
+		let payload: unknown
+		try {
+			payload = JSON.parse(file.buffer.toString('utf-8'))
+		} catch {
+			throw new BadRequestException('Uploaded file is not valid JSON')
+		}
+
+		if (!isObject(payload)) {
+			throw new BadRequestException('JSON payload must be an object with "with" and "without" arrays')
+		}
+
+		const withArr = (payload as any).with
+		const withoutArr = (payload as any).without
+
+		if (!Array.isArray(withArr) || !Array.isArray(withoutArr)) {
+			throw new BadRequestException('JSON payload must contain arrays: "with" and "without"')
+		}
+
+		// 2) transform -> flat rows for upsert
+		const records: Array<
+			Pick<BahRate, 'year' | 'mhaCode' | 'locationName' | 'paygrade' | 'withDependents' | 'monthlyAmount'>
+		> = []
+
+		const processRow = (row: unknown, withDependents: boolean, rowIndex: number) => {
+			if (!isObject(row)) {
+				throw new BadRequestException(`Row #${rowIndex} is not an object`)
+			}
+
+			const year = toYear(row.year)
+			const mhaCode = String(row.mha ?? '').trim()
+			const locationName = String(row.name ?? '').trim()
+
+			if (!mhaCode) throw new BadRequestException(`Row #${rowIndex}: missing "mha"`)
+			if (!locationName) throw new BadRequestException(`Row #${rowIndex}: missing "name"`)
+
+			// для кожного paygrade ключа -> створюємо запис
+			for (const [key, pg] of Object.entries(PAYGRADE_MAP)) {
+				if (!(key in row)) continue // деякі JSON можуть бути “часткові”
+				const monthlyAmount = toMoneyString((row as any)[key], `row#${rowIndex} ${mhaCode} ${key}`)
+
+				records.push({
+					year,
+					mhaCode,
+					locationName,
+					paygrade: pg,
+					withDependents,
+					monthlyAmount
+				})
+			}
+		}
+
+		withArr.forEach((r, idx) => processRow(r, true, idx))
+		withoutArr.forEach((r, idx) => processRow(r, false, idx))
+
+		if (records.length === 0) {
+			throw new BadRequestException('No BAH records found (no recognized paygrade keys)')
+		}
+
+		// 3) dry-run
+		if (opts?.dryRun) {
+			return {
+				dryRun: true,
+				totalRecordsPrepared: records.length,
+				uniqueKey: '(year, mhaCode, paygrade, withDependents)',
+				sample: records.slice(0, 10)
+			}
+		}
+
+		// 4) upsert in transaction (chunked)
+		const chunks = chunk(records, 1000)
+		await this.dataSource.transaction(async manager => {
+			const repo = manager.getRepository(BahRate)
+
+			for (const part of chunks) {
+				await repo.upsert(part as any, {
+					conflictPaths: ['year', 'mhaCode', 'paygrade', 'withDependents'],
+					skipUpdateIfNoValuesChanged: true
+				})
+			}
+		})
+
+		return {
+			dryRun: false,
+			totalRecordsPrepared: records.length,
+			uniqueKey: '(year, mhaCode, paygrade, withDependents)',
+			sample: records.slice(0, 10)
+		}
+	}
+
+	async importBahZipMappingsFromCsv(file: IMultipartFile, opts?: { dryRun?: boolean }) {
+		// 1) parse CSV
+		let records: any[]
+		try {
+			records = parse(file.buffer.toString('utf-8'), {
+				columns: true,
+				skip_empty_lines: true,
+				trim: true
+			})
+		} catch {
+			throw new BadRequestException('Invalid CSV file')
+		}
+
+		if (!records.length) {
+			throw new BadRequestException('CSV file is empty')
+		}
+
+		// 2) normalize + validate
+		const rows: Array<Partial<BahZipMapping>> = records.map((r, index) => {
+			if (!r.zip || !r.mha_code || !r.state || !r.city) {
+				throw new BadRequestException(`Invalid row at index ${index}`)
+			}
+
+			return {
+				zip: String(r.zip).padStart(5, '0'),
+				mhaCode: String(r.mha_code).toUpperCase().trim(),
+				mhaName: String(r.mha_name ?? r.mha_code).trim(),
+				state: String(r.state).toUpperCase().trim(),
+				city: String(r.city).trim()
+			}
+		})
+
+		if (opts?.dryRun) {
+			return {
+				dryRun: true,
+				totalRows: rows.length,
+				sample: rows.slice(0, 10)
+			}
+		}
+
+		// 3) upsert (transaction + chunking)
+		const CHUNK_SIZE = 1000
+
+		await this.dataSource.transaction(async manager => {
+			const repo = manager.getRepository(BahZipMapping)
+
+			for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+				const chunk = rows.slice(i, i + CHUNK_SIZE)
+
+				await repo.upsert(chunk as any, {
+					conflictPaths: ['zip', 'mhaCode'],
+					skipUpdateIfNoValuesChanged: true
+				})
+			}
+		})
+
+		return {
+			dryRun: false,
+			totalRows: rows.length
+		}
+	}
+
+	async addView(dealId: number) {
+		await this.listingRepository.increment({ id: dealId }, 'totalViews', 1)
 	}
 }

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common'
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { DeepPartial, FindOneOptions, Repository } from 'typeorm'
+import { DeepPartial, Repository } from 'typeorm'
 
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { EListingStatus } from '../../../interfaces/EListingStatus'
@@ -14,8 +15,22 @@ export class ListingSystemService {
 		@InjectRepository(Listing)
 		private readonly listingRepository: Repository<Listing>,
 		@InjectRepository(ListingPhoto)
-		private readonly listingPhotoRepository: Repository<ListingPhoto>
+		private readonly listingPhotoRepository: Repository<ListingPhoto>,
+		@Inject(CACHE_MANAGER)
+		private readonly cache: Cache
 	) {}
+
+	async markViewedOnce(params: { listingId: number; viewerKey: string; ttlMs: number }): Promise<boolean> {
+		const { listingId, viewerKey, ttlMs } = params
+		const key = `listing:view:${listingId}:${viewerKey}`
+
+		const already = await this.cache.get<string>(key)
+		if (already) return false
+
+		await this.cache.set(key, '1', ttlMs)
+
+		return true
+	}
 
 	async updateListingPhoto(id: number, data: DeepPartial<ListingPhoto>) {
 		return await this.listingPhotoRepository.save({ id, ...data })

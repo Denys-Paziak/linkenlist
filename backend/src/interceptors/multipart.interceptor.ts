@@ -85,7 +85,7 @@ export function MultipartInterceptor(opts: MultipartInterceptorOptions = {}): Ty
 			}
 
 			req.storedFiles = files
-			req.body = JSON.parse(body.payload)
+			req.body = JSON.parse(body.payload || "{}")
 
 			return next.handle()
 		}

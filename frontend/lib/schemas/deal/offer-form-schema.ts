@@ -17,27 +17,25 @@ export const offerFormSchema = z
     originalPrice: z.preprocess(
       (v) => (v === "" ? undefined : v),
       z.coerce
-        .number({
-          error: "Original price is required",
-        })
+        .number()
         .min(0, "Original price must be at least 0")
         .max(9999999999.99, "Original price must be at most 9999999999.99")
         .refine((v) => Number.isInteger(v * 100), {
           message: "Original price can have at most 2 decimal places",
         })
+        .optional(),
     ),
 
     yourPrice: z.preprocess(
       (v) => (v === "" ? undefined : v),
       z.coerce
-        .number({
-          error: "Your price is required",
-        })
+        .number()
         .min(0, "Your price must be at least 0")
         .max(9999999999.99, "Your price must be at most 9999999999.99")
         .refine((v) => Number.isInteger(v * 100), {
           message: "Your price can have at most 2 decimal places",
         })
+        .optional(),
     ),
 
     cadencePrice: z.string().min(1, "Cadence price is required").optional(),
@@ -60,8 +58,7 @@ export const offerFormSchema = z
 
     providerDisplayName: z
       .string()
-      .min(1, "Provider display name is required")
-      .max(120, "Provider display name must be no longer than 120 characters")
+      .max(120, "Provider display name must be no longer than 120 characters"),
   })
   .superRefine((data, ctx) => {
     const { originalPrice, yourPrice, ongoingOffer, validFrom, validUntil } =

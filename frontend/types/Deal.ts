@@ -61,6 +61,7 @@ export interface IDealSection {
   bodyMd: string | null;
 
   attachments: IDealSectionAttachment[];
+  images: IDealImage[];
 }
 
 export interface IDealTag {

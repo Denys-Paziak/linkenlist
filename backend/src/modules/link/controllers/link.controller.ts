@@ -36,7 +36,7 @@ export class LinkController {
 		const counted = await this.linkSystemService.markViewedOnce({
 			dealId,
 			viewerKey,
-			ttlMs: 60 * 60 * 1000
+			ttlMs: 10 * 60 * 60 * 1000
 		})
 
 		if (counted) {

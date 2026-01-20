@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
 import { DataSource, EntityManager, Not, Repository } from 'typeorm'
@@ -31,6 +31,7 @@ import { ResourceImage } from '../entities/ResourceImage.entity'
 import { ResourceRelated } from '../entities/ResourceRelated.entity'
 import { ResourceSection } from '../entities/ResourceSection.entity'
 import { ResourceSectionAttachment } from '../entities/ResourceSectionAttachment.entity'
+import { ResourceSectionImages } from '../entities/ResourceSectionImages.entity'
 import { ResourceTag } from '../entities/ResourceTag.entity'
 
 import { ResourceQueryService } from './resource-query.service'
@@ -46,6 +47,8 @@ export class ResourceCommandService {
 		private readonly resourceSectionRepository: Repository<ResourceSection>,
 		@InjectRepository(ResourceRelated)
 		private readonly resourceRelatedRepository: Repository<ResourceRelated>,
+		@InjectRepository(ResourceSectionImages)
+		private readonly resourceSectionImagesRepository: Repository<ResourceSectionImages>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
@@ -58,6 +61,14 @@ export class ResourceCommandService {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
 			path: 'resource/heroes/' + resourceId
+		})
+		return { key, url, width: file.width, height: file.height }
+	}
+
+	private async saveSectionImage(file: IMultipartFile, dealId: number): Promise<IUploadedImage> {
+		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
+			filename: file.filename,
+			path: 'resource/section_image/' + dealId
 		})
 		return { key, url, width: file.width, height: file.height }
 	}
@@ -295,6 +306,46 @@ export class ResourceCommandService {
 		return await this.resourceSectionRepository.findOne({ where: { id: newSection.id }, relations: ['attachments'] })
 	}
 
+	async uploadContentSectionImage(resourceId: number, file: IMultipartFile) {
+		const exists = await this.resourceSectionRepository.exists({
+			where: { id: resourceId }
+		})
+		if (!exists) throw new NotFoundException('Deal section not found.')
+
+		const uploadedImage = await this.saveSectionImage(file, resourceId)
+
+		const newSectionImage = await this.resourceSectionImagesRepository.save({
+			dealSection: { id: resourceId },
+			url: uploadedImage.url,
+			originalKey: uploadedImage.key,
+			width: uploadedImage.width || 0,
+			height: uploadedImage.height || 0
+		})
+
+		const updated = await this.resourceSectionImagesRepository.findOne({
+			where: { id: newSectionImage.id }
+		})
+		if (!updated) throw new InternalServerErrorException('Unable to load image.')
+
+		return updated
+	}
+
+	async deleteContentSectionImage(imageId: number) {
+		const image = await this.resourceSectionImagesRepository.findOne({
+			where: { id: imageId },
+			select: {
+				id: true,
+				originalKey: true
+			}
+		})
+		if (!image) throw new NotFoundException('Content section image not found.')
+
+		await this.resourceSectionImagesRepository.delete(imageId)
+		if (image.originalKey) {
+			await this.s3StorageService.delete(image.originalKey)
+		}
+	}
+
 	async deleteContentSection(resourceId: number, sectionId: number) {
 		await this.resourceSectionRepository.delete({ id: sectionId, resource: { id: resourceId } })
 	}
@@ -365,7 +416,7 @@ export class ResourceCommandService {
 
 			return await manager.getRepository(ResourceSection).save({
 				id: sectionId,
-				title: dto.title || 'Section',
+				title: dto.title,
 				bodyMd: dto.bodyMd,
 				enabled: dto.enabled,
 				attachments: [

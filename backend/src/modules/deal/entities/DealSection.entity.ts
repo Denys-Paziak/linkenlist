@@ -12,6 +12,7 @@ import {
 
 import { Deal } from './Deal.entity'
 import { DealSectionAttachment } from './DealSectionAttachment.entity'
+import { DealSectionImages } from './DealSectionImages.entity'
 
 @Entity('deal_sections')
 export class DealSection {
@@ -24,6 +25,9 @@ export class DealSection {
 
 	@OneToMany(() => DealSectionAttachment, s => s.dealSection, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
 	attachments?: DealSectionAttachment[]
+
+	@OneToMany(() => DealSectionImages, s => s.dealSection, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+	images?: DealSectionImages[]
 
 	@Index()
 	@Column({ type: 'int' })

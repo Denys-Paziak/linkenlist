@@ -43,7 +43,7 @@ export function PublishingForm() {
   const { id: dealId } = useParams();
 
   const { data, error, isValidating, mutate } = useSWR<IDeal>(
-    dealId ? `/admin/deals/${dealId}` : null
+    dealId ? `/admin/deals/${dealId}` : null,
   );
 
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
@@ -54,8 +54,12 @@ export function PublishingForm() {
     values: data
       ? {
           status: data.status || dealStatuses[0],
-          schedulePublish: isoToDatetimeLocal(data.publishAt) || "",
-          scheduleExpire: isoToDatetimeLocal(data.expireAt) || "",
+          schedulePublish: data?.publishAt
+            ? new Date(data.publishAt).toISOString().split("T")[0]
+            : "",
+          scheduleExpire: data?.expireAt
+            ? new Date(data.expireAt).toISOString().split("T")[0]
+            : "",
           showComments: data.commentsEnabled ?? true,
         }
       : {
@@ -124,7 +128,9 @@ export function PublishingForm() {
   }, [status]);
 
   const loading = isValidating || status === "loading";
-  const loadError = error ? (error as any)?.message ?? "Failed to load" : null;
+  const loadError = error
+    ? ((error as any)?.message ?? "Failed to load")
+    : null;
 
   return (
     <form onSubmit={(e) => e.preventDefault()} noValidate>
@@ -159,7 +165,7 @@ export function PublishingForm() {
                       className={cn(
                         form.formState.errors.status
                           ? "border-destructive bg-background focus:border-destructive"
-                          : "bg-background border border-input"
+                          : "bg-background border border-input",
                       )}
                     >
                       <SelectValue placeholder="Select a category" />

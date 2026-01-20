@@ -21,6 +21,7 @@ import { ResourceCommandService } from '../services/resource-command.service'
 import { ResourceQueryService } from '../services/resource-query.service'
 import { GetAllResourcesAdminDto } from '../dtos/GetAllResourcesAdmin.dto'
 import { SwitchFeaturedDto } from '../dtos/SwitchFeatured.dto'
+import { ParamsContentSectionImage } from '../dtos/ParamsContentSectionImage.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -82,6 +83,28 @@ export class ResourceAdminController {
 	async createContentSection(@Param() params: ParamId) {
 		return await this.resourceCommandService.createContentSection(params.id)
 	}
+
+	@Authorization(ERoleName.ADMIN)
+		@Post(':id/content-section/:sectionId/text-image')
+		@UseInterceptors(
+			MultipartInterceptor({
+				globalFileSizeLimit: IMAGE_MAX_BYTES,
+				maxFiles: 1,
+				validators: [new MultipartOptions(IMAGE_MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)]
+			})
+		)
+		async uploadContentSectionImage(@Files() files: Record<string, IMultipartFile[]>, @Param() params: ParamsContentSection) {
+			const file = Object.values(files)?.[0]?.[0]
+	
+			return await this.resourceCommandService.uploadContentSectionImage(params.sectionId, file)
+		}
+	
+		@Authorization(ERoleName.ADMIN)
+		@Delete(':id/content-section/:sectionId/text-image/:imageId')
+		async deleteContentSectionImage(@Param() params: ParamsContentSectionImage) {
+			await this.resourceCommandService.deleteContentSectionImage(params.imageId)
+			return { ok: true }
+		}
 
 	@Authorization(ERoleName.ADMIN)
 	@Delete(':id/content-section/:sectionId')
@@ -149,10 +172,6 @@ export class ResourceAdminController {
 	@Authorization(ERoleName.ADMIN)
 	@Get('simplified')
 	async getSimplifiedResources(@Query() query: GetSimplifiedResourceDto) {
-		// прийматиме рядок пошуку, та сторінку і ліміт для пагінації
-		// пагінація автоматична при доскролювані до кінця
-		// повертатиме id name slug isVerified
-
 		return await this.resourceQueryService.getSimplifiedResources(query)
 	}
 

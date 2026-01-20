@@ -1,18 +1,25 @@
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Brackets, Repository } from 'typeorm'
 
 import { EListingStatus } from '../../../interfaces/EListingStatus'
-import { EDealType, ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
+import { ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
+import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
+import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager'
+import { BahZipMapping } from '../entities/MHA.entity'
 
 @Injectable()
 export class ListingQueryService {
 	constructor(
 		@InjectRepository(Listing)
 		private readonly listingRepository: Repository<Listing>,
+		@InjectRepository(BahRate)
+		private readonly bahRateRepository: Repository<BahRate>,
+		@InjectRepository(BahZipMapping)
+		private readonly bahZipMappingRepository: Repository<BahZipMapping>,
 		@Inject(CACHE_MANAGER)
 		private readonly cacheManager: Cache
 	) {}
@@ -317,14 +324,27 @@ export class ListingQueryService {
 	}
 
 	async getOneListing(listingSlug: string) {
-		const listing = await this.listingRepository
+		const qb = this.listingRepository
 			.createQueryBuilder('listing')
 			.leftJoinAndSelect('listing.photos', 'photo')
+			.leftJoinAndSelect('listing.owner', 'owner')
+			.leftJoinAndSelect('owner.avatar', 'avatar')
 			.leftJoinAndSelect('listing.nearestBase', 'nearestBase')
 			.where('listing.slug = :listingSlug', { listingSlug })
 			.andWhere('listing.status = :status', { status: EListingStatus.ACTIVE })
+			.loadRelationCountAndMap('owner.forSaleCount', 'owner.listings', 'ol_sale', sub =>
+				sub.andWhere('ol_sale.forSale = true').andWhere('ol_sale.status = :activeStatus', {
+					activeStatus: EListingStatus.ACTIVE
+				})
+			)
+			.loadRelationCountAndMap('owner.forRentCount', 'owner.listings', 'ol_rent', sub =>
+				sub.andWhere('ol_rent.forRent = true').andWhere('ol_rent.status = :activeStatus', {
+					activeStatus: EListingStatus.ACTIVE
+				})
+			)
 			.orderBy('photo.position', 'ASC')
-			.getOne()
+
+		const listing = await qb.getOne()
 
 		if (!listing) throw new NotFoundException('Listing not found.')
 
@@ -332,8 +352,232 @@ export class ListingQueryService {
 			...listing,
 			street: listing.hideStreet ? null : listing.street,
 			unit: listing.hideStreet ? null : listing.unit,
+			owner: {
+				id: listing.owner.id,
+				avatar: listing.owner.avatar,
+				createdAt: listing.owner.createdAt,
+				listings: {
+					forSale: (listing.owner as any).forSaleCount ?? 0,
+					forRent: (listing.owner as any).forRentCount ?? 0
+				}
+			},
 			expiresAt: null,
 			updatedAt: null
+		}
+	}
+
+	async getBahRates(dto: GetBAHRatesDto) {
+		const year = new Date().getFullYear()
+
+		const raw = String(dto.search ?? '').trim()
+		const q = raw.replace(/\s+/g, ' ')
+		const qUpper = q.toUpperCase()
+
+		// -------- helpers --------
+
+		const normalizeState = (s: string) => s.trim().toUpperCase()
+
+		const isZipCandidate = (s: string) => /^\d{5}(-\d{4})?$/.test(s.trim())
+		const toZip5 = (s: string) => (isZipCandidate(s) ? s.trim().slice(0, 5) : null)
+
+		// MHA коди типу AK400 (2 літери + 3 цифри). Якщо у вас зустрічаються інші формати — розширите regex.
+		const isMhaCode = (s: string) => /^[A-Z]{2}\d{3}$/.test(s.trim().toUpperCase())
+
+		function parseSearch(input: string): { zip5?: string; city?: string; state?: string; mhaCode?: string } {
+			const cleaned = input.trim()
+			if (!cleaned) return {}
+
+			// розіб'ємо по комі або по пробілах (як fallback)
+			const parts = cleaned
+				.split(',')
+				.map(p => p.trim())
+				.filter(Boolean)
+
+			// Якщо користувач ввів без ком — пробуємо грубий fallback
+			const partsFallback = cleaned
+				.split(/\s+/)
+				.map(p => p.trim())
+				.filter(Boolean)
+
+			const tokens = parts.length ? parts : partsFallback
+
+			let zip5: string | undefined
+			let state: string | undefined
+			let city: string | undefined
+			let mhaCode: string | undefined
+
+			// 1) знайдемо ZIP
+			for (const t of tokens) {
+				const z = toZip5(t)
+				if (z) {
+					zip5 = z
+					break
+				}
+			}
+
+			// 2) знайдемо MHA code (може бути введений як перший токен)
+			for (const t of tokens) {
+				const tt = t.toUpperCase()
+				if (isMhaCode(tt)) {
+					mhaCode = tt
+					break
+				}
+			}
+
+			// 3) state: якщо є токен з 2 букв (US state code) — беремо його
+			for (const t of tokens) {
+				const tt = t.trim()
+				if (/^[A-Za-z]{2}$/.test(tt)) {
+					state = normalizeState(tt)
+					break
+				}
+			}
+
+			// 4) city: якщо є коми — типово "ZIP, City, ST" або "City, ST"
+			//    візьмемо перший сегмент, який не ZIP і не state і не mhaCode
+			const skipSet = new Set<string>()
+			if (zip5) skipSet.add(zip5)
+			if (state) skipSet.add(state)
+			if (mhaCode) skipSet.add(mhaCode)
+
+			// якщо було з комами, то city зазвичай окремим chunk'ом
+			if (parts.length) {
+				// candidates: усі chunk-и окрім zip/state/mha
+				const candidates = parts.filter(p => {
+					const pu = p.toUpperCase()
+					const z = toZip5(p)
+					if (z) return false
+					if (state && pu === state) return false
+					if (mhaCode && pu === mhaCode) return false
+					return true
+				})
+
+				// якщо "39530, Biloxi, MS" -> candidates[0] = Biloxi
+				// якщо "Biloxi, MS" -> candidates[0] = Biloxi
+				if (candidates.length) city = candidates[0].trim()
+			} else {
+				// fallback без ком: якщо останній токен state, то решта може бути city
+				// приклад: "Biloxi MS" -> city="Biloxi"
+				if (state && tokens.length >= 2) {
+					const withoutState = tokens.filter(t => normalizeState(t) !== state)
+					const withoutZip = withoutState.filter(t => !toZip5(t))
+					const withoutMha = withoutZip.filter(t => !isMhaCode(t))
+					if (withoutMha.length) city = withoutMha.join(' ').trim()
+				}
+			}
+
+			return { zip5, city, state, mhaCode }
+		}
+
+		const parsed = parseSearch(q)
+
+		// -------- resolve MHA codes --------
+
+		let mhaCodes: string[] = []
+
+		// A) якщо є ZIP — це найточніше
+		if (parsed.zip5) {
+			const mappings = await this.bahZipMappingRepository.find({
+				where: { zip: parsed.zip5 },
+				take: 20
+			})
+
+			mhaCodes = Array.from(
+				new Set(
+					mappings
+						.map(m =>
+							String(m.mhaCode ?? '')
+								.toUpperCase()
+								.trim()
+						)
+						.filter(Boolean)
+				)
+			).slice(0, 10)
+		}
+
+		// B) якщо немає ZIP або ZIP не дав результат, але є city/state — шукаємо по місту (та штату якщо є)
+		if (mhaCodes.length === 0 && parsed.city) {
+			const qb = this.bahZipMappingRepository.createQueryBuilder('m').where('m.city ILIKE :city', {
+				city: `%${parsed.city}%`
+			})
+
+			if (parsed.state) {
+				qb.andWhere('m.state = :state', { state: parsed.state })
+			}
+
+			// fallback: mhaName ILIKE по повному search (включно зі штатом), якщо користувач вводить “KETCHIKAN, AK”
+			qb.orWhere('m.mhaName ILIKE :mhaName', { mhaName: `%${q}%` })
+
+			const mappings = await qb.limit(50).getMany()
+
+			mhaCodes = Array.from(
+				new Set(
+					mappings
+						.map(m =>
+							String(m.mhaCode ?? '')
+								.toUpperCase()
+								.trim()
+						)
+						.filter(Boolean)
+				)
+			).slice(0, 10)
+		}
+
+		// C) якщо користувач явно ввів MHA code — беремо його (якщо ще не маємо mhaCodes)
+		if (mhaCodes.length === 0 && parsed.mhaCode) {
+			mhaCodes = [parsed.mhaCode]
+		}
+
+		// D) fallback: пробуємо знайти MHA через bah_rates (exact mha або locationName ILIKE)
+		if (mhaCodes.length === 0) {
+			const foundMhaCodesFromRates = await this.bahRateRepository
+				.createQueryBuilder('r')
+				.select('DISTINCT r.mhaCode', 'mhaCode')
+				.where('r.year = :year', { year })
+				.andWhere('r.paygrade = :paygrade', { paygrade: dto.paygrade })
+				.andWhere('(r.mhaCode = :mhaExact OR r.locationName ILIKE :loc)', {
+					mhaExact: qUpper,
+					loc: `%${q}%`
+				})
+				.limit(10)
+				.getRawMany<{ mhaCode: string }>()
+
+			mhaCodes = foundMhaCodesFromRates.map(x => String(x.mhaCode).toUpperCase().trim()).filter(Boolean)
+		}
+
+		if (mhaCodes.length === 0) {
+			return {
+				search: raw,
+				paygrade: dto.paygrade,
+				resolved: parsed,
+				resolvedMhaCodes: [],
+				results: []
+			}
+		}
+
+		const rates = await this.bahRateRepository
+			.createQueryBuilder('r')
+			.where('r.year = :year', { year })
+			.andWhere('r.paygrade = :paygrade', { paygrade: dto.paygrade })
+			.andWhere('r.mhaCode IN (:...mhaCodes)', { mhaCodes })
+			.andWhere('r.withDependents IN (:...deps)', { deps: [true, false] })
+			.orderBy('r.mhaCode', 'ASC')
+			.addOrderBy('r.withDependents', 'DESC')
+			.getMany()
+
+		return {
+			search: raw,
+			paygrade: dto.paygrade,
+			resolved: parsed,
+			resolvedMhaCodes: mhaCodes,
+			results: rates.map(r => ({
+				year: r.year,
+				mhaCode: r.mhaCode,
+				locationName: r.locationName,
+				paygrade: r.paygrade,
+				withDependents: r.withDependents,
+				monthlyAmount: Number(r.monthlyAmount)
+			}))
 		}
 	}
 }

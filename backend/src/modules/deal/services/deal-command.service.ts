@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+	BadRequestException,
+	ConflictException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
 import { DataSource, EntityManager, Not, Repository } from 'typeorm'
@@ -12,6 +18,7 @@ import { IUploadedFile, IUploadedImage } from '../../../interfaces/IUploadedFile
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { DailyMetric } from '../../metrics/entities/Metrics.entity'
 import { MetricsSystemService } from '../../metrics/services/metrics-system.service'
 import { Resource } from '../../resource/entities/Resource.entity'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
@@ -32,10 +39,10 @@ import { DealImage } from '../entities/DealImage.entity'
 import { DealRelated } from '../entities/DealRelated.entity'
 import { DealSection } from '../entities/DealSection.entity'
 import { DealSectionAttachment } from '../entities/DealSectionAttachment.entity'
+import { DealSectionImages } from '../entities/DealSectionImages.entity'
 import { DealTag } from '../entities/DealTag.entity'
 
 import { DealQueryService } from './deal-query.service'
-import { DailyMetric } from '../../metrics/entities/Metrics.entity'
 
 @Injectable()
 export class DealCommandService {
@@ -46,6 +53,8 @@ export class DealCommandService {
 		private readonly dealSectionRepository: Repository<DealSection>,
 		@InjectRepository(DealRelated)
 		private readonly dealRelatedRepository: Repository<DealRelated>,
+		@InjectRepository(DealSectionImages)
+		private readonly dealSectionImagesRepository: Repository<DealSectionImages>,
 		private readonly dataSource: DataSource,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly scheduleQueueService: ScheduleQueueService,
@@ -58,6 +67,14 @@ export class DealCommandService {
 		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
 			filename: file.filename,
 			path: 'deals/heroes/' + dealId
+		})
+		return { key, url, width: file.width, height: file.height }
+	}
+
+	private async saveSectionImage(file: IMultipartFile, dealId: number): Promise<IUploadedImage> {
+		const { url, key } = await this.s3StorageService.uploadPublic(file.buffer, file.mimetype, false, {
+			filename: file.filename,
+			path: 'deals/section_image/' + dealId
 		})
 		return { key, url, width: file.width, height: file.height }
 	}
@@ -284,21 +301,26 @@ export class DealCommandService {
 		if (!exists) throw new NotFoundException('Deal not found.')
 
 		const errorReqFields: string[] = []
-		if (!exists.dealType && !dto.dealType) errorReqFields.push('Deal type required.')
-		if (!exists.originalPrice && !dto.originalPrice) errorReqFields.push('Original price required.')
-		if (!exists.yourPrice && !dto.yourPrice) errorReqFields.push('Your price required.')
-		if (!exists.providerDisplayName && !dto.providerDisplayName) errorReqFields.push('Provider display name required.')
-		if (dto.ongoingOffer !== true) {
-			if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
-				if (!dto.validFrom && !exists.validFrom) {
-					errorReqFields.push('Valid from is required when Ongoing offer is false.')
+		if (exists.offerEnabled) {
+			const originalPrice = dto.originalPrice ?? exists.originalPrice
+			const yourPrice = dto.yourPrice ?? exists.yourPrice
+
+			if (!exists.dealType && !dto.dealType) errorReqFields.push('Deal type required.')
+			if (originalPrice === null || originalPrice === undefined) errorReqFields.push('Original price required.')
+			if (yourPrice === null || yourPrice === undefined) errorReqFields.push('Your price required.')
+			if (!exists.providerDisplayName && !dto.providerDisplayName) errorReqFields.push('Provider display name required.')
+			if (dto.ongoingOffer !== true) {
+				if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
+					if (!dto.validFrom && !exists.validFrom) {
+						errorReqFields.push('Valid from is required when Ongoing offer is false.')
+					}
 				}
 			}
-		}
-		if (dto.ongoingOffer !== true) {
-			if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
-				if (!dto.validUntil && !exists.validUntil) {
-					errorReqFields.push('Valid until is required when Ongoing offer is false.')
+			if (dto.ongoingOffer !== true) {
+				if (dto.ongoingOffer === false || exists.ongoingOffer === false) {
+					if (!dto.validUntil && !exists.validUntil) {
+						errorReqFields.push('Valid until is required when Ongoing offer is false.')
+					}
 				}
 			}
 		}
@@ -412,7 +434,7 @@ export class DealCommandService {
 
 			return await manager.getRepository(DealSection).save({
 				id: sectionId,
-				title: dto.title || 'Section',
+				title: dto.title,
 				bodyMd: dto.bodyMd,
 				enabled: dto.enabled,
 				attachments: [
@@ -444,6 +466,46 @@ export class DealCommandService {
 					})
 				}
 			}
+		}
+	}
+
+	async uploadContentSectionImage(dealId: number, file: IMultipartFile) {
+		const exists = await this.dealSectionRepository.exists({
+			where: { id: dealId }
+		})
+		if (!exists) throw new NotFoundException('Deal section not found.')
+
+		const uploadedImage = await this.saveSectionImage(file, dealId)
+
+		const newSectionImage = await this.dealSectionImagesRepository.save({
+			dealSection: { id: dealId },
+			url: uploadedImage.url,
+			originalKey: uploadedImage.key,
+			width: uploadedImage.width || 0,
+			height: uploadedImage.height || 0
+		})
+
+		const updated = await this.dealSectionImagesRepository.findOne({
+			where: { id: newSectionImage.id }
+		})
+		if (!updated) throw new InternalServerErrorException('Unable to load image.')
+
+		return updated
+	}
+
+	async deleteContentSectionImage(imageId: number) {
+		const image = await this.dealSectionImagesRepository.findOne({
+			where: { id: imageId },
+			select: {
+				id: true,
+				originalKey: true
+			}
+		})
+		if (!image) throw new NotFoundException('Content section image not found.')
+
+		await this.dealSectionImagesRepository.delete(imageId)
+		if (image.originalKey) {
+			await this.s3StorageService.delete(image.originalKey)
 		}
 	}
 
@@ -617,10 +679,12 @@ export class DealCommandService {
 			if (!exists.slug) errorReqFields.push('Slug required.')
 			if (!exists.categories.length) errorReqFields.push('Categories required.')
 			if (!exists.outboundUrl) errorReqFields.push('Outbound URL required.')
-			if (!exists.dealType) errorReqFields.push('Deal type required.')
-			if (!exists.originalPrice) errorReqFields.push('Original price required.')
-			if (!exists.yourPrice) errorReqFields.push('Your price required.')
-			if (!exists.providerDisplayName) errorReqFields.push('Provider display name required.')
+			if (exists.offerEnabled) {
+				if (!exists.dealType) errorReqFields.push('Deal type required.')
+				if (exists.originalPrice === null) errorReqFields.push('Original price required.')
+				if (exists.yourPrice === null) errorReqFields.push('Your price required.')
+				if (!exists.providerDisplayName) errorReqFields.push('Provider display name required.')
+			}
 
 			if (errorReqFields.length > 0) {
 				throw new BadRequestException(errorReqFields)

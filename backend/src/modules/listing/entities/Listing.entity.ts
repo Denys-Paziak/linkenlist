@@ -220,6 +220,9 @@ export class Listing {
 	@Column({ type: 'enum', enum: EListingStatus, default: EListingStatus.DRAFT })
 	status: EListingStatus
 
+	@Column({ type: 'int', default: 0, name: 'total_views' })
+	totalViews: number
+
 	@Column({ name: 'published_at', type: 'timestamptz', nullable: true })
 	publishedAt?: Date | null
 

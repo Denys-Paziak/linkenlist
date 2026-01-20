@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler'
 import type { FastifyRequest } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
+import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { ParamSlug } from '../../../dtos/ParamSlug.dto'
 import { ERoleName } from '../../../interfaces/ERoleName'
@@ -10,7 +11,6 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { GetAllResourcesDto } from '../dtos/GetAllResources.dto'
 import { ResourceCommandService } from '../services/resource-command.service'
 import { ResourceQueryService } from '../services/resource-query.service'
-import { OptionalAuthorization } from '../../../decorators/optional-auth.decorator'
 import { ResourceSystemService } from '../services/resource-system.service'
 
 @Controller('resources')
@@ -41,7 +41,7 @@ export class ResourceController {
 
 	@OptionalAuthorization()
 	@Patch(':id/add-view')
-	async addView(@Req() request: FastifyRequest,@Param() params: ParamId) {
+	async addView(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const dealId = Number(params.id)
 
 		const userId = (request as any).user?.id as number | undefined
@@ -50,7 +50,7 @@ export class ResourceController {
 		const counted = await this.resourceSystemService.markViewedOnce({
 			dealId,
 			viewerKey,
-			ttlMs: 60 * 60 * 1000
+			ttlMs: 10 * 60 * 60 * 1000
 		})
 
 		if (counted) {

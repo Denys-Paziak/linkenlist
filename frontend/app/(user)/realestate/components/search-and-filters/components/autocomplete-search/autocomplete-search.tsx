@@ -142,7 +142,7 @@ export function AutocompleteSearch() {
 
   return (
     <div className="flex items-center gap-2 max-md:relative max-md:flex-1">
-      <div ref={containerRef} className={`relative w-80 max-md:flex-1`}>
+      <div ref={containerRef} className={`relative md:w-80 max-md:flex-1`}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 hidden md:block" />
           <input

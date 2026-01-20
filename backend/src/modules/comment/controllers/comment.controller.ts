@@ -46,7 +46,7 @@ export class CommentController {
 	}
 
 	@Throttle({ default: { limit: 10, ttl: 60 * 1000 } })
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Post()
 	async postComment(@Req() request: FastifyRequest, @Body() dto: PostCommentDto) {
 		const userFromToken = request.user as ITokenUser
@@ -66,7 +66,7 @@ export class CommentController {
 		}
 	}
 
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Patch(':id/like')
 	async likeComment(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const userFromToken = request.user as ITokenUser
@@ -78,7 +78,7 @@ export class CommentController {
 		}
 	}
 
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Patch(':id/dislike')
 	async dislikeComment(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const userFromToken = request.user as ITokenUser

@@ -79,6 +79,10 @@ export class FavoriteService {
 		})
 	}
 
+	async countFavoriteListings(listingId: number) {
+		return await this.favoriteListingRepository.count({ where: { listing: { id: listingId } } })
+	}
+
 	async deleteFavoriteListings(userId: number, listingId: number) {
 		await this.favoriteListingRepository.delete({
 			listing: { id: listingId },

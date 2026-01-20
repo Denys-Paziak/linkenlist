@@ -1,5 +1,6 @@
 import { commands, TextState, TextAreaTextApi } from "@uiw/react-md-editor";
 import {
+  SmileIcon,
   ExternalLink,
   Tag,
   Users,
@@ -106,7 +107,7 @@ export const insertIconCommand = commands.group([], {
   groupName: "insertIcon",
   buttonProps: { title: "Insert icon", "aria-label": "Insert icon" },
 
-  icon: <Image className="w-3 h-3" strokeWidth={3} />,
+  icon: <SmileIcon className="w-3 h-3" strokeWidth={3} />,
 
   children: ({ close, textApi }) => {
     return (

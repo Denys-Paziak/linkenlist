@@ -41,7 +41,7 @@ export function OfferForm() {
   const { id: dealId } = useParams();
 
   const { data, error, isValidating, mutate } = useSWR<IDeal>(
-    dealId ? `/admin/deals/${dealId}` : null
+    dealId ? `/admin/deals/${dealId}` : null,
   );
 
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
@@ -54,8 +54,8 @@ export function OfferForm() {
     values: data
       ? {
           dealType: data?.dealType || "",
-          originalPrice: data?.originalPrice || "",
-          yourPrice: data?.yourPrice || "",
+          originalPrice: data?.originalPrice === null ? "" : data?.originalPrice,
+          yourPrice: data?.yourPrice === null ? "" : data?.yourPrice,
           cadencePrice: data?.cadencePrice || cadenceOptions[0],
           promoCode: data?.promoCode || "",
           whereToEnterCode: data?.whereToEnterCode || "",
@@ -99,9 +99,31 @@ export function OfferForm() {
       return;
     }
 
+    const values = form.getValues();
+
+    if (data?.offerEnabled) {
+      if (values.originalPrice === "") {
+        form.setError("originalPrice", {
+          message: "Original price is required",
+        });
+      }
+      if (values.yourPrice === "") {
+        form.setError("yourPrice", {
+          message: "Your price is required",
+        });
+      }
+      if (!values.providerDisplayName) {
+        form.setError("providerDisplayName", {
+          message: "Provider display name is required",
+        });
+      }
+      if (values.originalPrice === "" || values.yourPrice === "" || !values.providerDisplayName) {
+        return
+      }
+    }
+
     setStatus("loading");
     try {
-      const values = form.getValues();
       const dirty = pickDirty(values, form.formState.dirtyFields);
 
       await fetcherAdmin(`/admin/deals/${dealId}/offer-details`, {
@@ -112,12 +134,18 @@ export function OfferForm() {
         },
         body: JSON.stringify({
           ...dirty,
-          validFrom: !dirty.ongoingOffer ? dirty.validFrom : undefined,
-          validUntil: !dirty.ongoingOffer ? dirty.validUntil : undefined,
-          originalPrice: dirty.originalPrice
-            ? Number(dirty.originalPrice)
-            : undefined,
-          yourPrice: dirty.yourPrice ? Number(dirty.yourPrice) : undefined,
+          originalPrice:
+            dirty.originalPrice === ""
+              ? null
+              : dirty.yourPrice
+                ? Number(dirty.originalPrice)
+                : undefined,
+          yourPrice:
+            dirty.yourPrice === ""
+              ? null
+              : dirty.yourPrice
+                ? Number(dirty.yourPrice)
+                : undefined,
         }),
       });
 
@@ -169,7 +197,9 @@ export function OfferForm() {
   }, [status, statusOfferEnabled]);
 
   const loading = isValidating || status === "loading";
-  const loadError = error ? (error as any)?.message ?? "Failed to load" : null;
+  const loadError = error
+    ? ((error as any)?.message ?? "Failed to load")
+    : null;
 
   return (
     <form onSubmit={(e) => e.preventDefault()} noValidate>
@@ -196,7 +226,7 @@ export function OfferForm() {
             </div>
           </CardTitle>
         </CardHeader>
-        <fieldset disabled={loading || !data || !data.offerEnabled}>
+        <fieldset disabled={loading || !data}>
           <CardContent className="space-y-6">
             {loadError ? <ErrorAlert message={loadError} /> : null}
             {formError ? <ErrorAlert message={formError} /> : null}
@@ -221,7 +251,7 @@ export function OfferForm() {
                       className={cn(
                         form.formState.errors.dealType
                           ? "border-destructive bg-background focus:border-destructive"
-                          : "bg-background border border-input"
+                          : "bg-background border border-input",
                       )}
                     >
                       <SelectValue placeholder="Select a category" />
@@ -246,7 +276,7 @@ export function OfferForm() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Original Price */}
               <Input
-                label="Original Price"
+                label="Original Price *"
                 placeholder="99.99"
                 type="number"
                 {...form.register("originalPrice")}
@@ -256,7 +286,7 @@ export function OfferForm() {
 
               {/* Your Price */}
               <Input
-                label="Your Price"
+                label="Your Price *"
                 placeholder="49.99"
                 type="number"
                 {...form.register("yourPrice")}
@@ -277,7 +307,7 @@ export function OfferForm() {
                         className={cn(
                           form.formState.errors.cadencePrice
                             ? "border-destructive bg-background focus:border-destructive"
-                            : "bg-background border border-input"
+                            : "bg-background border border-input",
                         )}
                       >
                         <SelectValue />
@@ -373,7 +403,7 @@ export function OfferForm() {
 
             {/* Provider Display Name*/}
             <Input
-              label=" Provider Display Name"
+              label=" Provider Display Name *"
               {...form.register("providerDisplayName")}
               placeholder="Leave blank to use merchant name"
               error={!!form.formState.errors.providerDisplayName}

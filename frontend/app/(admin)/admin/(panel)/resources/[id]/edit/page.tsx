@@ -35,7 +35,7 @@ export default function ResourceEditorPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <SafeLink href={"/admin/deals"}>
+          <SafeLink href={"/admin/resources"}>
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Resources

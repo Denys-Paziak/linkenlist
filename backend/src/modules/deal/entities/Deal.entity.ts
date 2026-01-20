@@ -71,7 +71,7 @@ export class Deal {
 	offerEnabled: boolean
 
 	@Column({ type: 'enum', enum: EDealType, nullable: true, name: 'deal_type' })
-	dealType?: EDealType | null
+	dealType: EDealType | null
 
 	@Column({
 		type: 'numeric',
@@ -84,7 +84,7 @@ export class Deal {
 			from: (value: string | null) => (value !== null ? parseFloat(value) : null)
 		}
 	})
-	originalPrice?: number | null
+	originalPrice: number | null
 
 	@Column({
 		type: 'numeric',
@@ -97,7 +97,7 @@ export class Deal {
 			from: (value: string | null) => (value !== null ? parseFloat(value) : null)
 		}
 	})
-	yourPrice?: number | null
+	yourPrice: number | null
 
 	@Column({ type: 'enum', enum: EDealCadencePrice, default: EDealCadencePrice.ONE_TIME, name: 'cadence_price' })
 	cadencePrice: EDealCadencePrice
@@ -158,10 +158,10 @@ export class Deal {
 	publishAt?: Date | null
 
 	@Column({ type: 'timestamptz', nullable: true, name: 'expire_at' })
-	expireAt?: Date | null
+	expireAt: Date | null
 
 	@Column({ type: 'timestamptz', nullable: true, name: 'last_published_at' })
-	lastPublishedAt?: Date | null
+	lastPublishedAt: Date | null
 
 	// Коментарі вмикаються глобально + локально
 	@Column({ type: 'boolean', default: true, name: 'comments_enabled' })
@@ -169,7 +169,7 @@ export class Deal {
 
 	@OneToOne(() => Resource, { cascade: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'featured_resource_id' })
-	featuredResource?: Resource | null
+	featuredResource: Resource | null
 
 	@Column({ type: 'int', default: 0, name: 'total_helpful' })
 	totalHelpful: number

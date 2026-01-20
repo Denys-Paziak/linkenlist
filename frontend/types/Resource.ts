@@ -80,6 +80,7 @@ export interface IResourceSection {
   bodyMd: string | null;
 
   attachments: IResourceSectionAttachment[];
+  images: IResourceImage[];
 }
 
 export interface IResourceRelated {

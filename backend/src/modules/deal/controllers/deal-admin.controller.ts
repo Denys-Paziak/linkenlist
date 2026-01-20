@@ -23,6 +23,7 @@ import { SwitchRelatedMode } from '../dtos/SwitchRelatedMode.dto'
 import { SwitchShowOfferDetailsDto } from '../dtos/SwitchShowOfferDetails.dto'
 import { DealCommandService } from '../services/deal-command.service'
 import { DealQueryService } from '../services/deal-query.service'
+import { ParamsContentSectionImage } from '../dtos/ParamsContentSectionImage.dto'
 
 const IMAGE_MAX_MB = 5
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -146,6 +147,28 @@ export class DealAdminController {
 		return {
 			ok: true
 		}
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Post(':id/content-section/:sectionId/text-image')
+	@UseInterceptors(
+		MultipartInterceptor({
+			globalFileSizeLimit: IMAGE_MAX_BYTES,
+			maxFiles: 1,
+			validators: [new MultipartOptions(IMAGE_MAX_BYTES, ACCEPT_IMAGES, true, ACCEPT_IMAGES)]
+		})
+	)
+	async uploadContentSectionImage(@Files() files: Record<string, IMultipartFile[]>, @Param() params: ParamsContentSection) {
+		const file = Object.values(files)?.[0]?.[0]
+
+		return await this.dealCommandService.uploadContentSectionImage(params.sectionId, file)
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Delete(':id/content-section/:sectionId/text-image/:imageId')
+	async deleteContentSectionImage(@Param() params: ParamsContentSectionImage) {
+		await this.dealCommandService.deleteContentSectionImage(params.imageId)
+		return { ok: true }
 	}
 
 	@Authorization(ERoleName.ADMIN)

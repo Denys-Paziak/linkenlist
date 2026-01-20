@@ -6,6 +6,7 @@ import { PropertyHeader } from "./components/property-header";
 import { PropertyImage } from "./components/property-image/property-image";
 import { IRealestate } from "../../../../types/Realestate";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 export const dynamicParams = true;
 
@@ -40,7 +41,7 @@ export async function generateMetadata({
 
   const url = new URL(
     `/realestate/${realestate.slug}`,
-    process.env.NEXT_PUBLIC_SITE_URL
+    process.env.NEXT_PUBLIC_SITE_URL,
   ).toString();
   const isIndexable = true;
 
@@ -106,6 +107,23 @@ export default async function RealestateDetailPage({
 
   return (
     <div className="relative">
+      <div className="bg-primary text-white p-3">
+        <Link
+          className="text-white hover:text-white/80 transition-colors cursor-pointer"
+          href={"/"}
+        >
+          Home
+        </Link>
+        <span className="inline-block px-3">{" > "}</span>
+        <Link
+          className="text-white hover:text-white/80 transition-colors cursor-pointer"
+          href={"./"}
+        >
+          Real Estate
+        </Link>
+        <span className="inline-block px-3">{" > "}</span>
+        <span className="text-white">{listing.title}</span>
+      </div>
       <div className="flex flex-col w-full max-w-6xl mx-auto bg-white rounded-sm ">
         {/* Scrollable Content */}
         <div className="h-full overflow-y-auto">
@@ -128,7 +146,7 @@ export default async function RealestateDetailPage({
                   <PropertyFacts listing={listing} />
                 </div>
 
-                {/* <PropertyActionSidebar listing={listing} /> */}
+                <PropertyActionSidebar listing={listing} />
               </div>
             </div>
 

@@ -4,6 +4,60 @@ import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { IRealestate } from "../../../../../../../../types/Realestate";
 
+const propertyTaxesOptions: Record<string, number> = {
+  Alabama: 0.38,
+  Alaska: 0.02,
+  Arizona: 0.53,
+  Arkansas: 0.61,
+  California: 0.68,
+  Colorado: 0.5,
+  Connecticut: 1.92,
+  Delaware: 0.53,
+  Florida: 0.83,
+  Georgia: 0.87,
+  Hawaii: 0.32,
+  Idaho: 0.53,
+  Illinois: 2.07,
+  Indiana: 0.85,
+  Iowa: 1.43,
+  Kansas: 1.28,
+  Kentucky: 0.78,
+  Louisiana: 0.51,
+  Maine: 1.2,
+  Maryland: 1.3,
+  Massachusetts: 1.3,
+  Michigan: 1.31,
+  Minnesota: 1.3,
+  Mississippi: 0.7,
+  Missouri: 1.1,
+  Montana: 1.1,
+  Nebraska: 1.54,
+  Nevada: 0.49,
+  "New Hampshire": 1.77,
+  "New Jersey": 2.23,
+  "New Mexico": 1.0,
+  "New York": 1.5,
+  "North Carolina": 0.85,
+  "North Dakota": 1.1,
+  Ohio: 1.52,
+  Oklahoma: 0.65,
+  Oregon: 0.92,
+  Pennsylvania: 1.19,
+  "Rhode Island": 1.37,
+  "South Carolina": 0.51,
+  "South Dakota": 1.11,
+  Tennessee: 0.55,
+  Texas: 1.58,
+  Utah: 0.53,
+  Vermont: 1.71,
+  Virginia: 0.81,
+  Washington: 0.78,
+  "West Virginia": 0.47,
+  Wisconsin: 1.29,
+  Wyoming: 0.48,
+  "District of Columbia": 0.61,
+};
+
 export function MortgageCalculatorDialog({
   listing,
 }: {
@@ -11,12 +65,12 @@ export function MortgageCalculatorDialog({
 }) {
   const [homePrice, setHomePrice] = useState(0);
   const [downPayment, setDownPayment] = useState(0);
-  const [interestRate, setInterestRate] = useState(7.5);
+  const [interestRate, setInterestRate] = useState(6);
   const [loanTerm, setLoanTerm] = useState(30);
   const [propertyTaxes, setPropertyTaxes] = useState(0);
-  const [homeInsurance, setHomeInsurance] = useState(0);
+  const [homeInsurance, setHomeInsurance] = useState(220);
   const [hoaDues, setHoaDues] = useState(0);
-  const [utilities, setUtilities] = useState(0);
+  const [utilities, setUtilities] = useState(240);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
 
   // Initialize with listing price if available
@@ -24,6 +78,14 @@ export function MortgageCalculatorDialog({
     if (listing?.listPrice) {
       setHomePrice(listing.listPrice);
       setDownPayment(listing.listPrice * 0.2);
+      setPropertyTaxes(
+        propertyTaxesOptions[listing.state]
+          ? (listing.listPrice * propertyTaxesOptions[listing.state]) / 1200
+          : 0,
+      );
+    }
+    if (listing.hoaFee) {
+      setHoaDues(listing.hoaFee);
     }
   }, [listing]);
 
@@ -94,7 +156,7 @@ export function MortgageCalculatorDialog({
                 .slice(0, index)
                 .reduce(
                   (sum, prev) => sum + (prev.amount / total) * circumference,
-                  0
+                  0,
                 );
 
               return (
@@ -327,7 +389,7 @@ export function MortgageCalculatorDialog({
           <p>
             <strong>Total Interest:</strong> $
             {Math.round(
-              principalAndInterest * loanTerm * 12 - (homePrice - downPayment)
+              principalAndInterest * loanTerm * 12 - (homePrice - downPayment),
             ).toLocaleString()}
           </p>
         </div>

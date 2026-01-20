@@ -3,7 +3,12 @@ import { IUser } from "./User";
 export interface IOwnerRealestate {
   id: number;
   package: EPackageType;
-  owner: IUser;
+  owner: Pick<IUser, "id" | "avatar" | "createdAt"> & {
+    listings: {
+      forRent: number;
+      forSale: number;
+    };
+  };
   firstName?: string | null;
   lastName?: string | null;
   company?: string | null;
@@ -104,6 +109,8 @@ export interface IOwnerRealestate {
 
   // Статуси/дати
   status: EListingStatus;
+
+  totalViews: number;
 
   publishedAt?: string | null;
 

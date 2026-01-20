@@ -54,8 +54,12 @@ export function PublishingForm() {
     values: data
       ? {
           status: data.status || resourceStatuses[0],
-          schedulePublish: isoToDatetimeLocal(data.publishAt) || "",
-          scheduleExpire: isoToDatetimeLocal(data.expireAt) || "",
+          schedulePublish: data?.publishAt
+            ? new Date(data.publishAt).toISOString().split("T")[0]
+            : "",
+          scheduleExpire: data?.expireAt
+            ? new Date(data.expireAt).toISOString().split("T")[0]
+            : "",
           showComments: data.commentsEnabled ?? true,
         }
       : {

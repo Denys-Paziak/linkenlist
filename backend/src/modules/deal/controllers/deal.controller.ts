@@ -49,7 +49,7 @@ export class DealController {
 		const counted = await this.dealSystemService.markViewedOnce({
 			dealId,
 			viewerKey,
-			ttlMs: 60 * 60 * 1000
+			ttlMs: 10 * 60 * 60 * 1000
 		})
 
 		if (counted) {

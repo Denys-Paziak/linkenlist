@@ -270,6 +270,7 @@ export class DealQueryService {
 
 			.leftJoinAndSelect('deal.sections', 'section')
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
+			.leftJoinAndSelect('section.images', 'sectionImages')
 
 			.leftJoinAndSelect('deal.relatedManual', 'related')
 			.leftJoinAndSelect('related.target', 'relatedTarget')

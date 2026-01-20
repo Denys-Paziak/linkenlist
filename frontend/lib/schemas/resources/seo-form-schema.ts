@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const seoFormSchema = z.object({
-  image: z.string().min(1, "Image is required"),
+  image: z.string(),
 
   seoMetaTitle: z
     .string()

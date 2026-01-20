@@ -13,6 +13,7 @@ import { DealImage } from './entities/DealImage.entity'
 import { DealRelated } from './entities/DealRelated.entity'
 import { DealSection } from './entities/DealSection.entity'
 import { DealSectionAttachment } from './entities/DealSectionAttachment.entity'
+import { DealSectionImages } from './entities/DealSectionImages.entity'
 import { DealTag } from './entities/DealTag.entity'
 import { DealCommandService } from './services/deal-command.service'
 import { DealCronService } from './services/deal-cron.service'
@@ -21,7 +22,7 @@ import { DealSystemService } from './services/deal-system.service'
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Deal, DealRelated, DealSection, DealSectionAttachment, DealTag, DealImage]),
+		TypeOrmModule.forFeature([Deal, DealRelated, DealSection, DealSectionAttachment, DealTag, DealImage, DealSectionImages]),
 		S3StorageModule,
 		ImageQueueModule,
 		ScheduleQueueModule,

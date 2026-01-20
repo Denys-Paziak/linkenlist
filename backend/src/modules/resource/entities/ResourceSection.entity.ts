@@ -12,6 +12,7 @@ import {
 
 import { Resource } from './Resource.entity'
 import { ResourceSectionAttachment } from './ResourceSectionAttachment.entity'
+import { ResourceSectionImages } from './ResourceSectionImages.entity'
 
 @Entity('resource_sections')
 export class ResourceSection {
@@ -29,6 +30,14 @@ export class ResourceSection {
 		onDelete: 'SET NULL'
 	})
 	attachments?: ResourceSectionAttachment[]
+
+	@OneToMany(() => ResourceSectionImages, s => s.resourceSection, {
+		cascade: true,
+		eager: true,
+		nullable: true,
+		onDelete: 'SET NULL'
+	})
+	images?: ResourceSectionImages[]
 
 	@Index()
 	@Column({ type: 'int' })

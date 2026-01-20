@@ -95,6 +95,11 @@ export class FavoriteController {
 		}
 	}
 
+	@Get('listings/:id/count')
+	async getCountFavoriteListing(@Param() params: ParamId) {
+		return await this.favoriteService.countFavoriteListings(params.id)
+	}
+
 	@Authorization(ERoleName.USER)
 	@Delete('listings/:id')
 	async deleteFavoriteListings(@Req() request: FastifyRequest, @Param() params: ParamId) {

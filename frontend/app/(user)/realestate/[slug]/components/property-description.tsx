@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { IRealestate } from "../../../../../types/Realestate";
 import { formatDateDiff } from "../../../../../lib/utils";
+import useSWR from "swr";
 
 export function PropertyDescription({ listing }: { listing: IRealestate }) {
+  const { data: favoriteCount } = useSWR<number>(`/favorite/listings/${listing.id}/count`);
+
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   const isLongDescription = listing.description.length > 450;
@@ -103,10 +106,10 @@ export function PropertyDescription({ listing }: { listing: IRealestate }) {
           </span>
           <span className="mx-2">on LinkEnlist</span>
           <span className="mx-2 text-gray-400">|</span>
-          <span className="font-semibold text-gray-900">254</span>
+          <span className="font-semibold text-gray-900">{listing.totalViews}</span>
           <span className="mx-2">views</span>
           <span className="mx-2 text-gray-400">|</span>
-          <span className="font-semibold text-gray-900">10</span>
+          <span className="font-semibold text-gray-900">{favoriteCount}</span>
           <span className="mx-2">saves</span>
         </div>
       </div>

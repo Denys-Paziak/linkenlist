@@ -2,64 +2,55 @@
 
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  ButtonSubmit,
+  ButtonSubmitStatus,
+} from "../../../../../../../components/ui/button-submit";
+import { fetcherUser } from "../../../../../../../lib/fetcher";
+import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
+
+const paygrades = [
+  {
+    category: "Enlisted",
+    options: ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"],
+  },
+  {
+    category: "Warrant Officer",
+    options: ["W-1", "W-2", "W-3", "W-4", "W-5"],
+  },
+  { category: "Officer (Prior Enlisted)", options: ["O-1E", "O-2E", "O-3E"] },
+  {
+    category: "Officer",
+    options: [
+      "O-1",
+      "O-2",
+      "O-3",
+      "O-4",
+      "O-5",
+      "O-6",
+      "O-7",
+      "O-8",
+      "O-9",
+      "O-10",
+    ],
+  },
+];
 
 export function BAHCalculator() {
-  const [expandedBAH, setExpandedBAH] = useState(false);
   const [selectedPaygrade, setSelectedPaygrade] = useState("E-1");
   const [dutyStation, setDutyStation] = useState("");
   const [calculatedBAH, setCalculatedBAH] = useState<{
     withDependents: number;
     withoutDependents: number;
+    search: string;
+    paygrade: string;
   } | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const calculateBAH = () => {
-    const mockRates: {
-      [key: string]: { withDependents: number; withoutDependents: number };
-    } = {
-      "E-1": { withDependents: 1200, withoutDependents: 1000 },
-      "E-2": { withDependents: 1300, withoutDependents: 1100 },
-      "E-3": { withDependents: 1400, withoutDependents: 1200 },
-      "E-4": { withDependents: 1500, withoutDependents: 1300 },
-      "E-5": { withDependents: 1600, withoutDependents: 1400 },
-      "E-6": { withDependents: 1700, withoutDependents: 1500 },
-      "E-7": { withDependents: 1800, withoutDependents: 1600 },
-      "E-8": { withDependents: 1900, withoutDependents: 1700 },
-      "E-9": { withDependents: 2000, withoutDependents: 1800 },
-      "O-1": { withDependents: 1800, withoutDependents: 1600 },
-      "O-1E": { withDependents: 1900, withoutDependents: 1700 },
-      "O-2": { withDependents: 2000, withoutDependents: 1800 },
-      "O-2E": { withDependents: 2100, withoutDependents: 1900 },
-      "O-3": { withDependents: 2200, withoutDependents: 2000 },
-      "O-3E": { withDependents: 2300, withoutDependents: 2100 },
-      "O-4": { withDependents: 2400, withoutDependents: 2200 },
-      "O-5": { withDependents: 2600, withoutDependents: 2400 },
-      "O-6": { withDependents: 2800, withoutDependents: 2600 },
-    };
-
-    if (dutyStation && selectedPaygrade) {
-      setCalculatedBAH(
-        mockRates[selectedPaygrade] || {
-          withDependents: 1500,
-          withoutDependents: 1300,
-        }
-      );
-    }
-  };
-
-  const paygrades = [
-    {
-      category: "Enlisted",
-      options: ["E-1", "E-2", "E-3", "E-4", "E-5", "E-6", "E-7", "E-8", "E-9"],
-    },
-    {
-      category: "Officer",
-      options: ["O-1", "O-2", "O-3", "O-4", "O-5", "O-6"],
-    },
-    { category: "Officer (Prior Enlisted)", options: ["O-1E", "O-2E", "O-3E"] },
-  ];
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,6 +68,45 @@ export function BAHCalculator() {
     };
   }, []);
 
+  const calculateBAH = async () => {
+    setFormError(null);
+
+    setStatus("loading");
+
+    try {
+      const data = await fetcherUser(
+        `/listings/bah-rates?search=${dutyStation}&paygrade=${selectedPaygrade}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (data.results.length === 0) {
+        setStatus("error");
+        setFormError("No BAH rates found for the provided location.");
+      } else {
+        setStatus("success");
+        setCalculatedBAH({
+          withDependents: data.results[0].monthlyAmount,
+          withoutDependents: data.results[1].monthlyAmount,
+          search: data.search,
+          paygrade: data.paygrade,
+        });
+      }
+    } catch (err: any) {
+      setStatus("error");
+      setFormError(err?.message ?? "Update failed");
+    }
+  };
+
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(() => setStatus("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
   return (
     <div className="mt-6 pt-6 border-t border-gray-200">
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -85,6 +115,7 @@ export function BAHCalculator() {
         </h3>
 
         <div className="space-y-4">
+          {formError ? <ErrorAlert message={formError} /> : null}
           <div className="flex gap-3 items-end">
             <div className="flex-[2]">
               <label className="block text-gray-700 font-medium mb-1 text-sm">
@@ -150,13 +181,21 @@ export function BAHCalculator() {
             </div>
 
             <div className="flex-shrink-0">
-              <button
+              <ButtonSubmit
+                type="button"
                 onClick={calculateBAH}
-                disabled={!dutyStation || !selectedPaygrade}
+                status={status}
+                statusText={{
+                  loading: "Calculating...",
+                  success: "Calculated",
+                  error: "Try again",
+                  disabled: "Disabled",
+                }}
                 className="px-4 py-2 bg-[#002244] text-white font-semibold rounded-lg hover:bg-[#003366] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm"
+                disabled={!dutyStation || !selectedPaygrade}
               >
                 Calculate
-              </button>
+              </ButtonSubmit>
             </div>
           </div>
 
@@ -168,7 +207,7 @@ export function BAHCalculator() {
                     BAH Rates for
                   </p>
                   <p className="text-lg font-bold text-[#002244]">
-                    {selectedPaygrade} - {dutyStation}
+                    {calculatedBAH.paygrade} - {calculatedBAH.search}
                   </p>
                 </div>
 

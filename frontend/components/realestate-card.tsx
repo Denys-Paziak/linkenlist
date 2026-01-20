@@ -36,16 +36,14 @@ export function RealestateCard({
   showPremiumFeatures?: boolean;
   isLoading?: boolean;
 }) {
-  const [showBookmarkMessage, setShowBookmarkMessage] = useState(false);
-
-  useEffect(() => {
-    if (showBookmarkMessage) {
-      const timer = setTimeout(() => {
-        setShowBookmarkMessage(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showBookmarkMessage]);
+  const handleCardClick = async () => {
+    try {
+      await fetcherUser(`/listings/${data.id}/add-view`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+    } catch {}
+  };
 
   return (
     <>
@@ -54,16 +52,17 @@ export function RealestateCard({
           "card group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm h-fit",
           data.status === EListingStatus.ACTIVE &&
             "transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
-          isLoading && "pointer-events-none"
+          isLoading && "pointer-events-none",
         )}
       >
         {/* Link covering entire card */}
         {data.status === EListingStatus.ACTIVE && (
           <Link
+            onClick={handleCardClick}
             href={`/realestate/${data.slug}`}
             className={cn(
               "absolute inset-0 z-[5]",
-              isLoading && "pointer-events-none"
+              isLoading && "pointer-events-none",
             )}
           />
         )}
@@ -149,11 +148,11 @@ function FavoriteButton({ id }: { id: number }) {
 
   const { setShowLoginModal } = useUser();
 
-  const { data, mutate } = useSWR<number[]>(user ? `/favorite/deals` : null);
+  const { data, mutate } = useSWR<number[]>(user ? `/favorite/listings` : null);
 
   const addFavorite = async () => {
     try {
-      await fetcherUser(`/favorite/deals/${id}`, {
+      await fetcherUser(`/favorite/listings/${id}`, {
         method: "POST",
         credentials: "include",
       });
@@ -166,7 +165,7 @@ function FavoriteButton({ id }: { id: number }) {
 
   const deleteFavorite = async () => {
     try {
-      await fetcherUser(`/favorite/deals/${id}`, {
+      await fetcherUser(`/favorite/listings/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

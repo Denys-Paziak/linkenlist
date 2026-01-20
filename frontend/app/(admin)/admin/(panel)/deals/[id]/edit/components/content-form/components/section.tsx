@@ -5,7 +5,6 @@ import { CheckCircle, Paperclip, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Switch } from "../../../../../../../../../../components/ui/switch";
 import { Button } from "../../../../../../../../../../components/ui/button";
-import { Textarea } from "../../../../../../../../../../components/ui/textarea";
 import { IDeal, IDealSection } from "../../../../../../../../../../types/Deal";
 import {
   ButtonSubmitStatus,
@@ -18,7 +17,6 @@ import {
   SectionFormSchemaType,
 } from "../../../../../../../../../../lib/schemas/deal/section-form-schema";
 import {
-  cn,
   formatSmartSize,
   pickDirty,
 } from "../../../../../../../../../../lib/utils";
@@ -30,6 +28,7 @@ import MDEditor, { commands } from "@uiw/react-md-editor";
 import { MarkdownSection } from "../../../../../../../../../../components/markdown-section/markdown-section";
 import { insertIconCommand } from "../../../../../../../../../../components/markdown-section/insert-icon-command";
 import { Input } from "../../../../../../../../../../components/ui/input";
+import { TextImages } from "./text-images";
 
 interface IFileData {
   id?: number;
@@ -94,7 +93,7 @@ export function Section({
           name: item.name,
           size: formatSmartSize(item.sizeBytes),
         }))
-        .reverse()
+        .reverse(),
     );
     setBodyMd(section?.bodyMd || undefined);
   }, [section]);
@@ -123,7 +122,7 @@ export function Section({
           remainedAttachments: attached
             .map((item) => item.id)
             .filter((id) => id),
-        })
+        }),
       );
 
       files.forEach((item) => {
@@ -136,7 +135,7 @@ export function Section({
           method: "PATCH",
           credentials: "include",
           body: formData,
-        }
+        },
       );
 
       mutate(`/admin/deals/${dealId}`).then(() => {
@@ -161,8 +160,8 @@ export function Section({
 
   return (
     <form onSubmit={(e) => e.preventDefault()} noValidate>
-      <fieldset disabled={loading || !section}>
-        <div className="border rounded-lg p-4 space-y-3">
+      <fieldset disabled={loading || !section} className="space-y-3 border rounded-lg p-2">
+        <div className="border rounded-lg p-2 space-y-3">
           {formError ? <ErrorAlert message={formError} /> : null}
 
           <div className="flex items-center justify-between">
@@ -222,12 +221,13 @@ export function Section({
                     name: "title",
                     groupName: "title",
                     buttonProps: { "aria-label": "Insert title" },
-                  }
+                  },
                 ),
                 commands.divider,
                 commands.link,
                 commands.quote,
                 insertIconCommand,
+                commands.image,
                 commands.table,
                 commands.divider,
                 commands.orderedListCommand,
@@ -320,6 +320,7 @@ export function Section({
             Save
           </ButtonSubmit>
         </div>
+        <TextImages section={section}/>
       </fieldset>
     </form>
   );
@@ -349,7 +350,7 @@ function Actions({
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       setStatusRemove("success");
@@ -360,11 +361,11 @@ function Actions({
             ? {
                 ...draft,
                 sections: draft.sections.filter(
-                  (item) => item.id !== section.id
+                  (item) => item.id !== section.id,
                 ),
               }
             : undefined,
-        { revalidate: true }
+        { revalidate: true },
       );
     } catch (err: any) {
       setStatusRemove("error");
@@ -423,7 +424,7 @@ function Actions({
                 })(),
               }
             : undefined,
-        { revalidate: true }
+        { revalidate: true },
       );
     } catch (err: any) {
       setStatusMoveUp("error");
@@ -482,7 +483,7 @@ function Actions({
                 })(),
               }
             : undefined,
-        { revalidate: true }
+        { revalidate: true },
       );
     } catch (err: any) {
       setStatusMoveDown("error");
