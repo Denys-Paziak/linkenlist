@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common'
+import {
+	BadRequestException,
+	ConflictException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { extname } from 'node:path'
 import { DataSource, EntityManager, Not, Repository } from 'typeorm'
@@ -319,7 +325,8 @@ export class ResourceCommandService {
 			url: uploadedImage.url,
 			originalKey: uploadedImage.key,
 			width: uploadedImage.width || 0,
-			height: uploadedImage.height || 0
+			height: uploadedImage.height || 0,
+			status: EFileStatus.READY
 		})
 
 		const updated = await this.resourceSectionImagesRepository.findOne({

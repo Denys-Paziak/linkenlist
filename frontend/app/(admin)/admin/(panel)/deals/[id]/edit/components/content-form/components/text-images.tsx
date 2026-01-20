@@ -77,6 +77,7 @@ export function TextImages({ section }: { section: IDealSection }) {
             accept="image/png,image/jpeg"
             onChange={(e) => {
               const file = e.target.files?.[0];
+              e.target.value = "";
               if (file) uploadImage(file);
             }}
           />
