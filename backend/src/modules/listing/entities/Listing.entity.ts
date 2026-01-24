@@ -16,6 +16,7 @@ import { User } from '../../user/entities/User.entity'
 
 import { ListingPhoto } from './ListingPhoto.entity'
 import { MilitaryBase } from './MilitaryBase.entity'
+import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
 
 @Entity('listings')
 @Unique(['slug'])
@@ -222,6 +223,9 @@ export class Listing {
 
 	@Column({ type: 'int', default: 0, name: 'total_views' })
 	totalViews: number
+
+	@OneToMany(() => ContactInbox, report => report.reportListing)
+	reports: ContactInbox[]
 
 	@Column({ name: 'published_at', type: 'timestamptz', nullable: true })
 	publishedAt?: Date | null

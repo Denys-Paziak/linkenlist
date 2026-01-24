@@ -33,6 +33,7 @@ export function PublicProfile({ user }: { user?: IUser }) {
           company: user.company || "",
           phone: user.phone || "",
           publicEmail: user.publicEmail || "",
+          isPrivate: user.isPrivate || false,
         }
       : {
           avatar: "",
@@ -42,6 +43,7 @@ export function PublicProfile({ user }: { user?: IUser }) {
           company: "",
           phone: "",
           publicEmail: "",
+          isPrivate: false,
         },
     mode: "onBlur",
   });
@@ -80,7 +82,7 @@ export function PublicProfile({ user }: { user?: IUser }) {
         JSON.stringify({
           ...dirty,
           avatar: dirty.avatar === "" ? null : undefined,
-        })
+        }),
       );
 
       if (!!imageFile) {
@@ -233,6 +235,21 @@ export function PublicProfile({ user }: { user?: IUser }) {
               error={!!form.formState.errors.publicEmail}
               errorMessage={form.formState.errors.publicEmail?.message}
             />
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="verified-mobile"
+                {...form.register("isPrivate")}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label
+                htmlFor="verified-mobile"
+                className="ml-2 text-sm text-gray-700"
+              >
+                Private profile
+              </label>
+            </div>
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t border-primary/20">

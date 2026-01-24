@@ -28,7 +28,8 @@ export interface ILinkList {
   status: ELinkStatus;
   url: string;
   verified: boolean;
-  updatedAt: string;
+  totalViews: number;
+  lastEdit: string;
 }
 
 export interface ILink {

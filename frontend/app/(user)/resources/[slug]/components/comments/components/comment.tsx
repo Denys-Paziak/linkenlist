@@ -93,12 +93,12 @@ export function Comment({
     <div className={"space-y-4"}>
       <div className="flex gap-4 items-start">
         <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-semibold">
-          {comment.user?.aratar ? (
+          {comment.user?.avatar ? (
             <Image
-              src={comment.user.aratar.url}
+              src={comment.user.avatar.url}
               alt={comment.user.username}
-              width={comment.user.aratar.width}
-              height={comment.user.aratar.height}
+              width={comment.user.avatar.width}
+              height={comment.user.avatar.height}
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (

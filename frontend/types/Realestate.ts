@@ -3,7 +3,7 @@ import { IUser } from "./User";
 export interface IOwnerRealestate {
   id: number;
   package: EPackageType;
-  owner: Pick<IUser, "id" | "avatar" | "createdAt"> & {
+  owner: Pick<IUser, "id" | "avatar" | "createdAt" | "professionalTitle"> & {
     listings: {
       forRent: number;
       forSale: number;
@@ -158,9 +158,35 @@ export interface IRealestateOwnerList {
   slug: string;
   package: EPackageType;
   title: string | null;
-  expiresAt: Date | null;
+  expiresAt: string | null;
   isExpired: boolean;
   photos: IListingPhoto[];
+}
+
+export interface IRealestateAdminList {
+  id: number;
+  status: EListingStatus;
+  listPrice: number | null;
+  monthlyRent: number | null;
+  premiumFeatures: string | null;
+  bedrooms: number | null;
+  bathroomsFull: number | null;
+  bathroomsHalf: number | null;
+  interiorSize: number | null;
+  street: string | null;
+  unit: string | null;
+  zip: string | null;
+  state: string | null;
+  city: string | null;
+  slug: string;
+  package: EPackageType;
+  title: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  isExpired: boolean;
+  totalViews: number;
+  photos: IListingPhoto[];
+  owner: Pick<IUser, "id" | "firstName" | "lastName">;
 }
 
 export interface IRealestateList {

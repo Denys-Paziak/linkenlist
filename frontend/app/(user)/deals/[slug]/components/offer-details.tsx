@@ -25,7 +25,7 @@ export function OfferDetails({ data }: { data: IDeal }) {
         Offer Details
       </h2>
       <div className="space-y-4">
-        {data.originalPrice && (
+        {data.originalPrice === null ? null : (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Original Price:</span>
             <span className="font-medium text-foreground line-through text-lg">
@@ -34,7 +34,7 @@ export function OfferDetails({ data }: { data: IDeal }) {
           </div>
         )}
 
-        {data.yourPrice && (
+        {data.yourPrice === null ? null : (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Your Price:</span>
             <span className="font-bold text-green-600 text-xl">
@@ -43,7 +43,7 @@ export function OfferDetails({ data }: { data: IDeal }) {
           </div>
         )}
 
-        {savings && (
+        {savings === null ? null : (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">You Save:</span>
             <span className="font-bold text-primary bg-primary/20 px-3 py-1 rounded-lg">

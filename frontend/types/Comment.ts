@@ -22,7 +22,7 @@ export interface IComment {
     firstName: string | null;
     lastName: string | null;
     role: string;
-    aratar: {
+    avatar: {
       id: number;
       url: string;
       width: number;

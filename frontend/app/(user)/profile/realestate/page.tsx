@@ -15,6 +15,7 @@ import useSWR from "swr";
 import { IUser } from "../../../../types/User";
 import { useRouter } from "next/navigation";
 import { MyListings } from "./components/my-listings";
+import { SavedListings } from "./components/saved-listings";
 
 export default function MyRealEstatePage() {
   const {
@@ -85,7 +86,7 @@ export default function MyRealEstatePage() {
 
             {/* Saved Listings Tab */}
             <TabsContent value="saved-listings" className="space-y-8">
-              
+              <SavedListings />
             </TabsContent>
           </Tabs>
         </div>

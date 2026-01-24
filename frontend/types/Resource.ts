@@ -95,7 +95,8 @@ export interface IResourceList {
   categories: EResourceCategory[];
   status: EResourceStatus;
   slug: string;
-  updatedAt: string;
+  totalViews: number;
+  lastEdit: string;
 }
 
 export interface IResource {

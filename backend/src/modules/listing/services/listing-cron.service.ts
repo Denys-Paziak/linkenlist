@@ -5,6 +5,7 @@ import { Repository } from 'typeorm'
 
 import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { MailService } from '../../mail/mail.service'
+import { NotificationSystemService } from '../../notification/services/notification-system.service'
 import { Listing } from '../entities/Listing.entity'
 
 @Injectable()
@@ -14,7 +15,8 @@ export class ListingCronService {
 	constructor(
 		@InjectRepository(Listing)
 		private readonly listingRepository: Repository<Listing>,
-		private readonly mailService: MailService
+		private readonly mailService: MailService,
+		private readonly notificationSystemService: NotificationSystemService
 	) {}
 
 	@Cron(CronExpression.EVERY_DAY_AT_6AM)
@@ -60,9 +62,18 @@ export class ListingCronService {
 
 		if (!listings.length) return
 
+		await this.notificationSystemService.createNotifications(
+			listings.map(item => ({
+				title: `Your real estate listing will expire in ${daysLeft} days.`,
+				message: `Your listing "${item.title}" will expire in ${daysLeft} days. Please renew your listing to keep it active on LinkEnlist.`,
+				senderId: null,
+				recipientId: item.owner.id
+			}))
+		)
+
 		this.logger.log(`Sending ${daysLeft}-day reminders for ${listings.length} listing(s)`)
 
-		await Promise.all(
+		await Promise.allSettled(
 			listings.map(async listing => {
 				const email = listing.owner?.privateEmail
 				if (!email) return

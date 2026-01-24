@@ -33,7 +33,7 @@ export class ResourceQueryService {
 		const qb = this.resourceRepository
 			.createQueryBuilder('d')
 			.leftJoinAndSelect('d.image', 'img')
-			.select(['d.id', 'd.title', 'd.categories', 'd.status', 'd.updatedAt', 'd.createdAt', 'd.slug', 'img'])
+			.select(['d.id', 'd.title', 'd.categories', 'd.status', 'd.lastEdit', 'd.createdAt', 'd.slug', 'd.totalViews', 'img'])
 			.distinct(true)
 			.skip(offset)
 			.take(limit)
@@ -233,7 +233,7 @@ export class ResourceQueryService {
 
 	async getSimplifiedResources(query: GetSimplifiedResourceDto) {
 		const where: any = {
-			featuredDeal: IsNull()
+			status: EResourceStatus.PUBLISHED
 		}
 
 		if (query?.search) {
@@ -248,11 +248,12 @@ export class ResourceQueryService {
 				title: true,
 				slug: true,
 				status: true,
+				createdAt: true,
 				featuredDeal: { id: true }
 			},
 			skip: (query.page - 1) * query.limit,
 			take: query.limit,
-			order: { id: 'ASC' }
+			order: { createdAt: 'DESC' }
 		})
 	}
 
@@ -305,11 +306,14 @@ export class ResourceQueryService {
 			.leftJoinAndSelect('resource.featuredDeal', 'featuredDeal', 'featuredDeal.status = :publishedDeal', {
 				publishedDeal: EDealStatus.PUBLISHED
 			})
+			.loadRelationCountAndMap('featuredDeal.commentsCount', 'featuredDeal.comments', 'c', subQb =>
+				subQb.andWhere('c.status = :cs', { cs: ECommentStatus.APPROVED })
+			)
 			.leftJoinAndSelect('featuredDeal.tags', 'featuredTag')
 			.leftJoinAndSelect('featuredDeal.image', 'featuredImage')
 
 			.leftJoinAndSelect('resource.tags', 'tag')
-			.leftJoinAndSelect('resource.sections', 'section')
+			.leftJoinAndSelect('resource.sections', 'section', 'section.enabled = :enabled', { enabled: true })
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
 
 			.where('resource.slug = :slug', { slug: resourceSlug })

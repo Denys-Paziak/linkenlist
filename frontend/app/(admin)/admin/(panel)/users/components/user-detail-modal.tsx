@@ -21,9 +21,11 @@ import { useQueryStateWithLocalStorage } from "../../../../../../hooks/use-query
 import { parseAsInteger } from "nuqs";
 import useSWR from "swr";
 import { IUserTable } from "../../../../../../types/User";
-import { isoToDatetimeLocal } from "../../../../../../lib/utils";
+import { capitalize, isoToDatetimeLocal } from "../../../../../../lib/utils";
 import Link from "next/link";
 import FreeListingCredit from "./free-listing-credit";
+import { renderAddress } from "../../../../../../components/realestate-card";
+import { EListingStatus } from "../../../../../../types/Realestate";
 
 function ErrorBanner({
   message,
@@ -117,7 +119,7 @@ export function UserDetailModal() {
     key,
     {
       revalidateIfStale: true,
-    }
+    },
   );
 
   const isInitialLoading = !data && !error;
@@ -231,7 +233,7 @@ export function UserDetailModal() {
                         <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
                           {isoToDatetimeLocal(
                             userData.banExpirationDate,
-                            false
+                            false,
                           )}
                         </div>
                       </div>
@@ -366,7 +368,11 @@ export function UserDetailModal() {
                   </div>
                 </div>
 
-                <FreeListingCredit user={userData} disabled={actionsDisabled} mutate={mutate}/>
+                <FreeListingCredit
+                  user={userData}
+                  disabled={actionsDisabled}
+                  mutate={mutate}
+                />
 
                 {/* Listings Summary */}
                 <div className="space-y-4">
@@ -374,34 +380,38 @@ export function UserDetailModal() {
                     Listings ({userData?.listings.length || 0})
                   </h3>
                   <div className="space-y-2">
-                    {userData?.listings.map((listing: any) => (
+                    {userData?.listings.map((listing) => (
                       <div
                         key={listing.id}
                         className="flex items-center justify-between p-3 border rounded"
                       >
                         <div>
                           <Link
-                            href={`/realestate?listing=${listing.id}`}
+                            href={`/realestate/${listing.slug}`}
                             className="font-medium cursor-pointer hover:text-blue-600 hover:underline"
                           >
-                            {listing.address}
+                            {renderAddress(listing)}
                           </Link>
                           <div className="text-sm text-gray-600">
-                            {listing.type} • {listing.plan} • Expires{" "}
-                            {listing.expires}
+                            {listing.forRent ? "Rent" : "Sale"} •{" "}
+                            {capitalize(listing.package)} 
+                            {listing.expiresAt
+                              ? " • Expires " +
+                                new Date(listing.expiresAt).toLocaleDateString()
+                              : ""}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge
                             variant={
-                              listing.status === "Active"
+                              listing.status === EListingStatus.ACTIVE
                                 ? "default"
                                 : "secondary"
                             }
                           >
                             {listing.status}
                           </Badge>
-                          <Link href={`/realestate?listing=${listing.id}`}>
+                          <Link href={`/realestate/${listing.slug}`}>
                             <Button variant="ghost" size="sm">
                               Open
                             </Button>

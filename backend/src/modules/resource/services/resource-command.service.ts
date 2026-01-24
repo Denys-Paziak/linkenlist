@@ -253,6 +253,7 @@ export class ResourceCommandService {
 				categories: dto.categories,
 				format: dto.format,
 				featuredDeal: typeof dto.featuredDealId === 'number' ? { id: dto.featuredDealId } : dto.featuredDealId,
+				lastEdit: new Date(),
 				image:
 					newImage !== undefined
 						? {
@@ -460,13 +461,15 @@ export class ResourceCommandService {
 
 	async switchRelatedMode(resourceId: number, dto: SwitchRelatedMode) {
 		await this.resourceRepository.update(resourceId, {
-			relatedAutoMode: dto.relatedAutoMode
+			relatedAutoMode: dto.relatedAutoMode,
+			lastEdit: new Date(),
 		})
 	}
 
 	async switchFeatured(resourceId: number, dto: SwitchFeaturedDto) {
 		await this.resourceRepository.update(resourceId, {
-			isFeatured: dto.isFeatured
+			isFeatured: dto.isFeatured,
+			lastEdit: new Date(),
 		})
 	}
 
@@ -583,6 +586,7 @@ export class ResourceCommandService {
 				ogImageMode: dto.ogImageMode,
 				canonicalUrl: dto.canonicalUrl,
 				allowIndexing: dto.allowIndexing,
+				lastEdit: new Date(),
 				ogImage:
 					newImage !== undefined
 						? {
@@ -659,6 +663,7 @@ export class ResourceCommandService {
 			publishAt: dto.schedulePublish,
 			expireAt: dto.scheduleExpire,
 			lastPublishedAt: lastPublishedAt,
+			lastEdit: new Date(),
 			commentsEnabled: dto.commentsEnabled
 		})
 	}
@@ -678,6 +683,7 @@ export class ResourceCommandService {
 				.addSelect(['ogImage.originalKey', 'ogImage.processedKey'])
 				.leftJoinAndSelect('resource.sections', 'section')
 				.leftJoinAndSelect('section.attachments', 'attachment')
+				.leftJoinAndSelect('section.images', 'images')
 				.addSelect(['attachment.originalKey', 'attachment.processedKey'])
 				.where('resource.id = :id', { id: resourceId })
 				.getOne()
@@ -686,6 +692,7 @@ export class ResourceCommandService {
 
 			const keysToDelete: string[] = []
 			const attachmentIds: number[] = []
+			const sectionImageIds: number[] = []
 
 			const pushKey = (key?: string | null) => {
 				if (key) keysToDelete.push(key)
@@ -709,13 +716,26 @@ export class ResourceCommandService {
 				}
 			}
 
+			for (const section of resource.sections ?? []) {
+				for (const image of section.images ?? []) {
+					sectionImageIds.push(image.id)
+					pushKey(image.originalKey)
+					pushKey(image.processedKey)
+				}
+			}
+
 			await this.dataSource.transaction(async manager => {
 				const sectionAttachmentRepo = manager.getRepository(ResourceSectionAttachment)
+				const sectionImageRepo = manager.getRepository(ResourceSectionImages)
 				const resourceImageRepo = manager.getRepository(ResourceImage)
 				const resourceRepo = manager.getRepository(Resource)
 
 				if (attachmentIds.length) {
 					await sectionAttachmentRepo.delete(attachmentIds)
+				}
+
+				if (sectionImageIds.length) {
+					await sectionImageRepo.delete(sectionImageIds)
 				}
 
 				if (resource.image) {

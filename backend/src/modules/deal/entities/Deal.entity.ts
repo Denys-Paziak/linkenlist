@@ -6,6 +6,7 @@ import {
 	JoinColumn,
 	JoinTable,
 	ManyToMany,
+	ManyToOne,
 	OneToMany,
 	OneToOne,
 	PrimaryGeneratedColumn,
@@ -167,7 +168,7 @@ export class Deal {
 	@Column({ type: 'boolean', default: true, name: 'comments_enabled' })
 	commentsEnabled: boolean
 
-	@OneToOne(() => Resource, { cascade: true, nullable: true, onDelete: 'SET NULL' })
+	@ManyToOne(() => Resource, { cascade: true, nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn({ name: 'featured_resource_id' })
 	featuredResource: Resource | null
 
@@ -195,6 +196,10 @@ export class Deal {
 
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
+
+	@Column({ type: 'timestamptz', name: 'last_edit' })
+	@Index()
+	lastEdit: Date
 
 	@Column({ type: 'text', name: 'tags_text', default: '', })
 	tagsText: string

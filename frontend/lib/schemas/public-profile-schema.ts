@@ -29,13 +29,11 @@ export const publicProfileSchema = z.object({
 
   phone: z
     .string()
-    .trim()
-    .max(20, "Phone must be at most 20 characters long")
-    .regex(/^[0-9+\-()\s]*$/, {
-      message:
-        "Phone must contain only digits, spaces, parentheses, plus or hyphen",
-    })
-    .optional(),
+    .regex(
+      /^\+[1-9]\d{7,14}$/,
+      "Phone must be in E.164 format, e.g. +14155552671",
+    )
+    .or(z.literal("")),
 
   publicEmail: z
     .string()
@@ -45,6 +43,8 @@ export const publicProfileSchema = z.object({
     .refine(
       (val) =>
         !val || val.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
-      { message: "Public Email must be a valid email" }
+      { message: "Public Email must be a valid email" },
     ),
+
+  isPrivate: z.boolean(),
 });

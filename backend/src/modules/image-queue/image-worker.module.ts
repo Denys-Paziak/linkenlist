@@ -22,6 +22,7 @@ import { UserModule } from '../user/user.module'
 
 import { ImageProcessor } from './image.processor'
 import { CommentModule } from '../comment/comment.module'
+import { ContactInboxModule } from '../contact-inbox/contact-inbox.module'
 
 @Module({
 	imports: [
@@ -41,7 +42,8 @@ import { CommentModule } from '../comment/comment.module'
 		ListingModule,
 		TokenModule,
 		MailModule,
-		CommentModule
+		CommentModule,
+		ContactInboxModule
 	],
 	providers: [ImageProcessor, S3StorageService]
 })

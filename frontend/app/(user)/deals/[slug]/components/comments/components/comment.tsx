@@ -12,6 +12,7 @@ import { EditForm } from "./edit-form";
 import { IDeal } from "../../../../../../../types/Deal";
 import { Button } from "../../../../../../../components/ui/button";
 import { StatusChip } from "../../../../../../../components/ui/status-chip";
+import { UserProfileDialog } from "../../../../../../../components/user-profile-dialog";
 
 export function Comment({
   depth,
@@ -89,174 +90,191 @@ export function Comment({
     }
   }, [replyingId]);
 
-  return (
-    <div className={"space-y-4"}>
-      <div className="flex gap-4 items-start">
-        <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-semibold">
-          {comment.user?.aratar ? (
-            <Image
-              src={comment.user.aratar.url}
-              alt={comment.user.username}
-              width={comment.user.aratar.width}
-              height={comment.user.aratar.height}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-          ) : (
-            getInitials(
-              `${comment?.user?.firstName || ""} ${comment?.user?.lastName || ""}`,
-            )
-          )}
-        </div>
+  const [isAgentProfileOpen, setIsAgentProfileOpen] = useState<number | null>(
+    null,
+  );
 
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-gray-900 text-sm">
-              @{comment.user.username}
-            </span>
-            <span className="text-gray-500 text-xs">
-              {timeAgo(comment.createdAt)}
-            </span>
-            {ownerId === comment.user.id &&
-              comment.status === ECommentStatus.APPROVED && (
-                <StatusChip status={"published"} text="Approved" />
-              )}
-            {ownerId === comment.user.id &&
-              comment.status === ECommentStatus.HIDDEN && (
-                <StatusChip status={"expired"} text="Rejected" />
-              )}
-            {ownerId === comment.user.id &&
-              comment.status === ECommentStatus.PENDING && (
-                <StatusChip status={"draft"} text="Pending" />
-              )}
+  return (
+    <>
+      <div className={"space-y-4"}>
+        <div className="flex gap-4 items-start">
+          <div
+            className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer"
+            onClick={() => setIsAgentProfileOpen(comment.user.id)}
+          >
+            {comment.user?.avatar ? (
+              <Image
+                src={comment.user.avatar.url}
+                alt={comment.user.username}
+                width={comment.user.avatar.width}
+                height={comment.user.avatar.height}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              getInitials(
+                `${comment?.user?.firstName || ""} ${comment?.user?.lastName || ""}`,
+              )
+            )}
           </div>
 
-          {editingId === comment.id ? (
-            <EditForm
-              comment={comment}
-              setEditingComment={setEditingComment}
-              mutate={mutate}
-            />
-          ) : (
-            <p className="text-gray-700 text-sm leading-relaxed mb-2">
-              {comment.body}
-            </p>
-          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-semibold text-gray-900 text-sm">
+                @{comment.user.username}
+              </span>
+              <span className="text-gray-500 text-xs">
+                {timeAgo(comment.createdAt)}
+              </span>
+              {ownerId === comment.user.id &&
+                comment.status === ECommentStatus.APPROVED && (
+                  <StatusChip status={"published"} text="Approved" />
+                )}
+              {ownerId === comment.user.id &&
+                comment.status === ECommentStatus.HIDDEN && (
+                  <StatusChip status={"expired"} text="Rejected" />
+                )}
+              {ownerId === comment.user.id &&
+                comment.status === ECommentStatus.PENDING && (
+                  <StatusChip status={"draft"} text="Pending" />
+                )}
+            </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {ownerId && (
-              <>
-                <LikeButton comment={comment} mutate={mutate} />
-                <DislikedButton comment={comment} mutate={mutate} />
+            {editingId === comment.id ? (
+              <EditForm
+                comment={comment}
+                setEditingComment={setEditingComment}
+                mutate={mutate}
+              />
+            ) : (
+              <p className="text-gray-700 text-sm leading-relaxed mb-2">
+                {comment.body}
+              </p>
+            )}
 
+            <div className="flex items-center gap-2 flex-wrap">
+              {ownerId && (
+                <>
+                  <LikeButton comment={comment} mutate={mutate} />
+                  <DislikedButton comment={comment} mutate={mutate} />
+
+                  <button
+                    onClick={() => setReplyingComment(comment.id)}
+                    className="text-gray-500 hover:text-white hover:bg-gray-700 text-xs transition-all duration-200 px-2 py-1 rounded-md"
+                  >
+                    Reply
+                  </button>
+                </>
+              )}
+
+              {ownerId === comment.user.id && (
                 <button
-                  onClick={() => setReplyingComment(comment.id)}
+                  onClick={() => setEditingComment(comment.id)}
                   className="text-gray-500 hover:text-white hover:bg-gray-700 text-xs transition-all duration-200 px-2 py-1 rounded-md"
                 >
-                  Reply
+                  Edit
                 </button>
-              </>
-            )}
+              )}
 
-            {ownerId === comment.user.id && (
-              <button
-                onClick={() => setEditingComment(comment.id)}
-                className="text-gray-500 hover:text-white hover:bg-gray-700 text-xs transition-all duration-200 px-2 py-1 rounded-md"
-              >
-                Edit
-              </button>
-            )}
+              {ownerId === comment.user.id && (
+                <DeleteButton
+                  handleDelete={() => {
+                    setDeleteComment({
+                      deleteId: comment.id,
+                      replyMutate: commentParentMutate,
+                    });
+                  }}
+                />
+              )}
 
-            {ownerId === comment.user.id && (
-              <DeleteButton
-                handleDelete={() => {
-                  setDeleteComment({
-                    deleteId: comment.id,
-                    replyMutate: commentParentMutate,
-                  });
-                }}
+              {comment.repliesCount > 0 && (
+                <button
+                  onClick={() => setRepliesOpen((v) => !v)}
+                  className="text-gray-500 hover:text-gray-900 text-xs transition-all duration-200 px-2 py-1 rounded-md border border-gray-200 hover:border-gray-300 bg-transparent inline-flex items-center gap-1"
+                >
+                  {repliesOpen ? (
+                    <>
+                      <ChevronUp className="h-3 w-3" />
+                      Hide replies
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3" />
+                      Show replies ({comment.repliesCount})
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {repliesOpen && (
+          <div
+            className={cn(
+              "mt-4  space-y-4 border-l-2 border-gray-200",
+              depth <= 2 ? "ml-10" : "",
+              depth <= 1 ? "pl-4" : "pl-1",
+            )}
+          >
+            {replyingId === comment.id && (
+              <ReplyForm
+                dealId={deal.id}
+                comment={comment}
+                setReplyingComment={setReplyingComment}
+                mutate={mutateReplies}
               />
             )}
 
-            {comment.repliesCount > 0 && (
-              <button
-                onClick={() => setRepliesOpen((v) => !v)}
-                className="text-gray-500 hover:text-gray-900 text-xs transition-all duration-200 px-2 py-1 rounded-md border border-gray-200 hover:border-gray-300 bg-transparent inline-flex items-center gap-1"
-              >
-                {repliesOpen ? (
-                  <>
-                    <ChevronUp className="h-3 w-3" />
-                    Hide replies
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3" />
-                    Show replies ({comment.repliesCount})
-                  </>
+            {isInitialRepliesLoading ? (
+              <div className="text-xs text-gray-500">Loading replies…</div>
+            ) : (
+              <div className="space-y-6">
+                {replies.map((reply) => (
+                  <Comment
+                    depth={depth + 1}
+                    key={reply.id}
+                    deal={deal}
+                    comment={reply}
+                    commentParentMutate={mutateReplies}
+                    mutate={mutateReplies}
+                    ownerId={ownerId}
+                    editingId={editingId}
+                    replyingId={replyingId}
+                    setEditingComment={setEditingComment}
+                    setReplyingComment={setReplyingComment}
+                    setDeleteComment={setDeleteComment}
+                  />
+                ))}
+
+                {totalReplies > 0 && canLoadMore && (
+                  <Button
+                    variant="outline"
+                    disabled={isLoadingMore}
+                    onClick={() => setSize(size + 1)}
+                    className="h-8 px-3 text-xs bg-transparent"
+                  >
+                    {isLoadingMore
+                      ? "Loading…"
+                      : `Load more replies (${replies.length}/${totalReplies})`}
+                  </Button>
                 )}
-              </button>
+
+                {totalReplies > 0 && !canLoadMore && replies.length > 0 && (
+                  <div className="text-xs text-gray-400">
+                    All replies loaded.
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
-      {repliesOpen && (
-        <div
-          className={cn(
-            "mt-4  space-y-4 border-l-2 border-gray-200",
-            depth <= 2 ? "ml-10" : "",
-            depth <= 1 ? "pl-4" : "pl-1",
-          )}
-        >
-          {replyingId === comment.id && (
-            <ReplyForm
-              dealId={deal.id}
-              comment={comment}
-              setReplyingComment={setReplyingComment}
-              mutate={mutateReplies}
-            />
-          )}
-
-          {isInitialRepliesLoading ? (
-            <div className="text-xs text-gray-500">Loading replies…</div>
-          ) : (
-            <div className="space-y-6">
-              {replies.map((reply) => (
-                <Comment
-                  depth={depth + 1}
-                  key={reply.id}
-                  deal={deal}
-                  comment={reply}
-                  commentParentMutate={mutateReplies}
-                  mutate={mutateReplies}
-                  ownerId={ownerId}
-                  editingId={editingId}
-                  replyingId={replyingId}
-                  setEditingComment={setEditingComment}
-                  setReplyingComment={setReplyingComment}
-                  setDeleteComment={setDeleteComment}
-                />
-              ))}
-
-              {totalReplies > 0 && canLoadMore && (
-                <Button
-                  variant="outline"
-                  disabled={isLoadingMore}
-                  onClick={() => setSize(size + 1)}
-                  className="h-8 px-3 text-xs bg-transparent"
-                >
-                  {isLoadingMore
-                    ? "Loading…"
-                    : `Load more replies (${replies.length}/${totalReplies})`}
-                </Button>
-              )}
-
-              {totalReplies > 0 && !canLoadMore && replies.length > 0 && (
-                <div className="text-xs text-gray-400">All replies loaded.</div>
-              )}
-            </div>
-          )}
-        </div>
+      {isAgentProfileOpen && (
+        <UserProfileDialog
+          onClose={() => setIsAgentProfileOpen(null)}
+          userId={isAgentProfileOpen}
+        />
       )}
-    </div>
+    </>
   );
 }
 
@@ -310,7 +328,6 @@ export function LikeButton({
         credentials: "include",
       });
     } catch {
-      // опційно: повернути консистентність якщо запит впав
       mutate();
     }
   };

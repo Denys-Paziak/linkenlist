@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Link, PlayCircle } from "lucide-react";
+import { Link, PlayCircle } from "lucide-react";
 import { IRealestate } from "../../../../../types/Realestate";
-import { formatDateDiff, getInitials } from "../../../../../lib/utils";
+import { getInitials } from "../../../../../lib/utils";
 import Image from "next/image";
+import { UserProfileDialog } from "../../../../../components/user-profile-dialog";
 
 export function PropertyActionSidebar({ listing }: { listing: IRealestate }) {
   const [isAgentProfileOpen, setIsAgentProfileOpen] = useState(false);
@@ -27,9 +28,7 @@ export function PropertyActionSidebar({ listing }: { listing: IRealestate }) {
       await navigator.clipboard.writeText(listing.email);
       setShowCopyEmailTooltip(true);
       setTimeout(() => setShowCopyEmailTooltip(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy link:", err);
-    }
+    } catch {}
   };
 
   const handleVideoTour = () => {
@@ -40,7 +39,7 @@ export function PropertyActionSidebar({ listing }: { listing: IRealestate }) {
 
   return (
     <>
-      <div className="bg-white rounded-lg p-4 shadow-lg sticky top-4 w-full max-w-sm mx-auto h-fit border border-gray-100">
+      <div className="bg-white rounded-lg p-4 shadow-lg sticky top-16 w-full max-w-sm mx-auto h-fit border border-gray-100">
         {/* Action Buttons */}
         <div className="flex gap-2 mb-4 items-center">
           <div className="relative w-full">
@@ -126,104 +125,22 @@ export function PropertyActionSidebar({ listing }: { listing: IRealestate }) {
 
       {/* Agent Profile Modal */}
       {isAgentProfileOpen && (
-        <div
-          className="fixed inset-0 z-[10003] flex items-center justify-center p-4 bg-black/50"
-          onClick={() => setIsAgentProfileOpen(false)}
-        >
-          <div
-            className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Agent Profile</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsAgentProfileOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#002244] to-[#003366] flex items-center justify-center text-white font-semibold text-2xl mx-auto mb-3 overflow-hidden">
-                {listing.owner.avatar ? (
-                  <Image
-                    src={listing.owner.avatar.url}
-                    alt={`${listing.firstName} ${listing.lastName}`}
-                    width={listing.owner.avatar.width}
-                    height={listing.owner.avatar.height}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  getInitials(`${listing.firstName} ${listing.lastName}`)
-                )}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {listing.firstName} {listing.lastName}
-              </h3>
-              <p className="text-sm text-gray-600">Real Estate Agent</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">
-                  Contact Information
-                </h4>
-                <p className="text-sm text-gray-600">
-                  📞 {listing.primaryPhone}
-                </p>
-                <p className="text-sm text-gray-600">
-                  📞 {listing.alternativePhone}
-                </p>
-                <p className="text-sm text-gray-600">✉️ {listing.email}</p>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Company Name</h4>
-                <p className="text-sm text-gray-600">{listing.company}</p>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">
-                  LinkEnlist Experience
-                </h4>
-                <p className="text-sm text-gray-600">
-                  Member since:{" "}
-                  {new Date(listing.owner.createdAt).toLocaleDateString(
-                    "en-GB",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}{" "}
-                  ({formatDateDiff(listing.owner.createdAt)})
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">
-                  Property Listings
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-blue-50 p-3 rounded-lg text-center">
-                    <div className="font-semibold text-[#002244]">
-                      {listing.owner.listings.forSale}
-                    </div>
-                    <div className="text-[#002244]">For Sale</div>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded-lg text-center">
-                    <div className="font-semibold text-red-600">
-                      {listing.owner.listings.forRent}
-                    </div>
-                    <div className="text-red-600">For Rent</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UserProfileDialog 
+          onClose={() => setIsAgentProfileOpen(false)}
+          userInfo={{
+            id: listing.owner.id,
+            avatar: listing.owner.avatar,
+            company: listing.company || null,
+            alternativePhone: listing.alternativePhone || "",
+            primaryPhone: listing.primaryPhone || "",
+            createdAt: listing.owner.createdAt,
+            firstName: listing.firstName,
+            lastName: listing.lastName,
+            listings: listing.owner.listings,
+            professionalTitle: listing.owner.professionalTitle,
+            publicEmail: listing.email
+          }}
+        />
       )}
     </>
   );

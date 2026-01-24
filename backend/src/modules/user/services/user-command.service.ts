@@ -79,6 +79,7 @@ export class UserCommandService {
 				professionalTitle: dto.professionalTitle === '' ? null : dto.professionalTitle,
 				phone: dto.phone === '' ? null : dto.phone,
 				publicEmail: dto.publicEmail === '' ? null : dto.publicEmail,
+				isPrivate: dto.isPrivate,
 				avatar:
 					dto.avatar === null
 						? null

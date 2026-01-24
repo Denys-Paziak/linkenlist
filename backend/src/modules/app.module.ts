@@ -15,6 +15,7 @@ import { getThrottlerConfig } from '../configs/throttler.config'
 import { AppController } from './app.controller'
 import { AuthModule } from './auth/auth.module'
 import { CommentModule } from './comment/comment.module'
+import { ContactInboxModule } from './contact-inbox/contact-inbox.module'
 import { DealModule } from './deal/deal.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { ImageQueueModule } from './image-queue/image-queue.module'
@@ -31,6 +32,7 @@ import { StripeModule } from './stripe/stripe.module'
 import { TokenModule } from './token/token.module'
 import { TurnstileModule } from './turnstile/turnstile.module'
 import { UserModule } from './user/user.module'
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
 	imports: [
@@ -59,7 +61,9 @@ import { UserModule } from './user/user.module'
 		TurnstileModule,
 		CommentModule,
 		SettingModule,
-		StripeModule
+		StripeModule,
+		ContactInboxModule,
+		NotificationModule
 	],
 	controllers: [AppController],
 	providers: [

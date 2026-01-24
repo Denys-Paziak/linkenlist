@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   EListingStatus,
   IListingPhoto,
@@ -298,26 +298,32 @@ function renderPrice(listing: {
 
   return "Price not available";
 }
-function renderAddress(listing: {
-  street: string | null;
-  unit: string | null;
-  zip: string | null;
-  state: string | null;
-  city: string | null;
+export function renderAddress(listing: {
+  street?: string | null;
+  unit?: string | null;
+  zip?: string | null;
+  state?: string | null;
+  city?: string | null;
 }) {
   if (listing.unit && listing.street) {
     return (
-      listing.unit +
+      (listing.unit || "") +
       " " +
-      listing.street +
+      (listing.street || "") +
       ", " +
-      listing.city +
+      (listing.city || "") +
       ", " +
-      listing.state +
+      (listing.state || "") +
       " " +
-      listing.zip
+      (listing.zip || "")
     );
   }
 
-  return listing.city + ", " + listing.state + " " + listing.zip;
+  return (
+    (listing.city || "") +
+    ", " +
+    (listing.state || "") +
+    " " +
+    (listing.zip || "")
+  );
 }

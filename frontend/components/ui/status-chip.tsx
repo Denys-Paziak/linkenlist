@@ -5,9 +5,11 @@ export type TStatus = "draft" | "scheduled" | "published" | "expired" | "archive
 export function StatusChip({
   text,
   status,
+  className
 }: {
   text: string;
   status: TStatus;
+  className?: string
 }) {
   const statusColors: Record<TStatus, string> = {
     draft: "bg-gray-100 text-gray-800",
@@ -21,7 +23,8 @@ export function StatusChip({
     <span
       className={cn(
         "text-xs px-2 py-1 rounded-full",
-        statusColors[status]
+        statusColors[status],
+        className
       )}
     >
       {text}

@@ -66,6 +66,9 @@ export class User {
 	@Column({ name: 'last_activity', type: 'timestamptz', default: 'NOW()' })
 	lastActivity: Date
 
+	@Column({ name: 'is_private', type: 'boolean', default: false })
+	isPrivate: boolean
+
 	@Column({ type: 'enum', enum: EUserStatus, default: EUserStatus.ACTIVE })
 	status: EUserStatus
 

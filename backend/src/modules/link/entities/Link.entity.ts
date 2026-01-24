@@ -81,6 +81,10 @@ export class Link {
 	@Index()
 	createdAt: Date
 
+	@Column({ type: 'timestamptz', name: 'last_edit' })
+	@Index()
+	lastEdit: Date
+
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 

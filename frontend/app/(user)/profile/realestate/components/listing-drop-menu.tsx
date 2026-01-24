@@ -41,7 +41,7 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
           <Button
             variant="secondary"
             size="sm"
-            className="w-6 h-6 p-0 bg-white/90 hover:bg-white shadow-sm"
+            className="w-6 h-6 p-0 bg-white hover:bg-white shadow-sm"
           >
             <MoreVertical className="h-3 w-3" />
           </Button>

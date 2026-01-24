@@ -36,8 +36,9 @@ export class LinkQueryService {
 				'l.category',
 				'l.status',
 				'l.url',
-				'l.updatedAt',
+				'l.lastEdit',
 				'l.createdAt',
+				'l.totalViews',
 				'img.id',
 				'img.url',
 				'img.width',
@@ -193,7 +194,7 @@ export class LinkQueryService {
 					break
 
 				default:
-					qb.orderBy('l.updatedAt', 'DESC')
+					qb.orderBy('l.lastEdit', 'DESC')
 					break
 			}
 		}

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Patch, Query, Req, Res, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Query, Req, Res, UseInterceptors } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
@@ -16,6 +16,7 @@ import { DeleteAccountDto } from '../dtos/DeleteAccount.dto'
 import { SavePublicProfileDto } from '../dtos/SavePublicProfile.dto'
 import { UserCommandService } from '../services/user-command.service'
 import { UserQueryService } from '../services/user-query.service'
+import { ParamId } from '../../../dtos/ParamId.dto'
 
 const IMAGE_MAX_MB = 2
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -28,6 +29,11 @@ export class UserController {
 		private readonly userCommandService: UserCommandService,
 		private readonly configService: ConfigService
 	) {}
+
+	@Get(':id')
+	async getPublicProfile(@Param() params: ParamId) {
+		return await this.userQueryService.getPublicProfile(params.id)
+	}
 
 	@Authorization(ERoleName.USER)
 	@Get('self')

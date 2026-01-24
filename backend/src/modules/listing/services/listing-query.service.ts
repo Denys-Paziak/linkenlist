@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Brackets, Repository } from 'typeorm'
 
 import { EListingStatus } from '../../../interfaces/EListingStatus'
+import { GetAdminAllListingsDto } from '../dtos/GetAdminAllListings.dto'
 import { ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
@@ -274,7 +275,7 @@ export class ListingQueryService {
 		const limit = Math.max(1, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
-		return await this.listingRepository.findAndCount({
+		const [items, total] = await this.listingRepository.findAndCount({
 			where: { owner: { id: userId } },
 			relations: ['photos'],
 			select: {
@@ -299,6 +300,65 @@ export class ListingQueryService {
 				isExpired: true,
 				photos: true,
 				createdAt: true
+			},
+			skip: offset,
+			take: limit,
+			order: {
+				createdAt: 'DESC'
+			}
+		})
+
+		const activeCount = await this.listingRepository.count({
+			where: {
+				owner: { id: userId },
+				status: EListingStatus.ACTIVE
+			}
+		})
+
+		return {
+			items,
+			meta: {
+				total,
+				activeCount
+			}
+		}
+	}
+
+	async getAdminAllListings(query: GetAdminAllListingsDto) {
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(1, Number(query.limit ?? 16))
+		const offset = (page - 1) * limit
+
+		return await this.listingRepository.findAndCount({
+			relations: ['photos', 'owner'],
+			select: {
+				id: true,
+				status: true,
+				listPrice: true,
+				monthlyRent: true,
+				premiumFeatures: true,
+				bedrooms: true,
+				bathroomsFull: true,
+				bathroomsHalf: true,
+				interiorSize: true,
+				street: true,
+				unit: true,
+				zip: true,
+				state: true,
+				city: true,
+				slug: true,
+				package: true,
+				title: true,
+				expiresAt: true,
+				isExpired: true,
+				photos: true,
+				createdAt: true,
+				totalViews: true,
+				owner: {
+					id: true,
+					firstName: true,
+					lastName: true
+				}
 			},
 			skip: offset,
 			take: limit,
@@ -354,6 +414,7 @@ export class ListingQueryService {
 			unit: listing.hideStreet ? null : listing.unit,
 			owner: {
 				id: listing.owner.id,
+				professionalTitle: listing.owner.professionalTitle,
 				avatar: listing.owner.avatar,
 				createdAt: listing.owner.createdAt,
 				listings: {

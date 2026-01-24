@@ -1,16 +1,6 @@
-"use client"
-
-import { useEffect } from "react"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 import { ScrollButtons } from "@/components/scroll-buttons"
 
 export default function TermsOfService() {
-  // Auto-scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <main className="flex-1">

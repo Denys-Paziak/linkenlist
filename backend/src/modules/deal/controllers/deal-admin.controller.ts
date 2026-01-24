@@ -44,7 +44,7 @@ export class DealAdminController {
 	@Authorization(ERoleName.ADMIN)
 	@Get()
 	async getAllDeals(@Query() query: GetAllDealsAdminDto) {
-		return this.dealQueryService.getAllDealsAdmin(query)
+		return await this.dealQueryService.getAllDealsAdmin(query)
 	}
 
 	@Authorization(ERoleName.ADMIN)
@@ -194,10 +194,6 @@ export class DealAdminController {
 	@Authorization(ERoleName.ADMIN)
 	@Get('simplified')
 	async getSimplifiedDeals(@Query() query: GetSimplifiedDealsDto) {
-		// прийматиме рядок пошуку, та сторінку і ліміт для пагінації
-		// пагінація автоматична при доскролювані до кінця
-		// повертатиме id name slug isVerified
-
 		return await this.dealQueryService.getSimplifiedDeals(query)
 	}
 

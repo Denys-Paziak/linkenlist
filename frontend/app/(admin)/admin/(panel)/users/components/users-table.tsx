@@ -158,7 +158,7 @@ export function UsersTable() {
             <ErrorAlert message="Failed to load data" />
           </div>
         ) : null}
-        <CardContent>
+        <CardContent className="space-y-4">
           {data && data[0].length !== 0 ? (
             <Table>
               <TableHeader>
@@ -232,7 +232,7 @@ export function UsersTable() {
               page,
             }}
             totalPages={totalPages}
-            className="pb-8 px-6"
+            className="px-6"
           />
         </CardContent>
       </Card>

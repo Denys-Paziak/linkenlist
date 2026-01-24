@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
+import { GetOwnerAllListingsDto } from '../../listing/dtos/GetOwnerAllListings.dto'
 import { UserFavoriteDeal, UserFavoriteLink, UserFavoriteListing, UserFavoriteResource } from '../entities/UserFavorite.entity'
 
 @Injectable()
@@ -20,7 +21,7 @@ export class FavoriteService {
 	async getFavoriteDeals(userId: number) {
 		const data = await this.favoriteDealRepository.find({
 			where: { user: { id: userId } },
-			relations: ['user', 'deal']
+			relations: ['deal']
 		})
 
 		return data.map(item => item.deal.id)
@@ -43,7 +44,7 @@ export class FavoriteService {
 	async getFavoriteResources(userId: number) {
 		const data = await this.favoriteResourceRepository.find({
 			where: { user: { id: userId } },
-			relations: ['user', 'resource']
+			relations: ['resource']
 		})
 
 		return data.map(item => item.resource.id)
@@ -66,10 +67,76 @@ export class FavoriteService {
 	async getFavoriteListings(userId: number) {
 		const data = await this.favoriteListingRepository.find({
 			where: { user: { id: userId } },
-			relations: ['user', 'listing']
+			relations: ['listing']
 		})
 
 		return data.map(item => item.listing.id)
+	}
+
+	async getFavoriteListingsObjects(userId: number, query: GetOwnerAllListingsDto) {
+		const page = Math.max(1, Number(query.page ?? 1))
+		const limit = Math.max(1, Number(query.limit ?? 16))
+		const offset = (page - 1) * limit
+
+		const [rows, total] = await this.favoriteListingRepository.findAndCount({
+			where: { user: { id: userId } },
+			relations: ['listing', 'listing.photos'],
+			select: {
+				listing: {
+					id: true,
+					status: true,
+					forSale: true,
+					forRent: true,
+					listPrice: true,
+					monthlyRent: true,
+					premiumFeatures: true,
+					bedrooms: true,
+					bathroomsFull: true,
+					bathroomsHalf: true,
+					interiorSize: true,
+					street: true,
+					unit: true,
+					zip: true,
+					state: true,
+					city: true,
+					slug: true,
+					package: true,
+					title: true,
+					expiresAt: true,
+					isExpired: true,
+					photos: true,
+					createdAt: true
+				}
+			},
+			skip: offset,
+			take: limit,
+			order: {
+				createdAt: 'DESC'
+			}
+		})
+
+		const forSaleCount = await this.favoriteListingRepository.count({
+			where: {
+				user: { id: userId },
+				listing: { forSale: true }
+			}
+		})
+
+		const forRentCount = await this.favoriteListingRepository.count({
+			where: {
+				user: { id: userId },
+				listing: { forRent: true }
+			}
+		})
+
+		return {
+			items: rows.map(item => item.listing),
+			meta: {
+				total,
+				forSaleCount,
+				forRentCount
+			}
+		}
 	}
 
 	async addFavoriteListings(userId: number, listingId: number) {
@@ -93,7 +160,7 @@ export class FavoriteService {
 	async getFavoriteLinks(userId: number) {
 		const data = await this.favoriteLinkRepository.find({
 			where: { user: { id: userId } },
-			relations: ['user', 'link']
+			relations: ['link']
 		})
 
 		return data.map(item => item.link.id)

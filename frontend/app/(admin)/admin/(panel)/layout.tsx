@@ -1,8 +1,21 @@
+import { Metadata } from "next";
 import { AdminCheck } from "../components/admin-check";
 import { Header } from "../components/header";
 import { Navigation } from "../components/navigation";
 import "./style.css";
 import { AdminProvider } from "@/contexts/admin-context";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
+};
 
 export default function AdminLayout({
   children,

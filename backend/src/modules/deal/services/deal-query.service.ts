@@ -33,7 +33,7 @@ export class DealQueryService {
 		const qb = this.dealRepository
 			.createQueryBuilder('d')
 			.leftJoinAndSelect('d.image', 'img')
-			.select(['d.id', 'd.title', 'd.categories', 'd.status', 'd.updatedAt', 'd.createdAt', 'd.slug', 'img'])
+			.select(['d.id', 'd.title', 'd.categories', 'd.status', 'd.lastEdit', 'd.createdAt', 'd.slug', 'd.totalViews', 'img'])
 			.distinct(true)
 			.skip(offset)
 			.take(limit)
@@ -223,7 +223,7 @@ export class DealQueryService {
 
 	async getSimplifiedDeals(query: GetSimplifiedResourceDto) {
 		const where: any = {
-			featuredResource: IsNull()
+			status: EDealStatus.PUBLISHED
 		}
 
 		if (query?.search) {
@@ -238,11 +238,12 @@ export class DealQueryService {
 				title: true,
 				slug: true,
 				status: true,
+				createdAt: true,
 				featuredResource: { id: true }
 			},
 			skip: (query.page - 1) * query.limit,
 			take: query.limit,
-			order: { id: 'ASC' }
+			order: { createdAt: 'DESC' }
 		})
 	}
 
@@ -295,11 +296,14 @@ export class DealQueryService {
 			.leftJoinAndSelect('deal.featuredResource', 'featuredResource', 'featuredResource.status = :publishedResource', {
 				publishedResource: EResourceStatus.PUBLISHED
 			})
+			.loadRelationCountAndMap('featuredResource.commentsCount', 'featuredResource.comments', 'c', subQb =>
+				subQb.andWhere('c.status = :cs', { cs: ECommentStatus.APPROVED })
+			)
 			.leftJoinAndSelect('featuredResource.tags', 'featuredTag')
 			.leftJoinAndSelect('featuredResource.image', 'featuredImage')
 
 			.leftJoinAndSelect('deal.tags', 'tag')
-			.leftJoinAndSelect('deal.sections', 'section')
+			.leftJoinAndSelect('deal.sections', 'section', 'section.enabled = :enabled', { enabled: true })
 			.leftJoinAndSelect('section.attachments', 'sectionAttachment')
 
 			.where('deal.slug = :slug', { slug: dealSlug })

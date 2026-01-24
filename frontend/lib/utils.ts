@@ -191,3 +191,16 @@ export function formatDurationFromMonths(totalMonths: number): string {
 
   return parts.join(" ");
 }
+
+export function daysUntil(targetDate: Date | string): number {
+  const today = new Date()
+  const target = new Date(targetDate)
+
+  today.setHours(0, 0, 0, 0)
+  target.setHours(0, 0, 0, 0)
+
+  const diffMs = target.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  return Math.max(0, diffDays)
+}

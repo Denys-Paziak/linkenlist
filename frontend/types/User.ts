@@ -1,3 +1,5 @@
+import { IOwnerRealestate } from "./Realestate";
+
 export interface IUser {
   id: number;
   username: string;
@@ -11,6 +13,7 @@ export interface IUser {
   phone: string | null;
   footerDisclaimer: boolean;
   freeListingCredit: number;
+  isPrivate: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -27,7 +30,21 @@ export interface IUserTable {
   lastActivity: string;
   banExpirationDate: string | null;
   freeListingCredit: number;
-  listings: any[];
+  listings: Pick<
+    IOwnerRealestate,
+    | "id"
+    | "forSale"
+    | "forRent"
+    | "street"
+    | "unit"
+    | "zip"
+    | "state"
+    | "city"
+    | "package"
+    | "expiresAt"
+    | "status"
+    | "slug"
+  >[];
 }
 
 export interface IUserAvatar {

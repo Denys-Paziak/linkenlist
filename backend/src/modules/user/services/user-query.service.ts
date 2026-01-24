@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
+import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { GetAllUsersDto } from '../dtos/GetAllUsers.dto'
 import { User } from '../entities/User.entity'
@@ -12,6 +13,45 @@ export class UserQueryService {
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>
 	) {}
+
+	async getPublicProfile(userId: number) {
+		const userFromDB = await this.userRepository
+			.createQueryBuilder('user')
+			.where('user.id = :userId', { userId })
+			.andWhere('user.role = :role', { role: ERoleName.USER })
+			.andWhere('user.emailVerified = true')
+			.andWhere('user.isPrivate = false')
+			.leftJoinAndSelect('user.avatar', 'avatar')
+			.loadRelationCountAndMap('user.forSaleCount', 'user.listings', 'ol_sale', sub =>
+				sub.andWhere('ol_sale.forSale = true').andWhere('ol_sale.status = :activeStatus', {
+					activeStatus: EListingStatus.ACTIVE
+				})
+			)
+			.loadRelationCountAndMap('user.forRentCount', 'user.listings', 'ol_rent', sub =>
+				sub.andWhere('ol_rent.forRent = true').andWhere('ol_rent.status = :activeStatus', {
+					activeStatus: EListingStatus.ACTIVE
+				})
+			)
+			.getOne()
+
+		if (!userFromDB) throw new NotFoundException('No such user found')
+
+		return {
+			id: userFromDB.id,
+			avatar: userFromDB.avatar,
+			company: userFromDB.company,
+			primaryPhone: userFromDB.phone,
+			createdAt: userFromDB.createdAt,
+			firstName: userFromDB.firstName,
+			lastName: userFromDB.lastName,
+			listings: {
+				forSale: (userFromDB as any).forSaleCount ?? 0,
+				forRent: (userFromDB as any).forRentCount ?? 0
+			},
+			professionalTitle: userFromDB.professionalTitle,
+			publicEmail: userFromDB.publicEmail
+		}
+	}
 
 	async getSelf(userId: number, userRole: ERoleName, userIP?: string) {
 		const userFromDB = await this.userRepository.findOne({
@@ -35,6 +75,7 @@ export class UserQueryService {
 			phone: userFromDB.phone,
 			footerDisclaimer: userFromDB.footerDisclaimer,
 			freeListingCredit: userFromDB.freeListingCredit,
+			isPrivate: userFromDB.isPrivate,
 			updatedAt: userFromDB.updatedAt,
 			createdAt: userFromDB.createdAt
 		}
@@ -60,7 +101,19 @@ export class UserQueryService {
 				'user.lastActivity',
 				'user.banExpirationDate',
 				'user.freeListingCredit',
-				'listings'
+				'listings.id',
+				'listings.forSale',
+				'listings.forRent',
+				'listings.package',
+				'listings.package',
+				'listings.expiresAt',
+				'listings.status',
+				'listings.street',
+				'listings.unit',
+				'listings.zip',
+				'listings.state',
+				'listings.city',
+				'listings.slug'
 			])
 			.orderBy('user.createdAt', 'DESC')
 			.skip(offset)

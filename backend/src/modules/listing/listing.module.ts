@@ -17,6 +17,7 @@ import { ListingCommandService } from './services/listing-command.service'
 import { ListingCronService } from './services/listing-cron.service'
 import { ListingQueryService } from './services/listing-query.service'
 import { ListingSystemService } from './services/listing-system.service'
+import { NotificationModule } from '../notification/notification.module'
 
 @Module({
 	imports: [
@@ -24,7 +25,8 @@ import { ListingSystemService } from './services/listing-system.service'
 		S3StorageModule,
 		ImageQueueModule,
 		forwardRef(() => StripeModule),
-		ScheduleQueueModule
+		ScheduleQueueModule,
+		NotificationModule
 	],
 	controllers: [ListingController, ListingAdminController],
 	providers: [ListingCommandService, ListingQueryService, ListingSystemService, ListingCronService],

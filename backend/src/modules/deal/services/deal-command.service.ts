@@ -251,6 +251,7 @@ export class DealCommandService {
 				categories: dto.categories,
 				outboundUrl: dto.outboundUrl,
 				outboundUrlButtonLabel: dto.outboundUrlButtonLabel === '' ? 'Go to Deal' : dto.outboundUrlButtonLabel,
+				lastEdit: new Date(),
 				featuredResource:
 					typeof dto.featuredResourceId === 'number' ? { id: dto.featuredResourceId } : dto.featuredResourceId,
 				image:
@@ -340,12 +341,13 @@ export class DealCommandService {
 			ongoingOffer: dto.ongoingOffer,
 			validFrom: dto.validFrom,
 			validUntil: dto.validUntil,
+			lastEdit: new Date(),
 			providerDisplayName: dto.providerDisplayName
 		})
 	}
 
 	async switchShowOfferDetails(dealId: number, dto: SwitchShowOfferDetailsDto) {
-		await this.dealRepository.update(dealId, { offerEnabled: dto.offerEnabled })
+		await this.dealRepository.update(dealId, { offerEnabled: dto.offerEnabled, lastEdit: new Date() })
 	}
 
 	async createContentSection(dealId: number) {
@@ -513,13 +515,15 @@ export class DealCommandService {
 
 	async switchRelatedMode(dealId: number, dto: SwitchRelatedMode) {
 		await this.dealRepository.update(dealId, {
-			relatedAutoMode: dto.relatedAutoMode
+			relatedAutoMode: dto.relatedAutoMode,
+			lastEdit: new Date(),
 		})
 	}
 
 	async switchFeatured(resourceId: number, dto: SwitchFeaturedDto) {
 		await this.dealRepository.update(resourceId, {
-			isFeatured: dto.isFeatured
+			isFeatured: dto.isFeatured,
+			lastEdit: new Date(),
 		})
 	}
 
@@ -636,6 +640,7 @@ export class DealCommandService {
 				ogImageMode: dto.ogImageMode,
 				canonicalUrl: dto.canonicalUrl,
 				allowIndexing: dto.allowIndexing,
+				lastEdit: new Date(),
 				ogImage:
 					newImage !== undefined
 						? {
@@ -718,6 +723,7 @@ export class DealCommandService {
 			publishAt: dto.schedulePublish,
 			expireAt: dto.scheduleExpire,
 			lastPublishedAt: lastPublishedAt,
+			lastEdit: new Date(),
 			commentsEnabled: dto.commentsEnabled
 		})
 	}
@@ -737,6 +743,7 @@ export class DealCommandService {
 				.addSelect(['ogImage.originalKey', 'ogImage.processedKey'])
 				.leftJoinAndSelect('deal.sections', 'section')
 				.leftJoinAndSelect('section.attachments', 'attachment')
+				.leftJoinAndSelect('section.images', 'images')
 				.addSelect(['attachment.originalKey', 'attachment.processedKey'])
 				.where('deal.id = :id', { id: dealId })
 				.getOne()
@@ -745,6 +752,7 @@ export class DealCommandService {
 
 			const keysToDelete: string[] = []
 			const attachmentIds: number[] = []
+			const sectionImageIds: number[] = []
 
 			const pushKey = (key?: string | null) => {
 				if (key) keysToDelete.push(key)
@@ -768,13 +776,26 @@ export class DealCommandService {
 				}
 			}
 
+			for (const section of deal.sections ?? []) {
+				for (const image of section.images ?? []) {
+					sectionImageIds.push(image.id)
+					pushKey(image.originalKey)
+					pushKey(image.processedKey)
+				}
+			}
+
 			await this.dataSource.transaction(async manager => {
 				const sectionAttachmentRepo = manager.getRepository(DealSectionAttachment)
+				const sectionImageRepo = manager.getRepository(DealSectionImages)
 				const resourceImageRepo = manager.getRepository(DealImage)
 				const resourceRepo = manager.getRepository(Deal)
 
 				if (attachmentIds.length) {
 					await sectionAttachmentRepo.delete(attachmentIds)
+				}
+
+				if (sectionImageIds.length) {
+					await sectionImageRepo.delete(sectionImageIds)
 				}
 
 				if (deal.image) {

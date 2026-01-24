@@ -1,6 +1,6 @@
 import { PropertyActionSidebar } from "./components/property-action-sidebar";
 import { PropertyDescription } from "./components/property-description";
-import { PropertyExpandableSections } from "./components/property-expandable-sections";
+import { PropertyExpandableSections } from "./components/property-expandable-sections/property-expandable-sections";
 import { PropertyFacts } from "./components/property-facts/property-facts";
 import { PropertyHeader } from "./components/property-header";
 import { PropertyImage } from "./components/property-image/property-image";
@@ -126,7 +126,7 @@ export default async function RealestateDetailPage({
       </div>
       <div className="flex flex-col w-full max-w-6xl mx-auto bg-white rounded-sm ">
         {/* Scrollable Content */}
-        <div className="h-full overflow-y-auto">
+        <div className="h-full">
           {/* Image Section */}
           <div className="p-4 pb-0">
             <PropertyImage listing={listing} />
@@ -150,7 +150,7 @@ export default async function RealestateDetailPage({
               </div>
             </div>
 
-            {/* <PropertyExpandableSections listing={listing} /> */}
+            <PropertyExpandableSections listing={listing} />
           </div>
         </div>
       </div>

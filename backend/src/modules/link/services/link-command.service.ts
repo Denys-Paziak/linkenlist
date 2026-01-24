@@ -141,6 +141,7 @@ export class LinkCommandService {
 
 				status: dto.status,
 				url: dto.url,
+				lastEdit: new Date(),
 
 				image:
 					newImage === undefined

@@ -44,7 +44,7 @@ export function MyListings() {
       defaultValue: 16,
       parse: (v) => parseAsInteger.parse(v),
       sync: true,
-    }
+    },
   );
 
   const params = new URLSearchParams({
@@ -53,13 +53,16 @@ export function MyListings() {
   });
 
   const key = `/listings/my?${params.toString()}`;
-  const { data: listings, isLoading } = useSWR<[IRealestateOwnerList[], number]>(
-    key,
-    {
-      revalidateIfStale: true,
-    }
-  );
-  const totalPages = Math.ceil((listings?.[1] || 0) / limit);
+  const { data: listings, isLoading } = useSWR<{
+    items: IRealestateOwnerList[];
+    meta: {
+      total: number;
+      activeCount: number;
+    };
+  }>(key, {
+    revalidateIfStale: true,
+  });
+  const totalPages = Math.ceil((listings?.meta.total || 0) / limit);
 
   const handlePageChange = (page: number) => {
     setPage(page);
@@ -94,7 +97,7 @@ export function MyListings() {
                   Total Listings
                 </p>
                 <p className="text-lg md:text-2xl font-bold text-[#002244]">
-                  {listings?.[1] || 0}
+                  {listings?.meta.total || 0}
                 </p>
               </div>
               <Home className="h-4 w-4 md:h-8 md:w-8 text-[#002244]" />
@@ -110,11 +113,7 @@ export function MyListings() {
                   Active Listings
                 </p>
                 <p className="text-lg md:text-2xl font-bold text-[#002244]">
-                  {
-                    listings?.[0]?.filter(
-                      (l) => l.status === EListingStatus.ACTIVE
-                    ).length
-                  }
+                  {listings?.meta.activeCount || 0}
                 </p>
               </div>
               <Eye className="h-4 w-4 md:h-8 md:w-8 text-[#002244]" />
@@ -122,9 +121,9 @@ export function MyListings() {
           </CardContent>
         </Card>
       </div>
-      {listings && listings[0].length !== 0 ? (
+      {listings && listings.items.length !== 0 ? (
         <div className="grid-container-profile">
-          {listings[0].map((listing) => {
+          {listings.items.map((listing) => {
             return (
               <div key={listing.id} className="relative">
                 <RealestateCard data={listing} showStatusBadges />

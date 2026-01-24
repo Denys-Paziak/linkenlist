@@ -168,8 +168,8 @@ export function List() {
                         maxHeight: "2.8em", // 2 lines * 1.4 line-height
                       }}
                     >
-                      {item.status} • {0} views • Updated{" "}
-                      {item.updatedAt.split("T")[0]}
+                      {item.status} • {item.totalViews} views • Updated{" "}
+                      {item.lastEdit.split("T")[0]}
                     </p>
 
                     {/* Tags - limited to one line only */}

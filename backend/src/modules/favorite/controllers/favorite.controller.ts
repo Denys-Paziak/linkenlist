@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Req } from '@nestjs/common'
+import { Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common'
 import type { FastifyRequest } from 'fastify'
 
 import { FavoriteService } from '../services/favorite.service'
@@ -6,6 +6,7 @@ import { Authorization } from '../../../decorators/auth.decorator'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { ParamId } from '../../../dtos/ParamId.dto'
 import { ITokenUser } from '../../../interfaces/ITokenUser'
+import { GetOwnerAllListingsDto } from '../../listing/dtos/GetOwnerAllListings.dto'
 
 @Controller('favorite')
 export class FavoriteController {
@@ -81,6 +82,14 @@ export class FavoriteController {
 		const userFromToken = request.user as ITokenUser
 		
 		return await this.favoriteService.getFavoriteListings(userFromToken.id)
+	}
+
+	@Authorization(ERoleName.USER)
+	@Get('listings/objects')
+	async getFavoriteListingsObjects(@Req() request: FastifyRequest, @Query() query: GetOwnerAllListingsDto) {
+		const userFromToken = request.user as ITokenUser
+		
+		return await this.favoriteService.getFavoriteListingsObjects(userFromToken.id, query)
 	}
 
 	@Authorization(ERoleName.USER)

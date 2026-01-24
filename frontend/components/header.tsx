@@ -3,28 +3,18 @@
 import type React from "react";
 
 import Link from "next/link";
-import { useUser } from "@/contexts/user-context";
 import { useState, useEffect } from "react";
-import {
-  Menu,
-  X,
-  Star,
-  Bell,
-  ChevronDown,
-  Settings,
-  LogOut,
-  Home,
-} from "lucide-react";
+import { Menu, X, ChevronDown, Settings, LogOut, Home } from "lucide-react";
 import { useScrollManager } from "@/lib/scroll-manager";
 import { ButtonSubmitStatus, renderStatusIcon } from "./ui/button-submit";
 import { fetcherUser } from "../lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { IUser } from "../types/User";
+import { NotificationsButton } from "./notifications-button";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const scrollManager = useScrollManager();
 
   const { data: user } = useSWR<IUser>("/users/self");
@@ -41,31 +31,6 @@ export function Header() {
       scrollManager.unfreezeBackground();
     };
   }, [isMobileMenuOpen, scrollManager]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-
-      // Handle notifications dropdown
-      if (isNotificationsOpen && !target.closest(".notifications-container")) {
-        setIsNotificationsOpen(false);
-      }
-
-      // Handle mobile menu - only close if not clicking on notifications
-      if (
-        isMobileMenuOpen &&
-        !target.closest("nav") &&
-        !target.closest(".notifications-container")
-      ) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isNotificationsOpen, isMobileMenuOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -179,80 +144,10 @@ export function Header() {
                   )}
                 </div>
 
-                <div className="relative notifications-container">
-                  <button
-                    className="relative px-4 py-2 text-white hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-[#FFDD00] transition-all duration-150 ease-in-out rounded-md touch-manipulation"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-4 w-4" />
-                    {0 > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {0}
-                      </span>
-                    )}
-                  </button>
-
-                  {isNotificationsOpen && (
-                    <div className="absolute top-full right-0 mt-1 w-[20rem] bg-white border border-gray-200 rounded-lg shadow-xl z-[1010] animate-in slide-in-from-top-2 duration-200">
-                      <div className="py-2">
-                        <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-bold text-foreground">
-                            Notifications
-                          </p>
-                        </div>
-                        <div className="max-h-[20rem] overflow-y-auto">
-                          <div className="px-4 py-3 border-b border-gray-100 hover:bg-secondary cursor-pointer">
-                            <p className="font-medium text-sm text-foreground mb-1">
-                              New Military Discount Available
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              Adobe Creative Cloud is now offering 60% off for
-                              military members. Check out the deals page for
-                              more information.
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              2 hours ago
-                            </p>
-                          </div>
-                          <div className="px-4 py-3 border-b border-gray-100 hover:bg-secondary cursor-pointer">
-                            <p className="font-medium text-sm text-foreground mb-1">
-                              System Maintenance Complete
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              Scheduled maintenance has been completed. All
-                              services are now running normally.
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Yesterday
-                            </p>
-                          </div>
-                          <div className="px-4 py-3 hover:bg-secondary cursor-pointer">
-                            <p className="font-medium text-sm text-foreground mb-1">
-                              Welcome to LinkEnlist!
-                            </p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              Thank you for joining LinkEnlist. Explore our
-                              directory of military resources and bookmark your
-                              favorites.
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              3 days ago
-                            </p>
-                          </div>
-                        </div>
-                        <div className="border-t border-gray-100">
-                          <Link
-                            href="/notifications"
-                            className="block px-4 py-3 text-sm text-primary hover:bg-secondary transition-colors text-center font-medium"
-                            onClick={() => setIsNotificationsOpen(false)}
-                          >
-                            View All Notifications
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <NotificationsButton
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={(state) => setIsMobileMenuOpen(state)}
+                />
               </div>
             ) : (
               <Link
@@ -334,81 +229,12 @@ export function Header() {
                           {user.username || "john_doe"}
                         </p>
                       </div>
-                      <div className="relative notifications-container">
-                        <button
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-white/20 hover:text-white transition-colors rounded touch-manipulation"
-                          aria-label="Notifications"
-                        >
-                          <Bell className="h-4 w-4" />
-                          Notifications
-                          {0 > 0 && (
-                            <span className="ml-2 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {0}
-                            </span>
-                          )}
-                        </button>
-
-                        {isNotificationsOpen && (
-                          <div className="mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl z-[1010] animate-in slide-in-from-top-2 duration-200">
-                            <div className="py-2">
-                              <div className="px-4 py-2 border-b border-gray-100">
-                                <p className="text-sm font-bold text-foreground">
-                                  Notifications
-                                </p>
-                              </div>
-                              <div className="max-h-[20rem] overflow-y-auto">
-                                <div className="px-4 py-3 border-b border-gray-100 hover:bg-secondary cursor-pointer">
-                                  <p className="font-medium text-sm text-foreground mb-1">
-                                    New Military Discount Available
-                                  </p>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    Adobe Creative Cloud is now offering 60% off
-                                    for military members. Check out the deals
-                                    page for more information.
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    2 hours ago
-                                  </p>
-                                </div>
-                                <div className="px-4 py-3 border-b border-gray-100 hover:bg-secondary cursor-pointer">
-                                  <p className="font-medium text-sm text-foreground mb-1">
-                                    System Maintenance Complete
-                                  </p>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    Scheduled maintenance has been completed.
-                                    All services are now running normally.
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Yesterday
-                                  </p>
-                                </div>
-                                <div className="px-4 py-3 hover:bg-secondary cursor-pointer">
-                                  <p className="font-medium text-sm text-foreground mb-1">
-                                    Welcome to LinkEnlist!
-                                  </p>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    Thank you for joining LinkEnlist. Explore
-                                    our directory of military resources and
-                                    bookmark your favorites.
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    3 days ago
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="border-t border-gray-100">
-                                <Link
-                                  href="/notifications"
-                                  className="block px-4 py-3 text-sm text-primary hover:bg-secondary transition-colors text-center font-medium"
-                                  onClick={() => setIsNotificationsOpen(false)}
-                                >
-                                  View All Notifications
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <NotificationsButton
+                        isMobileMenuOpen={isMobileMenuOpen}
+                        setIsMobileMenuOpen={(state) =>
+                          setIsMobileMenuOpen(state)
+                        }
+                      />
                       <Link
                         href="/profile/realestate"
                         className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-white/20 hover:text-white transition-colors rounded"
@@ -466,7 +292,7 @@ function LogOutButton() {
 
       setStatus("success");
       mutate("/users/self", () => null, { revalidate: false });
-      clearFavoritesFromLocalStorage()
+      clearFavoritesFromLocalStorage();
     } catch {
       setStatus("error");
     }
@@ -495,14 +321,14 @@ function LogOutButton() {
 }
 
 function clearFavoritesFromLocalStorage(): void {
-	const keysToRemove: string[] = []
+  const keysToRemove: string[] = [];
 
-	for (let i = 0; i < localStorage.length; i++) {
-		const key = localStorage.key(i)
-		if (key && key.includes('favorites')) {
-			keysToRemove.push(key)
-		}
-	}
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.includes("favorites")) {
+      keysToRemove.push(key);
+    }
+  }
 
-	keysToRemove.forEach(key => localStorage.removeItem(key))
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
 }

@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  CheckCircle,
   ExternalLink,
   Eye,
   Loader2,
   MessageSquare,
-  Trash2,
 } from "lucide-react";
 import { Card, CardContent } from "../../../../../../../components/ui/card";
 import { Button } from "../../../../../../../components/ui/button";
@@ -124,7 +122,7 @@ export function Comments() {
       <Card>
         <CardContent className="p-0">
           {error ? (
-            <div className="p-6 pt-0">
+            <div className="p-6">
               <ErrorAlert message="Failed to load data" />
             </div>
           ) : null}
@@ -280,7 +278,7 @@ export function Comments() {
 
       <CommentDetailDialog
         comment={selectedCommentDetail}
-        setShowComment={setSelectedCommentDetail}
+        onClose={() => setSelectedCommentDetail(null)}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import { Controller, Post, Query, UseInterceptors } from '@nestjs/common'
+import { Controller, Get, Post, Query, UseInterceptors } from '@nestjs/common'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
@@ -7,14 +7,20 @@ import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { MultipartOptions } from '../../../utils/file.util'
 import { ListingCommandService } from '../services/listing-command.service'
+import { ListingQueryService } from '../services/listing-query.service'
+import { GetAdminAllListingsDto } from '../dtos/GetAdminAllListings.dto'
 
 const FILE_MAX_MB = 10
 const FILE_MAX_BYTES = FILE_MAX_MB * 1024 * 1024
 
 @Controller('admin/listings')
 export class ListingAdminController {
-	constructor(private readonly listingCommandService: ListingCommandService) {}
+	constructor(
+		private readonly listingCommandService: ListingCommandService,
+		private readonly listingQueryService: ListingQueryService
+	) {}
 
+	@Authorization(ERoleName.ADMIN)
 	@Post('import-bah-rates')
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -24,15 +30,15 @@ export class ListingAdminController {
 		})
 	)
 	async importBahRatesFromJson(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
-        const file = Object.values(files)?.[0]?.[0]
+		const file = Object.values(files)?.[0]?.[0]
 
 		return await this.listingCommandService.importBahRatesFromJson(file, {
 			dryRun: dryRun === '1' || dryRun === 'true'
 		})
 	}
 
-    @Authorization(ERoleName.ADMIN)
-    @Post('import-bah-zip-mappings')
+	@Authorization(ERoleName.ADMIN)
+	@Post('import-bah-zip-mappings')
 	@UseInterceptors(
 		MultipartInterceptor({
 			globalFileSizeLimit: FILE_MAX_BYTES,
@@ -41,10 +47,16 @@ export class ListingAdminController {
 		})
 	)
 	async importBahZipMappingsFromCsv(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
-        const file = Object.values(files)?.[0]?.[0]
+		const file = Object.values(files)?.[0]?.[0]
 
 		return await this.listingCommandService.importBahZipMappingsFromCsv(file, {
 			dryRun: dryRun === '1' || dryRun === 'true'
 		})
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Get()
+	async getAllListings(@Query() query: GetAdminAllListingsDto) {
+		return await this.listingQueryService.getAdminAllListings(query)
 	}
 }

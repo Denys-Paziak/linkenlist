@@ -27,13 +27,13 @@ import { postCommentSchema } from "../../../../../../../lib/schemas/post-comment
 
 export function CommentDetailDialog({
   comment,
-  setShowComment,
+  onClose,
 }: {
   comment: ICommentAdmin | null;
-  setShowComment: (value: ICommentAdmin | null) => void;
+  onClose: () => void;
 }) {
   return (
-    <Dialog open={!!comment} onOpenChange={() => setShowComment(null)}>
+    <Dialog open={!!comment} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Comment Details</DialogTitle>
@@ -95,7 +95,7 @@ export function CommentDetailDialog({
               <HideButton selectedComments={[comment?.id || 0]} />
               <DeleteButton
                 selectedComments={[comment?.id || 0]}
-                handleSuccess={() => setShowComment(null)}
+                handleSuccess={onClose}
               />
             </div>
 

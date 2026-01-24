@@ -88,7 +88,8 @@ export interface IDealList {
   categories: EDealCategory[];
   slug: string;
   status: EDealStatus;
-  updatedAt: string;
+  totalViews: number;
+  lastEdit: string;
 }
 
 export interface IDealListExtended {
