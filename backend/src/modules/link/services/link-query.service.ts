@@ -135,6 +135,7 @@ export class LinkQueryService {
 			'l.views30d',
 			'l.popularScore',
 			'l.isOfficial',
+			'l.lastEdit',
 			'l.updatedAt',
 			'l.createdAt',
 			'img',
