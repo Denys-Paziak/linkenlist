@@ -143,7 +143,7 @@ export class Resource {
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 
-	@Column({ type: 'timestamptz', name: 'last_edit' })
+	@Column({ type: 'timestamptz', name: 'last_edit', default: () => 'CURRENT_TIMESTAMP' })
 	@Index()
 	lastEdit: Date
 

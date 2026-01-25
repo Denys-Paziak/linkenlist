@@ -15,6 +15,10 @@ export function OfferDetails({ data }: { data: IDeal }) {
 
   const savings = calculateSavings();
 
+  if (!data.offerEnabled) {
+    return null;
+  }
+
   return (
     <section
       id="offer-details"

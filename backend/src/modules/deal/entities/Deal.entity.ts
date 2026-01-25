@@ -30,8 +30,8 @@ import { DealTag } from './DealTag.entity'
 @Entity('deals')
 @Unique(['slug'])
 @Index('deals_search_document_gin_idx', { synchronize: false })
-@Index('deals_title_trgm_gin_idx',  { synchronize: false })
-@Index('deals_tags_text_trgm_gin_idx',  { synchronize: false })
+@Index('deals_title_trgm_gin_idx', { synchronize: false })
+@Index('deals_tags_text_trgm_gin_idx', { synchronize: false })
 export class Deal {
 	@PrimaryGeneratedColumn()
 	id: number
@@ -197,13 +197,13 @@ export class Deal {
 	@UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
 	updatedAt: Date
 
-	@Column({ type: 'timestamptz', name: 'last_edit' })
+	@Column({ type: 'timestamptz', name: 'last_edit', default: () => 'CURRENT_TIMESTAMP' })
 	@Index()
 	lastEdit: Date
 
-	@Column({ type: 'text', name: 'tags_text', default: '', })
+	@Column({ type: 'text', name: 'tags_text', default: '' })
 	tagsText: string
- 
+
 	@Column({
 		type: 'tsvector',
 		select: false,
