@@ -1,29 +1,51 @@
+import { HttpService } from '@nestjs/axios'
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { parse } from 'csv-parse/sync'
-import { DataSource, In, Not, Repository } from 'typeorm'
+import { firstValueFrom } from 'rxjs'
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm'
 
 import { EFileStatus } from '../../../interfaces/EFileStatus'
 import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { EPackageType } from '../../../interfaces/EPackageType'
+import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
+import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { IUploadedImage } from '../../../interfaces/IUploadedFile'
 import { formatLocalDateYYYYMMDD } from '../../../utils/format-local-date-YYYYMMDD'
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { NotificationSystemService } from '../../notification/services/notification-system.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
 import { StripeSystemService } from '../../stripe/services/stripe-system.service'
 import { User } from '../../user/entities/User.entity'
+import { BulkAdjustExpirationDto } from '../dtos/BulkAdjustExpiration.dto'
+import { BulkApproveDto } from '../dtos/BulkApprove.dto'
+import { BulkRejectDto } from '../dtos/BulkReject.dto'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { InitListingDto } from '../dtos/InitListing.dto'
+import { InitListingAdminDto } from '../dtos/InitListingAdmin.dto'
 import { SaveListingDto } from '../dtos/SaveListing.dto'
 import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
 import { ListingPhoto } from '../entities/ListingPhoto.entity'
 import { BahZipMapping } from '../entities/MHA.entity'
 import { chunk, isObject, PAYGRADE_MAP, toMoneyString, toYear } from '../utils/import-bah'
+
+type GoogleGeocodeResponse = {
+	status: string
+	results: Array<{
+		formatted_address: string
+		place_id: string
+		geometry: {
+			location: { lat: number; lng: number }
+			location_type: string
+		}
+	}>
+}
 
 @Injectable()
 export class ListingCommandService {
@@ -34,9 +56,10 @@ export class ListingCommandService {
 		private readonly imageQueueService: ImageQueueService,
 		private readonly stripeSystemService: StripeSystemService,
 		private readonly scheduleQueueService: ScheduleQueueService,
-		@InjectRepository(BahRate)
-		private readonly bahRateRepo: Repository<BahRate>,
-		private readonly dataSource: DataSource
+		private readonly dataSource: DataSource,
+		private readonly notificationSystemService: NotificationSystemService,
+		private readonly configService: ConfigService,
+		private readonly http: HttpService
 	) {}
 
 	private async saveImage(file: IMultipartFile, listingId: number): Promise<IUploadedImage> {
@@ -136,18 +159,84 @@ export class ListingCommandService {
 		return errorFields
 	}
 
+	private async geocoding({
+		unit,
+		street,
+		city,
+		state,
+		zip
+	}: {
+		unit?: string
+		street?: string
+		city?: string
+		state?: string
+		zip?: string
+	}) {
+		const address = `${unit || ''} ${street || ''}, ${city || ''}, ${state || ''} ${zip || ''}, USA`
+		const key = this.configService.getOrThrow('GOOGLE_GEOCODING_API_KEY')
+
+		const url = 'https://maps.googleapis.com/maps/api/geocode/json'
+
+		const res = await firstValueFrom(
+			this.http.get<GoogleGeocodeResponse>(url, {
+				params: {
+					address,
+					key,
+					region: 'us',
+					components: 'country:US'
+				},
+				timeout: 8000
+			})
+		)
+
+		const data = res.data
+
+		if (data.status !== 'OK' || !data.results?.length) {
+			throw new BadRequestException({
+				message: 'Unable to find the address.',
+				status: data.status,
+				address
+			})
+		}
+
+		const best = data.results[0]
+		const { lat, lng } = best.geometry.location
+		// const locationType = best.geometry.location_type
+
+		// if (locationType !== 'ROOFTOP') {
+		// 	throw new BadRequestException({ message: 'Address is not precise enough', locationType })
+		// }
+
+		return { lat, lng }
+	}
+
 	async initListing(userId: number, dto: InitListingDto) {
+		let location: { lat: number; lng: number } | undefined = undefined
+		if (dto.city && dto.state && dto.zip) {
+			location = await this.geocoding({
+				city: dto.city || undefined,
+				state: dto.state || undefined,
+				street: undefined,
+				unit: undefined,
+				zip: dto.zip || undefined
+			})
+		}
+
 		return await this.dataSource.transaction(async manager => {
 			const userRepo = manager.getRepository(User)
 			const listingRepo = manager.getRepository(Listing)
 
 			const user = await userRepo.findOne({
 				where: { id: userId },
-				select: { id: true, freeListingCredit: true },
+				select: ['id', 'freeListingCredit', 'firstName', 'lastName', 'company', 'phone', 'publicEmail'],
 				lock: { mode: 'pessimistic_write' }
 			})
 
-			if (!user || user.freeListingCredit <= 0) {
+			if (!user) {
+				throw new NotFoundException('No such user found')
+			}
+
+			if (user.freeListingCredit <= 0 && dto.package === EPackageType.BASIC) {
 				throw new BadRequestException('No free listing credits')
 			}
 
@@ -161,7 +250,13 @@ export class ListingCommandService {
 				lastName: user.lastName,
 				company: user.company,
 				primaryPhone: user.phone,
-				email: user.publicEmail
+				email: user.publicEmail,
+				location: location
+					? {
+							type: 'Point',
+							coordinates: [location.lng, location.lat]
+						}
+					: undefined
 			})
 
 			if (dto.package === EPackageType.BASIC) {
@@ -182,7 +277,35 @@ export class ListingCommandService {
 		})
 	}
 
-	async saveListing(userId: number, listingId: number, dto: SaveListingDto) {
+	async initListingAdmin(dto: InitListingAdminDto) {
+		return await this.dataSource.transaction(async manager => {
+			const userRepo = manager.getRepository(User)
+			const listingRepo = manager.getRepository(Listing)
+
+			const user = await userRepo.findOne({
+				where: { username: dto.username },
+				select: { id: true }
+			})
+
+			if (!user) {
+				throw new NotFoundException('This user does not exist.')
+			}
+
+			const listing = await listingRepo.save({
+				owner: { id: user.id },
+				package: dto.package,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				company: user.company,
+				primaryPhone: user.phone,
+				email: user.publicEmail
+			})
+
+			return listing.id
+		})
+	}
+
+	async saveListing(user: ITokenUser, listingId: number, dto: SaveListingDto) {
 		const { photos, ...data } = dto
 
 		const deletePhoto: { id: number; originalKey?: string | null; processedKey?: string | null }[] = []
@@ -193,9 +316,20 @@ export class ListingCommandService {
 			slug = await this.generateSlugUnique(listingId, dto.listingDetails.title)
 		}
 
+		let location: { lat: number; lng: number } | undefined = undefined
+		if (dto.location) {
+			location = await this.geocoding({
+				city: dto.location.city || undefined,
+				state: dto.location.state || undefined,
+				street: dto.location.hideStreet ? undefined : dto.location.street || undefined,
+				unit: dto.location.hideStreet ? undefined : dto.location.unit || undefined,
+				zip: dto.location.zip || undefined
+			})
+		}
+
 		await this.dataSource.transaction(async manager => {
 			const listing = await manager.getRepository(Listing).findOne({
-				where: { id: listingId, owner: { id: userId } },
+				where: user.role === ERoleName.ADMIN ? { id: listingId } : { id: listingId, owner: { id: user.id } },
 				relations: ['photos'],
 				select: {
 					id: true,
@@ -262,7 +396,6 @@ export class ListingCommandService {
 			const dateAvailable = data.pricing?.dateAvailable
 			await manager.getRepository(Listing).save({
 				id: listingId,
-				owner: { id: userId },
 				slug,
 				...data.amenities,
 				...data.constructionAndLegalRecords,
@@ -274,12 +407,18 @@ export class ListingCommandService {
 				...data.property,
 				...data.seller,
 				...data.utilitiesEnergyConnectivity,
-				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable)
+				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable),
+				location: location
+					? {
+							type: 'Point',
+							coordinates: [location.lng, location.lat]
+						}
+					: undefined
 			})
 
 			if (listing.status === EListingStatus.ACTIVE) {
 				const updatedListing = await manager.getRepository(Listing).findOne({
-					where: { id: listingId, owner: { id: userId } },
+					where: { id: listingId, owner: user.role === ERoleName.ADMIN ? undefined : { id: user.id } },
 					relations: ['photos']
 				})
 				if (!updatedListing) throw new NotFoundException('Listing not found.')
@@ -303,7 +442,7 @@ export class ListingCommandService {
 		}
 	}
 
-	async uploadImages(userId: number, listingId: number, files: IMultipartFile[]) {
+	async uploadImages(user: ITokenUser, listingId: number, files: IMultipartFile[]) {
 		if (!files?.length) return []
 
 		const uploadedKeys: string[] = []
@@ -320,7 +459,7 @@ export class ListingCommandService {
 
 			const inserted = await this.dataSource.transaction(async manager => {
 				const listing = await manager.getRepository(Listing).findOne({
-					where: { id: listingId, owner: { id: userId } },
+					where: { id: listingId, owner: user.role === ERoleName.ADMIN ? {} : { id: user.id } },
 					lock: { mode: 'pessimistic_write' }
 				})
 
@@ -418,11 +557,15 @@ export class ListingCommandService {
 
 	async publish(userId: number, listingId: number) {
 		const result = await this.dataSource.transaction(async manager => {
-			const listing = await manager.getRepository(Listing).findOne({
-				where: { id: listingId, owner: { id: userId } },
-				relations: ['photos'],
-				lock: { mode: 'pessimistic_write' }
-			})
+			const listing = await manager
+				.getRepository(Listing)
+				.createQueryBuilder('listing')
+				.leftJoinAndSelect('listing.photos', 'photos')
+				.leftJoin('listing.owner', 'owner')
+				.where('listing.id = :id', { id: listingId })
+				.andWhere('owner.id = :userId', { userId })
+				.setLock('pessimistic_write', undefined, ['listing'])
+				.getOne()
 
 			if (!listing) throw new NotFoundException('Listing not found.')
 
@@ -430,7 +573,7 @@ export class ListingCommandService {
 			if (errorFields.length) {
 				throw new BadRequestException('Missing fields:' + errorFields.join(','))
 			}
-			if (listing.status === EListingStatus.ACTIVE || listing.status === EListingStatus.PENDING) {
+			if (listing.status === EListingStatus.ACTIVE || listing.status === EListingStatus.PENDING || listing.isExpired) {
 				throw new BadRequestException('Listing is already active or pending approval.')
 			}
 
@@ -438,10 +581,18 @@ export class ListingCommandService {
 				await manager
 					.getRepository(Listing)
 					.update({ id: listingId, owner: { id: userId } }, { status: EListingStatus.PENDING, isExpired: false })
+				return { action: 'ACTIVATED' as const }
 			}
 
-			if (listing.package === EPackageType.PREMIUM) {
-				return { action: 'CHECKOUT' as const }
+			if (listing.package === EPackageType.PREMIUM && listing.expiresAt && !listing.isExpired) {
+				await manager
+					.getRepository(Listing)
+					.update({ id: listingId, owner: { id: userId } }, { status: EListingStatus.ACTIVE, isExpired: false })
+				return { action: 'ACTIVATED' as const }
+			} else {
+				if (listing.package === EPackageType.PREMIUM) {
+					return { action: 'CHECKOUT' as const }
+				}
 			}
 
 			throw new BadRequestException('Unsupported package.')
@@ -457,7 +608,8 @@ export class ListingCommandService {
 
 	async extendListingExpiration(userId: number, listingId: number, dto: ExtendListingExpirationDto) {
 		const listing = await this.listingRepository.findOne({
-			where: { id: listingId, owner: { id: userId } }
+			where: { id: listingId, owner: { id: userId } },
+			relations: ['photos']
 		})
 
 		if (!listing) throw new NotFoundException('Listing not found.')
@@ -472,104 +624,7 @@ export class ListingCommandService {
 			}
 		}
 
-		switch (listing.package) {
-			case EPackageType.BASIC: {
-				if (dto.package === EPackageType.PREMIUM) {
-					return await this.stripeSystemService.createPaymentCheckout(listingId)
-				}
-
-				await this.extendBasicWithFreeCreditOrActivate(userId, listing.id)
-				return
-			}
-
-			case EPackageType.PREMIUM: {
-				if (dto.package === EPackageType.BASIC) {
-					throw new BadRequestException('It is not possible to switch from the Premium to the Basic package.')
-				}
-
-				return await this.stripeSystemService.createPaymentCheckout(listingId)
-			}
-
-			default:
-				return this.assertNever(listing.package as never, 'Unsupported current listing package.')
-		}
-	}
-
-	private async extendBasicWithFreeCreditOrActivate(userId: number, listingId: number) {
-		const afterCommit: (() => Promise<void>)[] = []
-		await this.dataSource.transaction(async manager => {
-			const userRepo = manager.getRepository(User)
-			const lockedUser = await userRepo.findOne({
-				where: { id: userId },
-				lock: { mode: 'pessimistic_write' }
-			})
-
-			if (!lockedUser) throw new NotFoundException('User not found.')
-			if (!lockedUser.freeListingCredit || lockedUser.freeListingCredit <= 0) {
-				throw new BadRequestException('Your free credits for placing ads have been used up')
-			}
-
-			const listingRepo = manager.getRepository(Listing)
-			const lockedListing = await listingRepo.findOne({
-				where: { id: listingId, owner: { id: userId } },
-				lock: { mode: 'pessimistic_write' }
-			})
-			if (!lockedListing) throw new NotFoundException('Listing not found.')
-
-			const updResLis = await listingRepo
-				.createQueryBuilder()
-				.update(Listing)
-				.set({
-					status: () => `
-						CASE 
-							WHEN status = '${EListingStatus.ACTIVE}' THEN status
-							ELSE '${EListingStatus.PENDING}'
-						END
-					`,
-					isExpired: false,
-					expiresAt: () => `
-						CASE 
-							WHEN status = '${EListingStatus.ACTIVE}' THEN GREATEST(NOW(), COALESCE("expires_at", NOW())) + (:days * interval '1 day')
-							ELSE "expires_at"
-						END
-					`
-				})
-				.setParameters({ days: 90 })
-				.where('id = :id', { id: lockedListing.id })
-				.andWhere('"owner_id" = :userId', { userId })
-				.andWhere(`("status" = :active OR "is_expired" = true)`, { active: EListingStatus.ACTIVE })
-				.execute()
-
-			if (!updResLis.affected) {
-				throw new BadRequestException('Listing cannot be extended in its current state.')
-			}
-
-			const wasLastCredit = lockedUser.freeListingCredit === 1
-			const updResDec = await userRepo.decrement({ id: lockedUser.id }, 'freeListingCredit', 1)
-
-			if (!updResDec.affected) {
-				throw new InternalServerErrorException('Failed to reduce free credit for placing ads.')
-			}
-
-			if (wasLastCredit) {
-				afterCommit.push(async () => {
-					const runAt = new Date()
-					runAt.setFullYear(runAt.getFullYear() + 1)
-
-					await this.scheduleQueueService.userFreeListingCredit({
-						entityId: lockedUser.id,
-						runAt
-					})
-				})
-			}
-		})
-		for (const fn of afterCommit) {
-			await fn()
-		}
-	}
-
-	private assertNever(x: never, msg: string): never {
-		throw new BadRequestException(msg)
+		return await this.stripeSystemService.createPaymentCheckout(listingId)
 	}
 
 	async deactivateListing(userId: number, listingId: number) {
@@ -746,5 +801,191 @@ export class ListingCommandService {
 
 	async addView(dealId: number) {
 		await this.listingRepository.increment({ id: dealId }, 'totalViews', 1)
+	}
+
+	async bulkApprove(dto: BulkApproveDto) {
+		const data = await this.listingRepository.find({
+			where: { id: In(dto.listingsIds), status: EListingStatus.PENDING },
+			select: {
+				id: true,
+				title: true,
+				owner: {
+					id: true
+				}
+			},
+			relations: ['owner']
+		})
+
+		if (data.length !== dto.listingsIds.length) {
+			throw new BadRequestException('Only listings with the status “Pending” are approved.')
+		}
+
+		await this.listingRepository
+			.createQueryBuilder()
+			.update()
+			.set({
+				status: EListingStatus.ACTIVE,
+				isExpired: false,
+				rejectionMessage: null,
+				expiresAt: () => `
+					CASE
+						WHEN "expires_at" IS NULL
+							THEN NOW() + (:days * interval '1 day')
+							ELSE "expires_at"
+					END
+				`,
+				publishedAt: () =>
+					`CASE 
+						WHEN "published_at" IS NULL 
+							THEN NOW() 
+							ELSE "published_at" 
+					END`
+			})
+			.setParameters({ days: 90 })
+			.whereInIds(dto.listingsIds)
+			.execute()
+
+		await this.notificationSystemService.createNotifications(
+			data?.map(item => ({
+				title: 'Your listing has been approved',
+				message: `Your listing "${item.title || 'your listing'}" has been approved and is now active on the platform.`,
+				senderId: null,
+				recipientId: item.owner.id
+			}))
+		)
+	}
+
+	async bulkReject(dto: BulkRejectDto) {
+		const listingsIds = dto.listings.map(item => item.id)
+
+		const messageById = new Map<number, string>(dto.listings.map(x => [x.id, x.message]))
+
+		const data = await this.listingRepository.find({
+			where: {
+				id: In(listingsIds),
+				status: In([EListingStatus.PENDING, EListingStatus.ACTIVE])
+			},
+			select: {
+				id: true,
+				title: true,
+				owner: { id: true }
+			},
+			relations: ['owner']
+		})
+
+		if (data.length !== dto.listings.length) {
+			throw new BadRequestException('Only listings with the status “Pending” or “Active” are rejected.')
+		}
+
+		const cases: string[] = []
+		const params: Record<string, any> = {}
+
+		dto.listings.forEach((item, i) => {
+			const idKey = `id${i}`
+			const msgKey = `msg${i}`
+
+			cases.push(`WHEN "id" = :${idKey} THEN :${msgKey}`)
+
+			params[idKey] = item.id
+			params[msgKey] = item.message
+		})
+
+		const rejectionMessageSql = `
+			CASE
+				${cases.join('\n      ')}
+				ELSE "rejection_message"
+			END
+		`
+
+		await this.listingRepository
+			.createQueryBuilder()
+			.update()
+			.set({
+				status: EListingStatus.REJECTED,
+				rejectionMessage: () => rejectionMessageSql
+			})
+			.where('id IN (:...ids)', { ids: listingsIds })
+			.setParameters(params)
+			.execute()
+
+		await this.notificationSystemService.createNotifications(
+			data.map(item => {
+				const reason = messageById.get(item.id) || 'No additional details provided.'
+
+				return {
+					title: 'Your listing was rejected',
+					message: `Your listing "${item.title || 'your listing'}" was rejected.\nReason: ${reason}`,
+					senderId: null,
+					recipientId: item.owner.id
+				}
+			})
+		)
+	}
+
+	async bulkAdjustExpiration(dto: BulkAdjustExpirationDto) {
+		const listingsIds = dto.listings.map(item => item.id)
+
+		const daysById = new Map<number, number>(dto.listings.map(x => [x.id, x.days]))
+
+		const data = await this.listingRepository.find({
+			where: {
+				id: In(listingsIds),
+				expiresAt: Not(IsNull())
+			},
+			select: {
+				id: true,
+				title: true,
+				owner: { id: true }
+			},
+			relations: ['owner']
+		})
+
+		if (data.length !== dto.listings.length) {
+			throw new BadRequestException('Expiration can be adjusted only for listings that already have an expiration date.')
+		}
+
+		const cases: string[] = []
+		const params: Record<string, any> = {}
+
+		dto.listings.forEach((item, i) => {
+			const idKey = `id${i}`
+			const daysKey = `days${i}`
+
+			cases.push(`WHEN "id" = :${idKey} THEN (NOW() + (:${daysKey}::int * INTERVAL '1 day'))`)
+
+			params[idKey] = item.id
+			params[daysKey] = item.days
+		})
+
+		const expiresAtSql = `
+			CASE
+				${cases.join('\n      ')}
+				ELSE "expires_at"
+			END
+		`
+
+		await this.listingRepository
+			.createQueryBuilder()
+			.update()
+			.set({
+				expiresAt: () => expiresAtSql,
+				isExpired: false
+			})
+			.where('id IN (:...ids)', { ids: listingsIds })
+			.setParameters(params)
+			.execute()
+
+		await this.notificationSystemService.createNotifications(
+			data.map(item => {
+				const days = daysById.get(item.id) ?? 0
+
+				return {
+					title: 'Listing expiration updated',
+					message: `Your listing "${item.title || 'your listing'}" has a new expiration term: ${days} day(s) from now.`,
+					senderId: null,
+					recipientId: item.owner.id
+				}
+			})
+		)
 	}
 }

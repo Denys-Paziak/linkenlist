@@ -54,7 +54,7 @@ export function LoginModal() {
           },
           credentials: "include",
           body: JSON.stringify(values),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -68,7 +68,7 @@ export function LoginModal() {
       });
     } catch {
       setFormError(
-        "Login failed. Please check your credentials and try again."
+        "Login failed. Please check your credentials and try again.",
       );
       setStatus("error");
     }
@@ -97,8 +97,10 @@ export function LoginModal() {
         <div>
           {/* OAuth Buttons */}
           <div className="space-y-3 mb-4">
-            <a
-              href={process.env.NEXT_PUBLIC_API_URL + "/auth/google/login"}
+            <button
+              onClick={() => {
+                window.location.href = process.env.NEXT_PUBLIC_API_URL + "/auth/google/login"
+              }}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -107,7 +109,7 @@ export function LoginModal() {
               <span className="text-foreground font-medium">
                 Continue with Google
               </span>
-            </a>
+            </button>
           </div>
 
           {/* Divider */}
@@ -137,7 +139,7 @@ export function LoginModal() {
                     "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
                     form.formState.errors.email
                       ? "border-destructive focus:border-destructive"
-                      : "border-gray-300 focus:border-primary"
+                      : "border-gray-300 focus:border-primary",
                   )}
                   placeholder="Enter your email"
                 />
@@ -160,7 +162,7 @@ export function LoginModal() {
                       "w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none transition-colors",
                       form.formState.errors.password
                         ? "border-destructive focus:border-destructive"
-                        : "border-gray-300 focus:border-primary"
+                        : "border-gray-300 focus:border-primary",
                     )}
                     placeholder="Enter your password"
                   />
@@ -170,9 +172,9 @@ export function LoginModal() {
                     className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-foreground/50" />
-                    ) : (
                       <Eye className="h-5 w-5 text-foreground/50" />
+                    ) : (
+                      <EyeOff className="h-5 w-5 text-foreground/50" />
                     )}
                   </button>
                 </div>

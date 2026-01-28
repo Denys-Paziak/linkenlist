@@ -48,7 +48,7 @@ export function PublishDialog({
       } else {
         handleCancel();
         mutate(
-          (key) => typeof key === "string" && key.startsWith("/listings/my?")
+          (key) => typeof key === "string" && key.startsWith("/listings/my?"),
         );
       }
 
@@ -89,7 +89,9 @@ export function PublishDialog({
               re-moderation.
             </DialogDescription>
           )}
-          {listing.package === EPackageType.PREMIUM && (
+          {listing.package === EPackageType.PREMIUM &&
+          listing.expiresAt &&
+          !listing.isExpired ? null : (
             <DialogDescription>
               The announcement will be published after successful payment.
             </DialogDescription>

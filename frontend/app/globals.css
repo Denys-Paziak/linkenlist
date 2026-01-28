@@ -43,6 +43,15 @@
   }
 }
 
+.autocomplete-wrapper gmp-place-autocomplete {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color-scheme: light;
+  height: 37px;
+  border-radius: 0.5rem;
+}
+
 fieldset:disabled {
   @apply pointer-events-none opacity-50 select-none
 }

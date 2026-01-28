@@ -14,6 +14,8 @@ import {
 	ValidationOptions
 } from 'class-validator'
 
+import { EDealType, ESortBy } from './GetAllListings.dto'
+
 function IsMinLessThanOrEqual(property: string, validationOptions?: ValidationOptions) {
 	return function (object: Object, propertyName: string) {
 		registerDecorator({
@@ -37,21 +39,7 @@ function IsMinLessThanOrEqual(property: string, validationOptions?: ValidationOp
 	}
 }
 
-export enum EDealType {
-	SALE = 'sale',
-	RENT = 'rent'
-}
-
-export enum ESortBy {
-	RECOMMENDED = 'recommended',
-	PRICE_ASC = 'price_asc',
-	PRICE_DESC = 'price_desc',
-	NEWEST = 'newest',
-	OLDEST = 'oldest',
-	MOST_RELEVANT = 'most_relevant'
-}
-
-export class GetAllListingsDto {
+export class GetMapListingsDto {
 	@IsOptional()
 	@IsEnum(EDealType)
 	dealType?: EDealType
@@ -151,41 +139,34 @@ export class GetAllListingsDto {
 	@IsEnum(ESortBy)
 	sortBy?: ESortBy
 
-	@Type(() => Number)
-	@IsInt()
-	@Min(1)
-	limit: number
-
-	@Type(() => Number)
-	@IsInt()
-	@Min(1)
-	page: number
-
-	@IsOptional()
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@Min(-90)
 	@Max(90)
 	swLat: number
 
-	@IsOptional()
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@Min(-180)
 	@Max(180)
 	swLng: number
 
-	@IsOptional()
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@Min(-90)
 	@Max(90)
 	neLat: number
 
-	@IsOptional()
 	@Transform(({ value }) => Number(value))
 	@IsNumber()
 	@Min(-180)
 	@Max(180)
 	neLng: number
+
+	@Transform(({ value }) => Number(value))
+	@IsOptional()
+	@IsNumber()
+	@Min(1)
+	@Max(5000)
+	limit?: number
 }

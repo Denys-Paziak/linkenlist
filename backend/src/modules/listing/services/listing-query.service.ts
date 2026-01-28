@@ -1,12 +1,17 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Brackets, Repository } from 'typeorm'
 
+import { EContactInboxStatus } from '../../../interfaces/EContactInboxStatus'
 import { EListingStatus } from '../../../interfaces/EListingStatus'
-import { GetAdminAllListingsDto } from '../dtos/GetAdminAllListings.dto'
+import { ERoleName } from '../../../interfaces/ERoleName'
+import { ITokenUser } from '../../../interfaces/ITokenUser'
+import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
+import { GetAdminAllListingsDto, ListingAdminFilter } from '../dtos/GetAdminAllListings.dto'
 import { ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
+import { GetMapListingsDto } from '../dtos/GetMapListings.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
 import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
@@ -45,7 +50,11 @@ export class ListingQueryService {
 			petFriendly,
 			garage,
 			limit = 16,
-			page = 1
+			page = 1,
+			neLat,
+			neLng,
+			swLat,
+			swLng
 		} = filters
 
 		const cacheKey =
@@ -68,7 +77,7 @@ export class ListingQueryService {
 			`petFriendly:${petFriendly ?? false}|` +
 			`garage:${garage ?? false}`
 
-		if (!keywords) {
+		if (!keywords && !neLat && !neLng && !swLat && !swLng) {
 			const cached = await this.cacheManager.get(cacheKey)
 			if (cached) return cached
 		}
@@ -80,11 +89,6 @@ export class ListingQueryService {
 		const hasKeywords = typeof keywords === 'string' && keywords.trim() !== ''
 		const q = hasKeywords ? keywords.trim() : ''
 
-		/**
-		 * Base QB (тільки listings) — без join photos/base, щоб:
-		 * - не було дублікатів
-		 * - не було DISTINCT по json (b_location)
-		 */
 		const baseQb = this.listingRepository.createQueryBuilder('l')
 
 		// 1) Active + dealType
@@ -168,8 +172,20 @@ export class ListingQueryService {
 			)
 			baseQb.setParameter('q', q)
 		} else {
-			// щоб :q не вимагався ніде
 			baseQb.setParameter('q', '')
+		}
+
+		const hasViewport = Number.isFinite(swLat) && Number.isFinite(swLng) && Number.isFinite(neLat) && Number.isFinite(neLng)
+
+		if (hasViewport) {
+			// geography -> geometry, envelope -> geometry
+			baseQb.andWhere(
+				`l.location IS NOT NULL AND ST_Intersects(
+					l.location::geometry,
+					ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
+				)`,
+				{ swLat, swLng, neLat, neLng }
+			)
 		}
 
 		/**
@@ -226,23 +242,21 @@ export class ListingQueryService {
 
 		if (!ids.length) return [[], total] as const
 
-		/**
-		 * Entities query:
-		 * - тягнемо повні дані з joins
-		 * - порядок відновлюємо через CASE WHEN (бо IN не гарантує порядок)
-		 */
 		const orderCase = `CASE ${ids.map((id, i) => `WHEN l.id = ${id} THEN ${i}`).join(' ')} ELSE ${ids.length} END`
 
-		const entities = await this.listingRepository
+		const qb = this.listingRepository
 			.createQueryBuilder('l')
 			.leftJoinAndSelect('l.photos', 'p')
 			.leftJoinAndSelect('l.nearestBase', 'b')
 			.where('l.id IN (:...ids)', { ids })
 			.orderBy(orderCase, 'ASC')
 			.addOrderBy('p.position', 'ASC')
-			.getMany()
+			.addSelect('ST_Y(l.location::geometry)', 'lat')
+			.addSelect('ST_X(l.location::geometry)', 'lng')
 
-		const items = entities.map(e => ({
+		const { entities, raw } = await qb.getRawAndEntities()
+
+		const items = entities.map((e, i) => ({
 			id: e.id,
 			status: e.status,
 			listPrice: e.listPrice ?? null,
@@ -260,14 +274,173 @@ export class ListingQueryService {
 			slug: e.slug,
 			title: e.title ?? null,
 			photos: e.photos ?? [],
-			nearestBase: e.nearestBase ?? null
+			nearestBase: e.nearestBase ?? null,
+
+			lat: raw[i]?.lat != null ? Number(raw[i].lat) : null,
+			lng: raw[i]?.lng != null ? Number(raw[i].lng) : null
 		}))
 
-		if (!keywords) {
+		if (!keywords && !neLat && !neLng && !swLat && !swLng) {
 			await this.cacheManager.set(cacheKey, [items, total], 60000)
 		}
 
 		return [items, total] as const
+	}
+
+	async getMapListings(filters: GetMapListingsDto) {
+		const {
+			dealType,
+			minPrice,
+			maxPrice,
+			beds,
+			baths,
+			bedsExact,
+			bathsExact,
+			propertyTypes,
+			keywords,
+			minSqft,
+			maxSqft,
+			minYearBuilt,
+			maxYearBuilt,
+			noHoa,
+			petFriendly,
+			garage,
+			swLat,
+			swLng,
+			neLat,
+			neLng,
+			limit = 2000
+		} = filters
+
+		if (swLat >= neLat || swLng >= neLng) {
+			throw new BadRequestException('Invalid viewport bounds')
+		}
+
+		const hasKeywords = typeof keywords === 'string' && keywords.trim() !== ''
+		const q = hasKeywords ? keywords.trim() : ''
+
+		const qb = this.listingRepository.createQueryBuilder('l')
+
+		// 1) active
+		qb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
+
+		// 2) dealType
+		if (dealType) {
+			if (dealType === 'rent') qb.andWhere('l.forRent = true')
+			else qb.andWhere('l.forSale = true')
+		}
+
+		// 3) price
+		const hasMin = typeof minPrice === 'number' && Number.isFinite(minPrice)
+		const hasMax = typeof maxPrice === 'number' && Number.isFinite(maxPrice)
+		const invalidRange = hasMin && hasMax && minPrice! > maxPrice!
+		if (!invalidRange && (hasMin || hasMax)) {
+			const col = dealType === 'rent' ? 'l.monthlyRent' : 'l.listPrice'
+			if (hasMin) qb.andWhere(`${col} >= :minPrice`, { minPrice })
+			if (hasMax) qb.andWhere(`${col} <= :maxPrice`, { maxPrice })
+		}
+
+		// 4) beds/baths
+		if (typeof beds === 'number' && beds > 0) {
+			qb.andWhere(bedsExact ? 'l.bedrooms = :beds' : 'l.bedrooms >= :beds', { beds })
+		}
+		if (typeof baths === 'number' && baths > 0) {
+			const bathsExpr = '(COALESCE(l.bathroomsFull, 0) + COALESCE(l.bathroomsHalf, 0) * 0.5)'
+			qb.andWhere(bathsExact ? `${bathsExpr} = :baths` : `${bathsExpr} >= :baths`, { baths })
+		}
+
+		// 5) property types
+		if (propertyTypes) {
+			qb.andWhere('l.propertyType IN (:...propertyTypes)', {
+				propertyTypes: propertyTypes
+					.split(',')
+					.map(s => s.trim())
+					.filter(Boolean)
+			})
+		}
+
+		// 6) more filters
+		if (typeof minSqft === 'number') qb.andWhere('l.interiorSize >= :minSqft', { minSqft })
+		if (typeof maxSqft === 'number') qb.andWhere('l.interiorSize <= :maxSqft', { maxSqft })
+		if (typeof minYearBuilt === 'number') qb.andWhere('l.yearBuilt >= :minYearBuilt', { minYearBuilt })
+		if (typeof maxYearBuilt === 'number') qb.andWhere('l.yearBuilt <= :maxYearBuilt', { maxYearBuilt })
+		if (noHoa) qb.andWhere('l.hoaPresent = false')
+
+		if (petFriendly) {
+			qb.andWhere(`
+				COALESCE(l.petPolicy, '') <> ''
+				AND l.petPolicy NOT ILIKE '%no pets%'
+			`)
+		}
+
+		if (garage) {
+			qb.andWhere(`
+				COALESCE(l.parkingType, '') <> ''
+				AND l.parkingType NOT ILIKE '%none%'
+			`)
+		}
+
+		// 7) keywords
+		if (hasKeywords) {
+			qb.andWhere(
+				new Brackets(wqb => {
+					wqb.where(`l.search_document @@ plainto_tsquery('english', :q)`).orWhere(
+						`word_similarity(l.title, :q) > 0.10`
+					)
+				})
+			)
+			qb.setParameter('q', q)
+		}
+
+		// 8) viewport filter (ключове)
+		qb.andWhere(
+			`l.location IS NOT NULL AND ST_Intersects(
+				l.location::geometry,
+				ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
+			)`,
+			{ swLat, swLng, neLat, neLng }
+		)
+
+		// 9) select мінімум полів + lat/lng
+		qb.select([
+			'l.id AS "id"',
+			'l.slug AS "slug"',
+			'l.title AS "title"',
+			'l.listPrice AS "listPrice"',
+			'l.monthlyRent AS "monthlyRent"',
+			'l.forRent AS "forRent"',
+			'l.forSale AS "forSale"'
+		])
+			.addSelect('ST_Y(l.location::geometry)', 'lat')
+			.addSelect('ST_X(l.location::geometry)', 'lng')
+			.take(Math.min(Math.max(1, Number(limit) || 2000), 5000))
+
+		const rows = await qb.getRawMany<{
+			id: number
+			slug: string
+			title: string
+			listPrice: string | null
+			monthlyRent: string | null
+			forRent: boolean
+			forSale: boolean
+			lat: string
+			lng: string
+		}>()
+
+		// 10) нормалізувати типи
+		const markers = rows.map(r => ({
+			id: Number(r.id),
+			slug: r.slug,
+			title: r.title,
+			listPrice: r.listPrice != null ? Number(r.listPrice) : null,
+			monthlyRent: r.monthlyRent != null ? Number(r.monthlyRent) : null,
+			forRent: r.forRent,
+			forSale: r.forSale,
+			lat: Number(r.lat),
+			lng: Number(r.lng)
+		}))
+
+		return markers
 	}
 
 	async getOwnerAllListings(userId: number, query: GetOwnerAllListingsDto) {
@@ -329,54 +502,118 @@ export class ListingQueryService {
 		const limit = Math.max(1, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
-		return await this.listingRepository.findAndCount({
-			relations: ['photos', 'owner'],
-			select: {
-				id: true,
-				status: true,
-				listPrice: true,
-				monthlyRent: true,
-				premiumFeatures: true,
-				bedrooms: true,
-				bathroomsFull: true,
-				bathroomsHalf: true,
-				interiorSize: true,
-				street: true,
-				unit: true,
-				zip: true,
-				state: true,
-				city: true,
-				slug: true,
-				package: true,
-				title: true,
-				expiresAt: true,
-				isExpired: true,
-				photos: true,
-				createdAt: true,
-				totalViews: true,
-				owner: {
-					id: true,
-					firstName: true,
-					lastName: true
-				}
-			},
-			skip: offset,
-			take: limit,
-			order: {
-				createdAt: 'DESC'
-			}
-		})
+		const qb = this.listingRepository
+			.createQueryBuilder('listing')
+			.leftJoinAndSelect('listing.photos', 'photos')
+			.leftJoinAndSelect('listing.owner', 'owner')
+
+		if (query.filter === ListingAdminFilter.DRAFT) {
+			qb.andWhere('listing.status = :status', { status: EListingStatus.DRAFT })
+		}
+
+		if (query.filter === ListingAdminFilter.PENDING) {
+			qb.andWhere('listing.status = :status', { status: EListingStatus.PENDING })
+		}
+
+		if (query.filter === ListingAdminFilter.EXPIRING) {
+			qb.andWhere('listing.isExpired = true')
+		}
+
+		if (query.filter === ListingAdminFilter.REPORTED) {
+			qb.innerJoinAndSelect('listing.reports', 'reports', 'reports.status != :resolved', {
+				resolved: EContactInboxStatus.RESOLVED
+			})
+		} else {
+			qb.leftJoinAndSelect('listing.reports', 'reports', 'reports.status != :resolved', {
+				resolved: EContactInboxStatus.RESOLVED
+			})
+		}
+
+		const [items, total] = await qb
+			.skip(offset)
+			.take(limit)
+			.orderBy('listing.createdAt', 'DESC')
+			.select([
+				'listing.id',
+				'listing.status',
+				'listing.listPrice',
+				'listing.monthlyRent',
+				'listing.premiumFeatures',
+				'listing.bedrooms',
+				'listing.bathroomsFull',
+				'listing.bathroomsHalf',
+				'listing.interiorSize',
+				'listing.street',
+				'listing.unit',
+				'listing.zip',
+				'listing.state',
+				'listing.city',
+				'listing.slug',
+				'listing.package',
+				'listing.title',
+				'listing.expiresAt',
+				'listing.isExpired',
+				'listing.createdAt',
+				'listing.totalViews',
+				'photos',
+				'owner.id',
+				'owner.firstName',
+				'owner.lastName',
+				'reports.id',
+				'reports.reportReason'
+			])
+			.getManyAndCount()
+
+		return [items, total]
 	}
 
-	async getOwnerOneListing(userId: number, listingId: number) {
-		const listing = await this.listingRepository
+	async getAdminListingsCounters() {
+		const qb = this.listingRepository.createQueryBuilder('listing')
+
+		const reportedExists = qb
+			.subQuery()
+			.select('1')
+			.from(ContactInbox, 'ci')
+			.where('ci.reportListing = listing.id')
+			.andWhere('ci.status != :resolved')
+			.getQuery()
+
+		const result = await qb
+			.select([
+				`COUNT(*) AS all`,
+				`COUNT(*) FILTER (WHERE listing.status = :draft) AS draft`,
+				`COUNT(*) FILTER (WHERE listing.status = :pending) AS pending`,
+				`COUNT(*) FILTER (WHERE listing.isExpired = true) AS expiring`,
+				`COUNT(*) FILTER (WHERE EXISTS (${reportedExists})) AS reported`
+			])
+			.setParameters({
+				draft: EListingStatus.DRAFT,
+				pending: EListingStatus.PENDING,
+				resolved: EContactInboxStatus.RESOLVED
+			})
+			.getRawOne()
+
+		return {
+			all: Number(result.all),
+			draft: Number(result.draft),
+			pending: Number(result.pending),
+			expiring: Number(result.expiring),
+			reported: Number(result.reported)
+		}
+	}
+
+	async getOwnerOneListing(user: ITokenUser, listingId: number) {
+		const query = this.listingRepository
 			.createQueryBuilder('listing')
-			.leftJoinAndSelect('listing.owner', 'owner')
+			.leftJoin('listing.owner', 'owner')
+			.addSelect('owner.id')
 			.leftJoinAndSelect('listing.photos', 'photo')
 			.where('listing.id = :listingId', { listingId })
-			.andWhere('owner.id = :userId', { userId })
-			.orderBy('photo.position', 'ASC')
-			.getOne()
+		if (user.role === ERoleName.USER) {
+			query.andWhere('owner.id = :userId', { userId: user.id })
+		}
+
+		const listing = query.orderBy('photo.position', 'ASC').getOne()
 
 		if (!listing) throw new NotFoundException('Listing not found.')
 

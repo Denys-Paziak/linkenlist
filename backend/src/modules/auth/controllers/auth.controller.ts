@@ -13,6 +13,7 @@ import { RegistrationDto } from '../dtos/Registration.dto'
 import { ResendConfirmationEmailDto } from '../dtos/ResendConfirmationEmail.dto'
 import { ResetPasswordDto } from '../dtos/ResetPassword.dto'
 import { AuthService } from '../services/auth.service'
+import { ITokenUser } from '../../../interfaces/ITokenUser'
 
 @Controller('auth')
 export class AuthController {
@@ -173,7 +174,7 @@ export class AuthController {
 
 		const data = await this.authService.refreshToken(refresh_token)
 		response.cookie('refresh_token', data.refreshToken, {
-			maxAge: 30 * 24 * 60 * 60,
+			maxAge: data.role === ERoleName.ADMIN ? 24 * 60 * 60 : 30 * 24 * 60 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',

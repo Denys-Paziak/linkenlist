@@ -147,6 +147,27 @@ export function ListingPackages() {
     return <ListingPackagesSkeleton />;
   }
 
+  if (pricesData.error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+        <p className="text-red-600 font-semibold">
+          Unable to load listing packages.
+        </p>
+        <p className="text-sm text-gray-500 max-w-md">
+          We couldn’t retrieve the available listing packages at the moment.
+          Please check your connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => pricesData.mutate()}
+          className="mt-2 inline-flex items-center px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
       {/* Basic Package Card */}
@@ -286,7 +307,9 @@ export function ListingPackages() {
               Premium
             </CardTitle>
             <span className="text-3xl font-bold text-[#002244]">
-              {"$" + pricesData.data?.price.toLocaleString("en-US")}
+              {pricesData.data
+                ? "$" + pricesData.data?.price.toLocaleString("en-US")
+                : "0"}
             </span>
           </div>
         </CardHeader>

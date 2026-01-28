@@ -36,10 +36,10 @@ export class TokenService {
 		await this.tokenRepository.delete({ type: tokenType, user: { id: userId } })
 	}
 
-	async generateRefreshToken(payload: ITokenUser, deleteToken?: string, expiresIn?: string) {
+	async generateRefreshToken(payload: ITokenUser, expiresIn: string, deleteToken?: string) {
 		const token = await this.jwtService.signAsync(payload, {
 			secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET_KEY'),
-			expiresIn: expiresIn || '30d'
+			expiresIn: expiresIn
 		})
 
 		if (deleteToken) {
@@ -62,10 +62,10 @@ export class TokenService {
 		return token
 	}
 
-	generateAccessToken(payload: ITokenUser) {
+	generateAccessToken(payload: ITokenUser, expiresIn: string) {
 		return this.jwtService.signAsync(payload, {
 			secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET_KEY'),
-			expiresIn: '5m'
+			expiresIn: expiresIn
 		})
 	}
 

@@ -12,10 +12,18 @@ import {
 import { Label } from "../../../../../../components/ui/label";
 import { Input } from "../../../../../../components/ui/input";
 import { StatusChip } from "../../../../../../components/ui/status-chip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IRealestateAdminList } from "../../../../../../types/Realestate";
 import { renderAddress } from "../../../../../../components/realestate-card";
 import { ArrowUpDown } from "lucide-react";
+import { daysUntil } from "../../../../../../lib/utils";
+import { fetcherAdmin } from "../../../../../../lib/fetcher";
+import {
+  ButtonSubmit,
+  ButtonSubmitStatus,
+} from "../../../../../../components/ui/button-submit";
+import { mutate } from "swr";
+import { ErrorAlert } from "../../../../../../components/ui/error-alert";
 
 export function ExpirationDialog({
   isShow,
@@ -67,7 +75,54 @@ export function ExpirationDialog({
     setNewExpirationDays((prev) => ({ ...prev, [listingId]: value }));
   };
 
-  const handleExpirationUpdate = () => {};
+  useEffect(() => {
+    setNewExpirationDays(
+      selectedListings.reduce((acc, item) => {
+        if (!item.expiresAt) return acc;
+
+        return { ...acc, [item.id]: daysUntil(item.expiresAt) };
+      }, {}),
+    );
+  }, [selectedListings]);
+
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleExpirationUpdate = async () => {
+    setFormError(null);
+    setStatus("loading");
+    try {
+      await fetcherAdmin("/admin/listings/bulk-adjust-expiration", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          listings: Object.entries(newExpirationDays).map((item) => ({
+            id: Number(item[0]),
+            days: Number(item[1]),
+          })),
+        }),
+      });
+
+      setStatus("success");
+      setNewExpirationDays({});
+      mutate(
+        (key) => typeof key === "string" && key.startsWith("/admin/listings"),
+      );
+    } catch (err: any) {
+      setFormError(err?.message ?? "Reject failed");
+      setStatus("error");
+    }
+  };
+
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(() => setStatus("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   return (
     <Dialog open={isShow} onOpenChange={onClose}>
@@ -100,6 +155,8 @@ export function ExpirationDialog({
         </div>
 
         <div className="space-y-4">
+          {formError ? <ErrorAlert message={formError} /> : null}
+
           {getSortedExpirationListings().map((listing) => (
             <ListingCard
               key={listing.id}
@@ -114,7 +171,19 @@ export function ExpirationDialog({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleExpirationUpdate}>Update Expiration</Button>
+          <ButtonSubmit
+            status={status}
+            statusText={{
+              loading: "Saving...",
+              success: "Saved",
+              error: "Try again",
+            }}
+            disabled={status === "loading"}
+            size="sm"
+            onClick={handleExpirationUpdate}
+          >
+            Update Expiration
+          </ButtonSubmit>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -158,35 +227,38 @@ function ListingCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label
-            htmlFor={`days-${listing.id}`}
-            className="text-xs font-medium text-gray-600"
-          >
-            Days Until Expiration
-          </Label>
-          <Input
-            id={`days-${listing.id}`}
-            type="number"
-            min="0"
-            max="365"
-            value={expirationValue}
-            onChange={(e) =>
-              expirationChange(listing.id, Number(e.target.value))
-            }
-            className="mt-1"
-          />
+      {listing.expiresAt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label
+              htmlFor={`days-${listing.id}`}
+              className="text-xs font-medium text-gray-600"
+            >
+              Days Until Expiration
+            </Label>
+            <Input
+              id={`days-${listing.id}`}
+              type="number"
+              min="0"
+              value={expirationValue}
+              onChange={(e) =>
+                expirationChange(listing.id, Number(e.target.value))
+              }
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-gray-600">
+              Expiration Date
+            </Label>
+            <p className="text-sm mt-1 p-2 bg-gray-50 rounded border">
+              {new Date(listing.expiresAt).toLocaleDateString()}
+            </p>
+          </div>
         </div>
-        <div>
-          <Label className="text-xs font-medium text-gray-600">
-            Expiration Date
-          </Label>
-          <p className="text-sm mt-1 p-2 bg-gray-50 rounded border">
-            {listing.expiresAt?.toLocaleDateString()}
-          </p>
-        </div>
-      </div>
+      ) : (
+        <p>This listing does not yet have an expiration date.</p>
+      )}
     </div>
   );
 }

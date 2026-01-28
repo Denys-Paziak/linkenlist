@@ -23,7 +23,7 @@ export class AuthAdminController {
 		const data = await this.authService.login(dto, ERoleName.ADMIN)
 
 		response.setCookie('refresh_token', data.refreshToken, {
-			maxAge: 30 * 24 * 60 * 1,
+			maxAge: 24 * 60 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',
@@ -48,7 +48,7 @@ export class AuthAdminController {
 		await this.authService.logout(refresh_token)
 
 		response.clearCookie('refresh_token', {
-			maxAge: 30 * 24 * 60 * 1,
+			maxAge: 24 * 60 * 60,
 			httpOnly: true,
 			secure: this.configService.getOrThrow('NODE_ENV') === 'production',
 			sameSite: 'strict',

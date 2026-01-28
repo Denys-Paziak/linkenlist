@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer'
-import { IsInt, Min } from 'class-validator'
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator'
+
+export enum ListingAdminFilter {
+	DRAFT = "draft",
+	PENDING = "pending",
+	REPORTED = "reported",
+	EXPIRING = "expiring",
+	DUBLICATES = "duplicates"
+}
 
 export class GetAdminAllListingsDto {
 	@Type(() => Number)
@@ -11,4 +19,8 @@ export class GetAdminAllListingsDto {
 	@IsInt()
 	@Min(1)
 	page: number
+
+	@IsOptional()
+	@IsEnum(ListingAdminFilter)
+	filter?: ListingAdminFilter
 }

@@ -176,18 +176,6 @@ export function ExpirationDialog({
               </div>
             ) : null}
             <div className="space-y-3">
-              {listing.package === EPackageType.BASIC && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-between p-4 h-auto bg-transparent"
-                  onClick={() => handleExtendListing(EPackageType.BASIC)}
-                  disabled={isBusy}
-                >
-                  <span>Basic: extend 90 days</span>
-                  <span className="font-semibold ">$0</span>
-                </Button>
-              )}
-
               <Button
                 variant="outline"
                 className="w-full justify-between p-4 h-auto bg-transparent"

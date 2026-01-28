@@ -46,6 +46,9 @@ export function Actions({ message }: { message: IContactInbox }) {
       params.set("limit", searchParams.get("limit") || "40");
       const key = `/admin/contact-inbox?${params.toString()}`;
       mutate(key);
+        mutate(
+          (key) => typeof key === "string" && key.startsWith("/admin/listings"),
+        );
     } catch {}
 
     if (status === EContactInboxStatus.OPEN) {

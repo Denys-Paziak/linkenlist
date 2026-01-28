@@ -1,10 +1,7 @@
+'use client'
+
 import {
-  Shield,
-  AlertCircle,
-  Copy,
   Flag,
-  AlertTriangle,
-  Badge,
   Edit,
 } from "lucide-react";
 import { Button } from "../../../../../../components/ui/button";
@@ -26,6 +23,7 @@ import {
   TStatus,
 } from "../../../../../../components/ui/status-chip";
 import { daysUntil } from "../../../../../../lib/utils";
+import Link from "next/link";
 
 export function DetailsDialog({
   isShow,
@@ -42,8 +40,7 @@ export function DetailsDialog({
         <DialogHeader>
           <DialogTitle>Listing Details & Reports</DialogTitle>
           <DialogDescription>
-            Detailed information about this listing including any reports or
-            flags.
+            Detailed information about this listing including any reports.
           </DialogDescription>
         </DialogHeader>
 
@@ -97,7 +94,9 @@ export function DetailsDialog({
               </div>
               <div>
                 <span className="font-medium text-gray-600">Submitted:</span>
-                <p>{selectedListing.createdAt.toLocaleDateString()}</p>
+                <p>
+                  {new Date(selectedListing.createdAt).toLocaleDateString()}
+                </p>
               </div>
               {selectedListing.expiresAt && (
                 <div>
@@ -109,27 +108,10 @@ export function DetailsDialog({
           </div>
 
           {/* Flags and Warnings */}
-          {(selectedListing.freeListingUsed ||
-            selectedListing.ownershipConflict ||
-            selectedListing.duplicateWarning ||
-            selectedListing.flaggedReasons.length > 0) && (
+          {/* {selectedListing.duplicateWarning && (
             <div className="border rounded-lg p-4 space-y-3">
               <h5 className="font-medium text-red-600">Flags & Warnings</h5>
               <div className="space-y-2">
-                {selectedListing.freeListingUsed && (
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm">
-                      Free listing quota already used
-                    </span>
-                  </div>
-                )}
-                {selectedListing.ownershipConflict && (
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <span className="text-sm">Ownership conflict detected</span>
-                  </div>
-                )}
                 {selectedListing.duplicateWarning && (
                   <div className="flex items-center gap-2">
                     <Copy className="h-4 w-4 text-purple-600" />
@@ -138,21 +120,19 @@ export function DetailsDialog({
                 )}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Reported Issues */}
-          {selectedListing.flaggedReasons.length > 0 && (
+          {selectedListing.reports.length > 0 && (
             <div className="border rounded-lg p-4 space-y-3">
               <h5 className="font-medium text-red-600">Reported Issues</h5>
               <div className="space-y-2">
-                {selectedListing.flaggedReasons.map(
-                  (reason: string, index: number) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Flag className="h-4 w-4 text-red-600" />
-                      <span className="text-sm">{reason}</span>
-                    </div>
-                  ),
-                )}
+                {selectedListing.reports.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <Flag className="h-4 w-4 text-red-600" />
+                    <span className="text-sm">{item.reportReason}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -162,10 +142,12 @@ export function DetailsDialog({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={() => handleEditListing(selectedListing?.id)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Listing
-          </Button>
+          <Link href={`/profile/realestate/${selectedListing.id}`}>
+            <Button>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Listing
+            </Button>
+          </Link>
         </DialogFooter>
       </DialogContent>
     </Dialog>

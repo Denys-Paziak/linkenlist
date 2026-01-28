@@ -309,14 +309,12 @@ export class DealQueryService {
 			.where('deal.slug = :slug', { slug: dealSlug })
 			.orderBy('section.position', 'ASC')
 
-		// Перший запит — базовий deal (щоб дізнатись relatedAutoMode)
 		const baseDeal = await qb.getOne()
 
 		if (!baseDeal) {
 			throw new NotFoundException('Deal not found.')
 		}
 
-		// Якщо потрібні relatedManual — додаємо join’и та перезапускаємо запит
 		if (baseDeal.relatedAutoMode === true) {
 			qb.leftJoinAndSelect('deal.relatedManual', 'related')
 				.leftJoinAndSelect('related.target', 'relatedTarget', 'relatedTarget.status = :publishedDeal', {

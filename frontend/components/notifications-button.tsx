@@ -72,8 +72,8 @@ export function NotificationsButton({
             </div>
             <div className="max-h-[20rem] overflow-y-auto">
               {data?.[0].length ? (
-                data?.[0].slice(0, 4).map((item) => (
-                  <div className="px-4 py-3 border-b border-gray-100 hover:bg-secondary cursor-pointer">
+                data?.[0].slice(0, 3).map((item) => (
+                  <div className="px-4 py-3 border-b border-gray-100">
                     <p className="font-medium text-sm text-foreground mb-1">
                       {item.title.length > 70
                         ? `${item.title.substring(0, 70)}...`

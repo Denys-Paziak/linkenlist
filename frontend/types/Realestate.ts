@@ -1,14 +1,10 @@
+import { IContactInbox } from "./ContactInbox";
 import { IUser } from "./User";
 
 export interface IOwnerRealestate {
   id: number;
   package: EPackageType;
-  owner: Pick<IUser, "id" | "avatar" | "createdAt" | "professionalTitle"> & {
-    listings: {
-      forRent: number;
-      forSale: number;
-    };
-  };
+
   firstName?: string | null;
   lastName?: string | null;
   company?: string | null;
@@ -122,6 +118,12 @@ export interface IOwnerRealestate {
 }
 
 export interface IRealestate extends IOwnerRealestate {
+  owner: Pick<IUser, "id" | "avatar" | "createdAt" | "professionalTitle"> & {
+    listings: {
+      forRent: number;
+      forSale: number;
+    };
+  };
   firstName: string;
   lastName: string;
   email: string;
@@ -161,6 +163,20 @@ export interface IRealestateOwnerList {
   expiresAt: string | null;
   isExpired: boolean;
   photos: IListingPhoto[];
+  lat: number | null;
+  lng: number | null;
+}
+
+export interface IRealestateMarkersList {
+  id: number;
+  slug: string;
+  title: string;
+  listPrice: number | null;
+  monthlyRent: number | null;
+  forRent: boolean;
+  forSale: boolean;
+  lat: number;
+  lng: number;
 }
 
 export interface IRealestateAdminList {
@@ -187,6 +203,7 @@ export interface IRealestateAdminList {
   totalViews: number;
   photos: IListingPhoto[];
   owner: Pick<IUser, "id" | "firstName" | "lastName">;
+  reports: Pick<IContactInbox, "id" | "reportReason">[];
 }
 
 export interface IRealestateList {

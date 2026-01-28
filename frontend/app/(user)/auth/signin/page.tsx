@@ -41,7 +41,7 @@ export default function SignInPage() {
         <div className="flex border-b border-gray-300 mb-6">
           <button
             onClick={() => {
-              setTab("login")
+              setTab("login");
               setRegisterSucces(false);
             }}
             className={`flex-1 py-3 font-medium text-sm transition-colors ${
@@ -54,7 +54,7 @@ export default function SignInPage() {
           </button>
           <button
             onClick={() => {
-              setTab("register")
+              setTab("register");
               setRegisterSucces(false);
             }}
             className={`flex-1 py-3 font-medium text-sm transition-colors ${
@@ -72,8 +72,11 @@ export default function SignInPage() {
           {/* OAuth Buttons */}
           {registerSucces ? null : (
             <div className="space-y-3 mb-4">
-              <a
-                href={process.env.NEXT_PUBLIC_API_URL + "/auth/google/login"}
+              <button
+                onClick={() => {
+                  window.location.href =
+                    process.env.NEXT_PUBLIC_API_URL + "/auth/google/login";
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -82,7 +85,7 @@ export default function SignInPage() {
                 <span className="text-foreground font-medium">
                   Continue with Google
                 </span>
-              </a>
+              </button>
             </div>
           )}
 
@@ -101,7 +104,9 @@ export default function SignInPage() {
           {/* Login Form */}
           {tab === "login" ? <LoginFrom token={token} /> : null}
           {/* Registration Form */}
-          {tab === "register" ? <RegisterForm token={token} setRegisterSucces={setRegisterSucces}/> : null}
+          {tab === "register" ? (
+            <RegisterForm token={token} setRegisterSucces={setRegisterSucces} />
+          ) : null}
 
           {/* Additional Links */}
           <div className="mt-4 text-center space-y-3">

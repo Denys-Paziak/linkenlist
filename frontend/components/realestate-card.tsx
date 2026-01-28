@@ -13,6 +13,7 @@ import { useState } from "react";
 import {
   EListingStatus,
   IListingPhoto,
+  IRealestateAdminList,
   IRealestateList,
   IRealestateOwnerList,
 } from "../types/Realestate";
@@ -29,11 +30,13 @@ export function RealestateCard({
   data,
   showStatusBadges = false,
   showPremiumFeatures = false,
+  showFavoriteButton = true,
   isLoading = false,
 }: {
-  data: IRealestateOwnerList | IRealestateList;
+  data: IRealestateOwnerList | IRealestateList | IRealestateAdminList;
   showStatusBadges?: boolean;
   showPremiumFeatures?: boolean;
+  showFavoriteButton?: boolean;
   isLoading?: boolean;
 }) {
   const handleCardClick = async () => {
@@ -101,7 +104,7 @@ export function RealestateCard({
             </div>
           )}
 
-          <FavoriteButton id={data.id} />
+          {showFavoriteButton && <FavoriteButton id={data.id} />}
         </div>
 
         {/* Content Container */}
@@ -307,23 +310,23 @@ export function renderAddress(listing: {
 }) {
   if (listing.unit && listing.street) {
     return (
-      (listing.unit || "") +
+      (listing.unit || "[Not specified]") +
       " " +
-      (listing.street || "") +
+      (listing.street || "[Not specified]") +
       ", " +
-      (listing.city || "") +
+      (listing.city || "[Not specified]") +
       ", " +
-      (listing.state || "") +
+      (listing.state || "[Not specified]") +
       " " +
-      (listing.zip || "")
+      (listing.zip || "[Not specified]")
     );
   }
 
   return (
-    (listing.city || "") +
+    (listing.city || "[Not specified]") +
     ", " +
-    (listing.state || "") +
+    (listing.state || "[Not specified]") +
     " " +
-    (listing.zip || "")
+    (listing.zip || "[Not specified]")
   );
 }

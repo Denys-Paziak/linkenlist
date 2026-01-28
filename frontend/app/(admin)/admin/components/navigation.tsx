@@ -19,7 +19,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Links", href: "/admin/links", icon: LinkIcon },
   { name: "Deals", href: "/admin/deals", icon: Tag },
-  { name: "Real Estate", href: "/admin/real-estate", icon: Building },
+  { name: "Real Estate", href: "/admin/realestate", icon: Building },
   { name: "Resources", href: "/admin/resources", icon: FileText },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Comms & Moderation", href: "/admin/comms", icon: MessageSquare },

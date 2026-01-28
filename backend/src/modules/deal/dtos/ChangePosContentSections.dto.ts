@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer'
 import { IsInt, Min, ValidateNested } from 'class-validator'
 
-class Items {
+class Item {
 	@IsInt()
 	@Min(1)
 	sectionId: number
@@ -13,6 +13,6 @@ class Items {
 
 export class ChangePosContentSectionsDto {
 	@ValidateNested({ each: true })
-	@Type(() => Items)
-	items: Items[]
+	@Type(() => Item)
+	items: Item[]
 }

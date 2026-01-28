@@ -18,6 +18,7 @@ import { ListingCronService } from './services/listing-cron.service'
 import { ListingQueryService } from './services/listing-query.service'
 import { ListingSystemService } from './services/listing-system.service'
 import { NotificationModule } from '../notification/notification.module'
+import { HttpModule } from '@nestjs/axios'
 
 @Module({
 	imports: [
@@ -26,7 +27,8 @@ import { NotificationModule } from '../notification/notification.module'
 		ImageQueueModule,
 		forwardRef(() => StripeModule),
 		ScheduleQueueModule,
-		NotificationModule
+		NotificationModule,
+		HttpModule
 	],
 	controllers: [ListingController, ListingAdminController],
 	providers: [ListingCommandService, ListingQueryService, ListingSystemService, ListingCronService],

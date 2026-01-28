@@ -32,7 +32,8 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
   const [showExpirationDialog, setShowExpirationDialog] =
     useState<boolean>(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
-  const [showDeactivateDialog, setShowDeactivateDialog] = useState<boolean>(false);
+  const [showDeactivateDialog, setShowDeactivateDialog] =
+    useState<boolean>(false);
 
   return (
     <>
@@ -48,7 +49,8 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-white border shadow-lg">
           {data.status !== EListingStatus.ACTIVE &&
-            data.status !== EListingStatus.PENDING && (
+            data.status !== EListingStatus.PENDING &&
+            !data.isExpired && (
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => {
@@ -76,7 +78,7 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
             </Link>
           </DropdownMenuItem>
 
-          {(data.status === EListingStatus.ACTIVE || data.isExpired) && (
+          {data.expiresAt && (
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => setShowExpirationDialog(true)}

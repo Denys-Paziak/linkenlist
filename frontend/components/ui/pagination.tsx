@@ -68,7 +68,7 @@ const PaginationLink = ({
         variant: isActive ? "outline" : "ghost",
         size,
       }),
-      className
+      className,
     )}
     {...props}
   />
@@ -84,7 +84,7 @@ const PaginationPrevious = ({
     size="default"
     className={cn(
       "gap-1 pl-1.5 sm:pl-2.5 cursor-pointer h-9 w-9 sm:w-auto p-0 sm:px-4",
-      className
+      className,
     )}
     {...props}
   >
@@ -103,7 +103,7 @@ const PaginationNext = ({
     size="default"
     className={cn(
       "gap-1 pr-1.5 sm:pr-2.5 cursor-pointer h-9 w-9 sm:w-auto p-0 sm:px-4",
-      className
+      className,
     )}
     {...props}
   >
@@ -121,7 +121,7 @@ const PaginationEllipsis = ({
     aria-hidden
     className={cn(
       "flex h-9 w-7 sm:w-10 items-center justify-center",
-      className
+      className,
     )}
     {...props}
   >
@@ -168,7 +168,7 @@ const PaginationPageSize = ({
             align="end"
             sideOffset={5}
             className={cn(
-              "z-50 min-w-[6rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+              "z-50 min-w-[6rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
             )}
           >
             {options.map((opt) => (
@@ -178,7 +178,7 @@ const PaginationPageSize = ({
                 className={cn(
                   "cursor-pointer select-none rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
                   "focus:bg-accent focus:text-accent-foreground",
-                  value === opt && "bg-accent text-accent-foreground"
+                  value === opt && "bg-accent text-accent-foreground",
                 )}
               >
                 {opt}
@@ -199,6 +199,7 @@ function Pagination({
   totalPages,
   pageSizeOptions = [9, 18, 48, 99],
   className,
+  center = true,
 }: {
   handlePageChange: (page: number) => void;
   handleLimitPageChange?: (limit: number) => void;
@@ -209,6 +210,7 @@ function Pagination({
   totalPages: number;
   pageSizeOptions?: number[];
   className?: string;
+  center?: boolean;
 }) {
   if (!pagination || totalPages <= 0) {
     return null;
@@ -236,7 +238,7 @@ function Pagination({
         totalPages - 3,
         totalPages - 2,
         totalPages - 1,
-        totalPages
+        totalPages,
       );
     } else {
       pages.push(
@@ -246,7 +248,7 @@ function Pagination({
         current,
         current + 1,
         "ellipsis-end",
-        totalPages
+        totalPages,
       );
     }
 
@@ -259,10 +261,11 @@ function Pagination({
     <div
       className={cn(
         "flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-0 items-center justify-center w-full",
-        className
+        center ? "sm:grid-cols-3" : "sm:grid-cols-2",
+        className,
       )}
     >
-      <div className="hidden sm:block"></div>
+      {center && <div className="hidden sm:block"></div>}
       <PaginationContainer className="order-1 sm:order-none">
         <PaginationContent>
           <PaginationItem>

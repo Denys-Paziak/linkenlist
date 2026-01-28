@@ -40,7 +40,8 @@ export interface FormHandle {
 }
 
 export default function EditRealestatePage() {
-  const userStatus = useSWR<IUser>("/users/self");
+  const userStatus = useSWR<IUser>("/users/self");  
+  const adminStatus = useSWR("/admin/users/self");
 
   const router = useRouter();
 
@@ -49,8 +50,10 @@ export default function EditRealestatePage() {
       userStatus.error ||
       (!userStatus.data && !(userStatus.isLoading || userStatus.isValidating))
     ) {
-      router.push("/auth/signin?tab=login");
-      return;
+      if (!adminStatus.data) {
+        router.push("/auth/signin?tab=login");
+        return;
+      }
     }
   }, [userStatus.data, userStatus.error]);
 
@@ -195,7 +198,7 @@ export default function EditRealestatePage() {
 
           <fieldset disabled={isLoading || loadError} className="mb-1">
             <div className="grid grid-cols-1 gap-8 w-full">
-              <div className="max-w-6xl mx-auto p-6 space-y-8 px-0 py-0 pt-8">
+              <div className="max-w-6xl mx-auto p-6 space-y-8 px-0 py-0 pt-8 w-full">
                 {realestate?.status === EListingStatus.ACTIVE &&
                   realestate?.package === EPackageType.BASIC && (
                     <p className="text-gray-600 font-bold">
@@ -206,7 +209,7 @@ export default function EditRealestatePage() {
                 {realestate?.status === EListingStatus.ACTIVE &&
                 realestate?.package === EPackageType.BASIC ? (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
                       <Seller ref={sellerRef} data={realestate} />
                       <Pricing ref={pricingRef} data={realestate} />
                     </div>

@@ -20,6 +20,7 @@ import { SaveListingDto } from '../dtos/SaveListing.dto'
 import { ListingCommandService } from '../services/listing-command.service'
 import { ListingQueryService } from '../services/listing-query.service'
 import { ListingSystemService } from '../services/listing-system.service'
+import { GetMapListingsDto } from '../dtos/GetMapListings.dto'
 
 const IMAGE_MAX_MB = 15
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -41,12 +42,12 @@ export class ListingController {
 		return await this.listingQueryService.getOwnerAllListings(userFromToken.id, query)
 	}
 
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Get('my/:id')
 	async getOwnerOneListing(@Req() request: FastifyRequest, @Param() params: ParamId) {
 		const userFromToken = request.user as ITokenUser
 
-		return await this.listingQueryService.getOwnerOneListing(userFromToken.id, params.id)
+		return await this.listingQueryService.getOwnerOneListing(userFromToken, params.id)
 	}
 
 	@Authorization(ERoleName.USER)
@@ -61,19 +62,19 @@ export class ListingController {
 		}
 	}
 
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Patch(':id')
 	async saveListing(@Req() request: FastifyRequest, @Param() params: ParamId, @Body() dto: SaveListingDto) {
 		const userFromToken = request.user as ITokenUser
 
-		await this.listingCommandService.saveListing(userFromToken.id, params.id, dto)
+		await this.listingCommandService.saveListing(userFromToken, params.id, dto)
 
 		return {
 			ok: true
 		}
 	}
 
-	@Authorization(ERoleName.USER)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
 	@Post(':id/upload-images')
 	@UseInterceptors(
 		MultipartInterceptor({
@@ -90,7 +91,7 @@ export class ListingController {
 		const userFromToken = request.user as ITokenUser
 		const filesArr = Object.values(files)?.[0]
 
-		return await this.listingCommandService.uploadImages(userFromToken.id, params.id, filesArr)
+		return await this.listingCommandService.uploadImages(userFromToken, params.id, filesArr)
 	}
 
 	@Authorization(ERoleName.USER)
@@ -152,6 +153,11 @@ export class ListingController {
 	@Get('')
 	async getAllListings(@Query() query: GetAllListingsDto) {
 		return await this.listingQueryService.getAllListings(query)
+	}
+
+	@Get('map')
+	getMapListings(@Query() dto: GetMapListingsDto) {
+		return this.listingQueryService.getMapListings(dto)
 	}
 
 	@Get(':slug')

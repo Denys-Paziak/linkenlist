@@ -12,11 +12,13 @@ import {
 
 import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { EPackageType } from '../../../interfaces/EPackageType'
+import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
 import { User } from '../../user/entities/User.entity'
 
 import { ListingPhoto } from './ListingPhoto.entity'
 import { MilitaryBase } from './MilitaryBase.entity'
-import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
+
+type GeoPoint = { type: 'Point'; coordinates: [number, number] };
 
 @Entity('listings')
 @Unique(['slug'])
@@ -34,34 +36,34 @@ export class Listing {
 	@ManyToOne(() => User, u => u.listings, { onDelete: 'CASCADE' })
 	owner: User
 	@Column({ name: 'first_name', type: 'varchar', length: 150, nullable: true })
-	firstName?: string | null
+	firstName: string | null
 	@Column({ name: 'last_name', type: 'varchar', length: 150, nullable: true })
-	lastName?: string | null
+	lastName: string | null
 	@Column({ name: 'company', type: 'varchar', length: 255, nullable: true })
-	company?: string | null
+	company: string | null
 	@Column({ name: 'primary_phone', type: 'varchar', length: 20, nullable: true })
-	primaryPhone?: string | null
+	primaryPhone: string | null
 	@Column({ name: 'alternative_phone', type: 'varchar', length: 20, nullable: true })
-	alternativePhone?: string | null
+	alternativePhone: string | null
 	@Column({ name: 'email', type: 'varchar', length: 255, nullable: true })
-	email?: string | null
+	email: string | null
 
 	// Адреса/гео та приватність
 	@Column({ type: 'text', nullable: true })
-	street?: string | null
+	street: string | null
 	@Column({ type: 'boolean', default: false })
 	hideStreet: boolean
 	@Column({ type: 'text', nullable: true })
-	unit?: string | null
+	unit: string | null
 	@Column({ type: 'text', nullable: true })
-	zip?: string | null
+	zip: string | null
 	@Column({ type: 'text', nullable: true })
-	state?: string | null
+	state: string | null
 	@Column({ type: 'text', nullable: true })
-	city?: string | null
+	city: string | null
 	@Index({ spatial: true })
 	@Column({ type: 'geography', spatialFeatureType: 'Point', srid: 4326, nullable: true })
-	location?: any | null
+	location: GeoPoint | null
 
 	// Тип угоди та ціни
 	@Column({ name: 'for_sale', type: 'boolean', default: false })
@@ -69,56 +71,56 @@ export class Listing {
 	@Column({ name: 'for_rent', type: 'boolean', default: false })
 	forRent: boolean
 	@Column({ name: 'list_price', type: 'int', nullable: true })
-	listPrice?: number | null
+	listPrice: number | null
 	@Column({ name: 'monthly_rent', type: 'int', nullable: true })
-	monthlyRent?: number | null
+	monthlyRent: number | null
 	@Column({ name: 'security_deposit', type: 'int', nullable: true })
-	securityDeposit?: number | null
+	securityDeposit: number | null
 	@Column({ name: 'application_fee', type: 'int', nullable: true })
-	applicationFee?: number | null
+	applicationFee: number | null
 	@Column({ name: 'date_available', type: 'date', nullable: true })
-	dateAvailable?: string | null
+	dateAvailable: string | null
 	@Column({ name: 'lease_term', type: 'text', nullable: true })
-	leaseTerm?: string | null
+	leaseTerm: string | null
 	@Column({ name: 'pet_policy', type: 'text', array: true, nullable: true })
-	petPolicy?: string[] | null
+	petPolicy: string[] | null
 
 	// Характеристики нерухомості
 	@Column({ name: 'property_type', type: 'text', nullable: true })
-	propertyType?: string | null
+	propertyType: string | null
 	@Column({ type: 'int', nullable: true })
-	bedrooms?: number | null
+	bedrooms: number | null
 	@Column({ name: 'bathrooms_full', type: 'int', nullable: true })
-	bathroomsFull?: number | null
+	bathroomsFull: number | null
 	@Column({ name: 'bathrooms_half', type: 'int', nullable: true })
-	bathroomsHalf?: number | null
+	bathroomsHalf: number | null
 	@Column({ name: 'interior_size', type: 'int', nullable: true })
-	interiorSize?: number | null
+	interiorSize: number | null
 	@Column({ name: 'year_built', type: 'int', nullable: true })
-	yearBuilt?: number | null
+	yearBuilt: number | null
 	@Column({ type: 'int', nullable: true })
-	stories?: number | null
+	stories: number | null
 	@Column({ name: 'architectural_style', type: 'text', nullable: true })
-	architecturalStyle?: string | null
+	architecturalStyle: string | null
 	// HOA
 	@Column({ type: 'boolean', default: false })
 	hoaPresent: boolean
 	@Column({ name: 'hoa_fee', type: 'int', nullable: true })
-	hoaFee?: number | null
+	hoaFee: number | null
 	@Column({ name: 'hoa_frequency', type: 'enum', enum: ['monthly', 'quarterly', 'annually'], nullable: true })
-	hoaFrequency?: 'monthly' | 'quarterly' | 'annually' | null
+	hoaFrequency: 'monthly' | 'quarterly' | 'annually' | null
 	@Column({ name: 'services_included', type: 'text', array: true, nullable: true })
-	servicesIncluded?: string[] | null
+	servicesIncluded: string[] | null
 
 	// Загальна інформація
 	@Column({ type: 'text', nullable: true })
-	title?: string | null
+	title: string | null
 	@Column({ type: 'text', unique: true, nullable: true })
-	slug?: string | null
+	slug: string | null
 	@Column({ type: 'text', nullable: true })
-	description?: string | null
+	description: string | null
 	@Column({ name: 'virtual_tour_url', type: 'text', nullable: true })
-	virtualTourUrl?: string | null
+	virtualTourUrl: string | null
 	@Column({
 		type: 'tsvector',
 		select: false,
@@ -132,29 +134,29 @@ export class Listing {
 
 	// Amenities
 	@Column({ name: 'subdivision_name', type: 'text', nullable: true })
-	subdivisionName?: string | null
+	subdivisionName: string | null
 	@Column({ name: 'community_features', type: 'text', array: true, nullable: true })
-	communityFeatures?: string[] | null
+	communityFeatures: string[] | null
 
 	// Outdoor Features
 	@Column({ name: 'outdoor_spaces', type: 'text', array: true, nullable: true })
-	outdoorSpaces?: string[] | null
+	outdoorSpaces: string[] | null
 	@Column({ type: 'text', array: true, nullable: true })
-	fencing?: string[] | null
+	fencing: string[] | null
 	@Column({ type: 'text', array: true, nullable: true })
-	view?: string[] | null
+	view: string[] | null
 	@Column({ name: 'parking_type', type: 'text', array: true, nullable: true })
-	parkingType?: string[] | null
+	parkingType: string[] | null
 	@Column({ name: 'lot_features', type: 'text', array: true, nullable: true })
-	lotFeatures?: string[] | null
+	lotFeatures: string[] | null
 	@Column({ name: 'pool_type', type: 'text', nullable: true })
-	poolType?: string | null
+	poolType: string | null
 	@Column({ name: 'garage_spaces', type: 'text', nullable: true })
-	garageSpaces?: string | null
+	garageSpaces: string | null
 	@Column({ name: 'driveway_spaces', type: 'text', nullable: true })
-	drivewaySpaces?: string | null
+	drivewaySpaces: string | null
 	@Column({ name: 'lot_size', type: 'text', nullable: true })
-	lotSize?: string | null
+	lotSize: string | null
 
 	// Indoor Features
 	@Column({ type: 'text', array: true, nullable: true })
@@ -174,43 +176,43 @@ export class Listing {
 
 	// Construction & Legal Records
 	@Column({ type: 'text', array: true, nullable: true })
-	construction?: string[] | null
+	construction: string[] | null
 	@Column({ name: 'new_construction', type: 'boolean', default: false })
 	newConstruction: boolean
 	@Column({ type: 'text', nullable: true })
-	builder?: string | null
+	builder: string | null
 	@Column({ type: 'text', nullable: true })
-	zoning?: string | null
+	zoning: string | null
 	@Column({ name: 'parcel_apn', type: 'text', nullable: true })
-	parcelApn?: string | null
+	parcelApn: string | null
 	@Column({ name: 'ownership_type', type: 'text', nullable: true })
-	ownershipType?: string | null
+	ownershipType: string | null
 	@Column({ name: 'listing_agreement', type: 'text', nullable: true })
-	listingAgreement?: string | null
+	listingAgreement: string | null
 	@Column({ name: 'date_on_market', type: 'text', nullable: true })
-	dateOnMarket?: string | null
+	dateOnMarket: string | null
 
 	// Utilities, Energy & Connectivity
 	@Column({ type: 'text', nullable: true })
-	water?: string | null
+	water: string | null
 	@Column({ type: 'text', nullable: true })
-	sewer?: string | null
+	sewer: string | null
 	@Column({ name: 'utilities_available', type: 'text', array: true, nullable: true })
-	utilitiesAvailable?: string[] | null
+	utilitiesAvailable: string[] | null
 	@Column({ name: 'energy_features', type: 'text', array: true, nullable: true })
-	energyFeatures?: string[] | null
+	energyFeatures: string[] | null
 	@Column({ name: 'download_speed', type: 'text', nullable: true })
-	downloadSpeed?: string | null
+	downloadSpeed: string | null
 	@Column({ name: 'cellular_notes', type: 'text', nullable: true })
-	cellularNotes?: string | null
+	cellularNotes: string | null
 	@Column({ name: 'internet_options', type: 'text', array: true, nullable: true })
-	internetOptions?: string[] | null
+	internetOptions: string[] | null
 	@Column({ name: 'smart_devices', type: 'text', array: true, nullable: true })
-	smartDevices?: string[] | null
+	smartDevices: string[] | null
 
 	// Найближчі бази
 	@ManyToOne(() => MilitaryBase, { nullable: true })
-	nearestBase?: MilitaryBase | null
+	nearestBase: MilitaryBase | null
 
 	// Медіа
 	@OneToMany(() => ListingPhoto, p => p.listing, { cascade: true })
@@ -228,13 +230,16 @@ export class Listing {
 	reports: ContactInbox[]
 
 	@Column({ name: 'published_at', type: 'timestamptz', nullable: true })
-	publishedAt?: Date | null
+	publishedAt: Date | null
 
 	@Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
-	expiresAt?: Date | null
+	expiresAt: Date | null
 
 	@Column({ name: 'is_expired', type: 'boolean', default: false })
 	isExpired: boolean
+
+	@Column({ name: 'rejection_message', type: 'text', nullable: true })
+	rejectionMessage: string | null
 
 	@CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
 	@Index()

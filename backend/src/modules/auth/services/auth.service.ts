@@ -159,14 +159,20 @@ export class AuthService {
 			throw new NotFoundException('No such user found')
 		}
 
-		const refreshToken = await this.tokenService.generateRefreshToken({
-			id: userFromDB.id,
-			role: userFromDB.role
-		})
-		const accessToken = await this.tokenService.generateAccessToken({
-			id: userFromDB.id,
-			role: userFromDB.role
-		})
+		const refreshToken = await this.tokenService.generateRefreshToken(
+			{
+				id: userFromDB.id,
+				role: userFromDB.role
+			},
+			userFromDB.role === ERoleName.ADMIN ? '1d' : '30d'
+		)
+		const accessToken = await this.tokenService.generateAccessToken(
+			{
+				id: userFromDB.id,
+				role: userFromDB.role
+			},
+			'5m'
+		)
 
 		return {
 			accessToken,
@@ -231,14 +237,20 @@ export class AuthService {
 			})
 		}
 
-		const refreshToken = await this.tokenService.generateRefreshToken({
-			id: user.id,
-			role: user.role
-		})
-		const accessToken = await this.tokenService.generateAccessToken({
-			id: user.id,
-			role: user.role
-		})
+		const refreshToken = await this.tokenService.generateRefreshToken(
+			{
+				id: user.id,
+				role: user.role
+			},
+			user.role === ERoleName.ADMIN ? '1d' : '30d'
+		)
+		const accessToken = await this.tokenService.generateAccessToken(
+			{
+				id: user.id,
+				role: user.role
+			},
+			'5m'
+		)
 
 		return {
 			accessToken,
@@ -275,13 +287,15 @@ export class AuthService {
 				id: userFromDB.id,
 				role: userFromDB.role
 			},
-			undefined,
-			role === ERoleName.ADMIN ? '1d' : undefined
+			role === ERoleName.ADMIN ? '1d' : '30d'
 		)
-		const accessToken = await this.tokenService.generateAccessToken({
-			id: userFromDB.id,
-			role: userFromDB.role
-		})
+		const accessToken = await this.tokenService.generateAccessToken(
+			{
+				id: userFromDB.id,
+				role: userFromDB.role
+			},
+			'5m'
+		)
 
 		return {
 			accessToken,
@@ -311,16 +325,21 @@ export class AuthService {
 				id: userFromDB.id,
 				role: userFromDB.role
 			},
+			userFromDB.role === ERoleName.ADMIN ? '1d' : '30d',
 			refresh_token
 		)
-		const accessToken = await this.tokenService.generateAccessToken({
-			id: userFromDB.id,
-			role: userFromDB.role
-		})
+		const accessToken = await this.tokenService.generateAccessToken(
+			{
+				id: userFromDB.id,
+				role: userFromDB.role
+			},
+			'5m'
+		)
 
 		return {
 			accessToken,
-			refreshToken
+			refreshToken,
+			role: userFromDB.role
 		}
 	}
 

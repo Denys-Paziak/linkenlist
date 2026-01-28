@@ -136,7 +136,7 @@ export function FloatingCommentCards({ data }: { data: Record<string, string | u
         return (
           <div
             key={testimonial.id}
-            className="absolute w-[240px] h-[120px] bg-white rounded-2xl shadow-lg border border-gray-100 p-2 transition-all duration-500 ease-out pointer-events-auto hover:shadow-xl hover:scale-105 cursor-pointer"
+            className="absolute w-[240px] h-[120px] bg-white rounded-2xl shadow-lg border border-gray-100 p-2 transition-all duration-500 ease-out pointer-events-auto hover:shadow-xl hover:scale-105"
             style={{
               ...testimonial.position,
               zIndex: testimonial.zIndex,

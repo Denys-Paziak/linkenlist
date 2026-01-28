@@ -50,7 +50,7 @@ export class ListingSystemService {
 				.createQueryBuilder()
 				.update()
 				.set({
-					status,
+					status: EListingStatus.ACTIVE,
 					isExpired: false,
 					expiresAt: () => `GREATEST(NOW(), COALESCE("expires_at", NOW())) + (:days * interval '1 day')`,
 					publishedAt: () =>
