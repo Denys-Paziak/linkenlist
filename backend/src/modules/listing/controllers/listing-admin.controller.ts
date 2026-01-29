@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Patch, Post, Query, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post, Query, Res, UseInterceptors } from '@nestjs/common'
+import type { FastifyReply } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
 import { Files } from '../../../decorators/files.decorator'
@@ -9,6 +10,7 @@ import { MultipartOptions } from '../../../utils/file.util'
 import { BulkAdjustExpirationDto } from '../dtos/BulkAdjustExpiration.dto'
 import { BulkApproveDto } from '../dtos/BulkApprove.dto'
 import { BulkRejectDto } from '../dtos/BulkReject.dto'
+import { ExportListingsDto } from '../dtos/ExportListings.dto'
 import { GetAdminAllListingsDto } from '../dtos/GetAdminAllListings.dto'
 import { InitListingAdminDto } from '../dtos/InitListingAdmin.dto'
 import { ListingCommandService } from '../services/listing-command.service'
@@ -108,5 +110,15 @@ export class ListingAdminController {
 		return {
 			listingId
 		}
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Post('export-csv')
+	async exportListings(@Body() dto: ExportListingsDto, @Res() res: FastifyReply) {
+		const csv = await this.listingQueryService.exportListings(dto)
+
+		res.header('Content-Type', 'text/csv')
+		res.header('Content-Disposition', 'attachment; filename=report.csv')
+		res.send(csv)
 	}
 }

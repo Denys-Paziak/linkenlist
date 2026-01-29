@@ -6,11 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Home,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { Home, AlertCircle, Loader2 } from "lucide-react";
 import { IRealestateAdminList } from "../../../../../types/Realestate";
 import { RealestateCard } from "../../../../../components/realestate-card";
 import { useQueryStateWithLocalStorage } from "../../../../../hooks/use-query-state-with-local-storage";
@@ -115,7 +111,13 @@ export default function RealEstatePage() {
             Review and manage property listings across all military bases
           </p>
         </div>
-        <TopBarActions selectedListings={selectedListings} />
+        <TopBarActions
+          listingsIdsForExport={
+            selectedListingsIds.length
+              ? selectedListingsIds
+              : data?.[0].map((item) => item.id) || []
+          }
+        />
       </div>
 
       {selectedListings.length > 0 && (

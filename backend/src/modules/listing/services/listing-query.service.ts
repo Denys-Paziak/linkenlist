@@ -1,13 +1,14 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Brackets, Repository } from 'typeorm'
+import { Brackets, In, Repository } from 'typeorm'
 
 import { EContactInboxStatus } from '../../../interfaces/EContactInboxStatus'
 import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { ERoleName } from '../../../interfaces/ERoleName'
 import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
+import { ExportListingsDto } from '../dtos/ExportListings.dto'
 import { GetAdminAllListingsDto, ListingAdminFilter } from '../dtos/GetAdminAllListings.dto'
 import { ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
@@ -16,6 +17,7 @@ import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
 import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
 import { BahZipMapping } from '../entities/MHA.entity'
+import { Parser } from 'json2csv'
 
 @Injectable()
 export class ListingQueryService {
@@ -884,5 +886,55 @@ export class ListingQueryService {
 				monthlyAmount: Number(r.monthlyAmount)
 			}))
 		}
+	}
+
+	async exportListings(dto: ExportListingsDto) {
+		const data = await this.listingRepository.find({
+			where: { id: In(dto.listingsIds) },
+			relations: ['owner'],
+			select: {
+				id: true,
+				forRent: true,
+				forSale: true,
+				listPrice: true,
+				monthlyRent: true,
+				createdAt: true,
+				expiresAt: true,
+				owner: {
+					username: true
+				},
+				slug: true,
+				status: true,
+				city: true,
+				state: true,
+				zip: true
+			}
+		})
+
+		const flattenData = data.map(item => {
+			const forRent = item.forRent ? ('rent' as const) : null
+			const forSale = item.forSale ? ('sale' as const) : null
+
+			return {
+				"listing id": item.id,
+				"listing type": forRent && forSale ? ('both' as const) : forRent || forSale,
+				"rent cost": item.monthlyRent,
+				"buy cost": item.listPrice,
+				"date created": item.createdAt,
+				"date expires": item.expiresAt,
+				username: item.owner.username,
+				slug: item.slug,
+				status: item.status,
+				city: item.city,
+				state: item.state,
+				"ZIP code": item.zip
+			}
+		})
+
+		const fields = Object.keys(flattenData[0])
+		const parser = new Parser({ fields })
+		const csv = parser.parse(flattenData)
+
+		return csv
 	}
 }

@@ -205,7 +205,7 @@ export function GoogleMap({
       marker.addListener("gmp-click", () => {
         onMarkerClick(l.id);
       });
-
+      
       markers.set(id, marker);
     }
 

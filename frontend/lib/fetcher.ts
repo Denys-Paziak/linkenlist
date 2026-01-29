@@ -1,9 +1,20 @@
-export async function fetcherAdmin(url: string, options: RequestInit = {}) {
+type ResponseType = "json" | "text" | "blob";
+
+type FetcherOptions = RequestInit & {
+  responseType?: ResponseType;
+};
+
+export async function fetcherAdmin<T = any>(
+  url: string,
+  options: FetcherOptions = {},
+) {
+  const { responseType = "json", ...requestInit } = options;
+
   const config: RequestInit = {
-    ...options,
+    ...requestInit,
     credentials: "include",
     headers: {
-      ...options.headers,
+      ...requestInit.headers,
     },
   };
 
@@ -13,7 +24,6 @@ export async function fetcherAdmin(url: string, options: RequestInit = {}) {
 
   if (response.status === 401) {
     const refreshed = await refreshToken();
-
     if (refreshed) {
       response = await fetch(fullUrl, config);
     } else {
@@ -23,23 +33,36 @@ export async function fetcherAdmin(url: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    let message = `API Error: ${response.status}`;
-    try {
-      const data = await response.json();
+    // помилка часто приходить JSON-ом, але може бути і text
+    let message: any = `API Error: ${response.status}`;
+    const ct = response.headers.get("content-type") || "";
 
-      if (data?.message) {
-        if (Array.isArray(data.message)) {
-          message = data.message;
-        } else if (typeof data.message === "string") {
-          message = data.message;
-        }
+    try {
+      if (ct.includes("application/json")) {
+        const data = await response.json();
+        const m = data?.message;
+        if (Array.isArray(m)) message = m;
+        else if (typeof m === "string") message = m;
+      } else {
+        const text = await response.text();
+        if (text) message = text;
       }
     } catch {}
 
     throw new Error(message);
   }
 
-  return response.json();
+  // успішна відповідь
+  if (responseType === "blob") return (await response.blob()) as any as T;
+  if (responseType === "text") return (await response.text()) as any as T;
+
+  // json за замовчуванням, але підстрахуємось якщо раптом прилетів не json
+  const ct = response.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    return (await response.text()) as any as T;
+  }
+
+  return (await response.json()) as T;
 }
 
 export async function fetcherUser(url: string, options: RequestInit = {}) {
@@ -92,7 +115,7 @@ async function refreshToken() {
       {
         method: "POST",
         credentials: "include",
-      }
+      },
     );
     return response.ok;
   } catch {
