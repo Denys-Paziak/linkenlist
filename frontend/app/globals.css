@@ -522,12 +522,14 @@ body {
 }
 
 .gmk-pill {
+  @apply bg-primary;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 4px 10px;
   border-radius: 9999px;
-  background: #b30d12;
+  
   color: #fff;
   font-weight: 700;
   font-size: 12px;
@@ -540,8 +542,7 @@ body {
 }
 
 .gmk-pill:hover {
-  filter: brightness(1.05);
-  transform: translateY(-3px);
+  background: #b30d12;
 }
 
 .gmk-pill.is-active {
@@ -549,6 +550,7 @@ body {
 }
 
 .gmk-cluster{
-  background: #b30d12;
+  @apply bg-primary;
   border: 2px solid rgba(255,255,255,.25);
+  font-size: 14px;
 }
