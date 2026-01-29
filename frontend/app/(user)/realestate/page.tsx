@@ -76,7 +76,7 @@ export default function RealEstatePage() {
               <RealestateMap mapApiRef={mapApiRef} />
             </div>
 
-            <div className="w-[700px] flex flex-col gap-4">
+            <div className="w-[700px] flex flex-col gap-4 max-md:hidden">
               {viewMode === "map" && (
                 <RealestateList
                   viewMode="map"
@@ -87,7 +87,7 @@ export default function RealEstatePage() {
           </div>
           {viewMode === "grid" && (
             <div
-              className="flex flex-col pt-4 px-4 relative top-0 left-0 w-full z-20 bg-gray-50"
+              className="flex flex-col pt-4 px-4 relative top-0 left-0 w-full z-20 bg-gray-50 justify-between"
               style={{
                 minHeight: `calc(100vh - ${121.6}px)`,
               }}

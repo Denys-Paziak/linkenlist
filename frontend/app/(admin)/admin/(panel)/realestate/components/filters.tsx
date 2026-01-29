@@ -10,6 +10,7 @@ export function Filters() {
     draft: number;
     pending: number;
     expiring: number;
+    duplicates: number;
     reported: number;
   }>("/admin/listings/filter-counters", {
     revalidateOnMount: true,
@@ -39,7 +40,7 @@ export function Filters() {
       </TabsTrigger>
       <TabsTrigger value="duplicates" className="flex items-center gap-2">
         <Copy className="h-4 w-4" />
-        Duplicates ({0})
+        Duplicates ({data?.duplicates || 0})
       </TabsTrigger>
     </TabsList>
   );

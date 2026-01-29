@@ -210,18 +210,25 @@ export class ListingCommandService {
 		return { lat, lng }
 	}
 
-	async initListing(userId: number, dto: InitListingDto) {
-		let location: { lat: number; lng: number } | undefined = undefined
-		if (dto.city && dto.state && dto.zip) {
-			location = await this.geocoding({
-				city: dto.city || undefined,
-				state: dto.state || undefined,
-				street: undefined,
-				unit: undefined,
-				zip: dto.zip || undefined
-			})
-		}
+	private async checkDublicate(lat: number, lng: number) {
+		const exists = await this.listingRepository
+			.createQueryBuilder('e')
+			.select('1')
+			.where(
+				`e.location IS NOT NULL AND ST_DWithin(
+					e.location,
+					ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+					:eps
+				)`,
+				{ lng, lat, eps: 3 }
+			)
+			.limit(1)
+			.getRawOne()
 
+		return !!exists
+	}
+
+	async initListing(userId: number, dto: InitListingDto) {
 		return await this.dataSource.transaction(async manager => {
 			const userRepo = manager.getRepository(User)
 			const listingRepo = manager.getRepository(Listing)
@@ -250,13 +257,7 @@ export class ListingCommandService {
 				lastName: user.lastName,
 				company: user.company,
 				primaryPhone: user.phone,
-				email: user.publicEmail,
-				location: location
-					? {
-							type: 'Point',
-							coordinates: [location.lng, location.lat]
-						}
-					: undefined
+				email: user.publicEmail
 			})
 
 			if (dto.package === EPackageType.BASIC) {
@@ -317,14 +318,17 @@ export class ListingCommandService {
 		}
 
 		let location: { lat: number; lng: number } | undefined = undefined
+		let isPotentialDuplicate: boolean | undefined = undefined
 		if (dto.location) {
 			location = await this.geocoding({
 				city: dto.location.city || undefined,
 				state: dto.location.state || undefined,
-				street: dto.location.hideStreet ? undefined : dto.location.street || undefined,
-				unit: dto.location.hideStreet ? undefined : dto.location.unit || undefined,
+				street: dto.location.street || undefined,
+				unit: dto.location.unit || undefined,
 				zip: dto.location.zip || undefined
 			})
+
+			isPotentialDuplicate = await this.checkDublicate(location?.lat, location?.lng)
 		}
 
 		await this.dataSource.transaction(async manager => {
@@ -413,7 +417,8 @@ export class ListingCommandService {
 							type: 'Point',
 							coordinates: [location.lng, location.lat]
 						}
-					: undefined
+					: undefined,
+				isPotentialDuplicate
 			})
 
 			if (listing.status === EListingStatus.ACTIVE) {

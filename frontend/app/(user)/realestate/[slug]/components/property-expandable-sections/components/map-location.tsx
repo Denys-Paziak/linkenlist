@@ -7,9 +7,13 @@ import {
   CardHeader,
 } from "../../../../../../../components/ui/card";
 import { useState } from "react";
+import { GoogleMapSingleMarker } from "../../../../../../../components/google-map-single-marker";
+import { IRealestate } from "../../../../../../../types/Realestate";
 
-export function MapLocation() {
+export function MapLocation({ listing }: { listing: IRealestate }) {
   const [expandedMap, setExpandedMap] = useState<boolean>(false);
+
+  if (!listing.lat || !listing.lng) return null;
 
   return (
     <Card>
@@ -30,7 +34,17 @@ export function MapLocation() {
       {expandedMap && (
         <CardContent className="p-4">
           <div className="bg-gray-200 h-64 flex items-center justify-center rounded-md">
-            <p className="text-gray-500">Map Placeholder</p>
+            <GoogleMapSingleMarker
+              initialCenter={{
+                lat: listing.lat,
+                lng: listing.lng,
+              }}
+              markerPosition={{
+                lat: listing.lat,
+                lng: listing.lng,
+              }}
+              zoom={13}
+            />
           </div>
         </CardContent>
       )}

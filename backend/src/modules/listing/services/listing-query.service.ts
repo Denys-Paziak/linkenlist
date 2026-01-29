@@ -57,31 +57,6 @@ export class ListingQueryService {
 			swLng
 		} = filters
 
-		const cacheKey =
-			'listings:list|' +
-			`page:${page}|` +
-			`limit:${limit}|` +
-			`dealType:${dealType ?? ''}|` +
-			`minPrice:${minPrice ?? ''}|` +
-			`maxPrice:${maxPrice ?? ''}|` +
-			`beds:${beds ?? ''}|` +
-			`baths:${baths ?? ''}|` +
-			`bedsExact:${bedsExact ?? false}|` +
-			`bathsExact:${bathsExact ?? false}|` +
-			`propertyTypes:${propertyTypes ?? ''}|` +
-			`minSqft:${minSqft ?? ''}|` +
-			`maxSqft:${maxSqft ?? ''}|` +
-			`minYearBuilt:${minYearBuilt ?? ''}|` +
-			`maxYearBuilt:${maxYearBuilt ?? ''}|` +
-			`noHoa:${noHoa ?? false}|` +
-			`petFriendly:${petFriendly ?? false}|` +
-			`garage:${garage ?? false}`
-
-		if (!keywords && !neLat && !neLng && !swLat && !swLng) {
-			const cached = await this.cacheManager.get(cacheKey)
-			if (cached) return cached
-		}
-
 		const safePage = Math.max(1, Number(page) || 1)
 		const safeLimit = Math.min(Math.max(1, Number(limit) || 16), 100)
 		const offset = (safePage - 1) * safeLimit
@@ -247,7 +222,6 @@ export class ListingQueryService {
 		const qb = this.listingRepository
 			.createQueryBuilder('l')
 			.leftJoinAndSelect('l.photos', 'p')
-			.leftJoinAndSelect('l.nearestBase', 'b')
 			.where('l.id IN (:...ids)', { ids })
 			.orderBy(orderCase, 'ASC')
 			.addOrderBy('p.position', 'ASC')
@@ -266,25 +240,46 @@ export class ListingQueryService {
 			bathroomsFull: e.bathroomsFull ?? null,
 			bathroomsHalf: e.bathroomsHalf ?? null,
 			interiorSize: e.interiorSize ?? null,
-			street: e.hideStreet ? null : (e.street ?? null),
-			unit: e.hideStreet ? null : (e.unit ?? null),
+			street: e.street ?? null,
+			unit: e.unit ?? null,
 			zip: e.zip ?? null,
 			state: e.state ?? null,
 			city: e.city ?? null,
 			slug: e.slug,
 			title: e.title ?? null,
 			photos: e.photos ?? [],
-			nearestBase: e.nearestBase ?? null,
 
 			lat: raw[i]?.lat != null ? Number(raw[i].lat) : null,
 			lng: raw[i]?.lng != null ? Number(raw[i].lng) : null
 		}))
 
-		if (!keywords && !neLat && !neLng && !swLat && !swLng) {
-			await this.cacheManager.set(cacheKey, [items, total], 60000)
-		}
-
 		return [items, total] as const
+	}
+
+	async getOneCardListing(listingId: number) {
+		return await this.listingRepository.findOne({
+			where: { id: listingId },
+			relations: ['photos'],
+			select: [
+				'id',
+				'status',
+				'listPrice',
+				'monthlyRent',
+				'premiumFeatures',
+				'bedrooms',
+				'bathroomsFull',
+				'bathroomsHalf',
+				'interiorSize',
+				'street',
+				'unit',
+				'zip',
+				'state',
+				'city',
+				'slug',
+				'title',
+				'photos'
+			]
+		})
 	}
 
 	async getMapListings(filters: GetMapListingsDto) {
@@ -529,6 +524,10 @@ export class ListingQueryService {
 			})
 		}
 
+		if (query.filter === ListingAdminFilter.DUBLICATES) {
+			qb.andWhere('listing.isPotentialDuplicate = true')
+		}
+
 		const [items, total] = await qb
 			.skip(offset)
 			.take(limit)
@@ -584,6 +583,7 @@ export class ListingQueryService {
 				`COUNT(*) FILTER (WHERE listing.status = :draft) AS draft`,
 				`COUNT(*) FILTER (WHERE listing.status = :pending) AS pending`,
 				`COUNT(*) FILTER (WHERE listing.isExpired = true) AS expiring`,
+				`COUNT(*) FILTER (WHERE listing.isPotentialDuplicate = true) AS duplicates`,
 				`COUNT(*) FILTER (WHERE EXISTS (${reportedExists})) AS reported`
 			])
 			.setParameters({
@@ -598,6 +598,7 @@ export class ListingQueryService {
 			draft: Number(result.draft),
 			pending: Number(result.pending),
 			expiring: Number(result.expiring),
+			duplicates: Number(result.duplicates),
 			reported: Number(result.reported)
 		}
 	}
@@ -639,16 +640,20 @@ export class ListingQueryService {
 					activeStatus: EListingStatus.ACTIVE
 				})
 			)
+			.addSelect('ST_Y(listing.location::geometry)', 'lat')
+			.addSelect('ST_X(listing.location::geometry)', 'lng')
 			.orderBy('photo.position', 'ASC')
 
-		const listing = await qb.getOne()
+		const { entities, raw } = await qb.getRawAndEntities()
 
+		const listing = entities[0]
 		if (!listing) throw new NotFoundException('Listing not found.')
+
+		const lat = raw[0]?.lat
+		const lng = raw[0]?.lng
 
 		return {
 			...listing,
-			street: listing.hideStreet ? null : listing.street,
-			unit: listing.hideStreet ? null : listing.unit,
 			owner: {
 				id: listing.owner.id,
 				professionalTitle: listing.owner.professionalTitle,
@@ -660,7 +665,9 @@ export class ListingQueryService {
 				}
 			},
 			expiresAt: null,
-			updatedAt: null
+			updatedAt: null,
+			lat: lat !== null && lat !== undefined ? Number(lat) : null,
+			lng: lng !== null && lng !== undefined ? Number(lng) : null
 		}
 	}
 

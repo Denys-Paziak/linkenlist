@@ -51,8 +51,6 @@ export class Listing {
 	// Адреса/гео та приватність
 	@Column({ type: 'text', nullable: true })
 	street: string | null
-	@Column({ type: 'boolean', default: false })
-	hideStreet: boolean
 	@Column({ type: 'text', nullable: true })
 	unit: string | null
 	@Column({ type: 'text', nullable: true })
@@ -237,6 +235,9 @@ export class Listing {
 
 	@Column({ name: 'is_expired', type: 'boolean', default: false })
 	isExpired: boolean
+
+	@Column({ name: 'is_potential_duplicate', type: 'boolean', default: false })
+	isPotentialDuplicate: boolean
 
 	@Column({ name: 'rejection_message', type: 'text', nullable: true })
 	rejectionMessage: string | null

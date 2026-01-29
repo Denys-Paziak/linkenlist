@@ -29,7 +29,6 @@ export const Location = forwardRef<
     resolver: zodResolver(locationFormSchema),
     values: {
       street: data?.street || "",
-      hideStreet: data?.hideStreet || false,
       unit: data?.unit || "",
       zip: data?.zip || "",
       state: data?.state || "",
@@ -58,7 +57,6 @@ export const Location = forwardRef<
           data: {
             location: {
               street: values.street === "" ? null : values.street,
-              hideStreet: values.hideStreet,
               unit: values.unit === "" ? null : values.unit,
               zip: values.zip === "" ? null : values.zip,
               state: values.state === "" ? null : values.state,
@@ -111,23 +109,6 @@ export const Location = forwardRef<
           error={!!form.formState.errors.unit}
           errorMessage={form.formState.errors.unit?.message}
         />
-
-        <div className="flex items-center space-x-2">
-          <Controller
-            control={form.control}
-            name="hideStreet"
-            render={({ field }) => (
-              <Checkbox
-                id="forSale"
-                checked={!!field.value}
-                onCheckedChange={(checked) => field.onChange(!!checked)}
-              />
-            )}
-          />
-          <Label htmlFor="forSale" className="text-sm font-medium mb-0">
-            Hide Street
-          </Label>
-        </div>
 
         <Input
           placeholder="ZIP code *"

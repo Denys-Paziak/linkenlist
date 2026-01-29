@@ -140,6 +140,8 @@ export interface IRealestate extends IOwnerRealestate {
   title: string;
   description: string;
   publishedAt: string;
+  lat: number | null;
+  lng: number | null;
 }
 
 export interface IRealestateOwnerList {

@@ -2,13 +2,16 @@
 
 import { useCallback, useState } from "react";
 import { GoogleMap } from "../../../../components/google-map";
-import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { IRealestateMarkersList } from "../../../../types/Realestate";
+import {
+  IRealestateMarkersList,
+  IRealestateOwnerList,
+} from "../../../../types/Realestate";
 import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state-with-local-storage";
-import { parseAsInteger } from "nuqs";
+import { parseAsFloat } from "nuqs";
 import { useSearchContext } from "./search-context";
-import { useDebounce } from "use-debounce";
+import { RealestateCard } from "../../../../components/realestate-card";
+import { Loader2 } from "lucide-react";
 
 export function RealestateMap({
   mapApiRef,
@@ -19,25 +22,25 @@ export function RealestateMap({
 
   const [neLat, setNeLat] = useQueryStateWithLocalStorage("/realestate?neLat", {
     defaultValue: null,
-    parse: (v) => parseAsInteger.parse(v),
+    parse: (v) => parseAsFloat.parse(v),
     sync: true,
   });
 
   const [neLng, setNeLng] = useQueryStateWithLocalStorage("/realestate?neLng", {
     defaultValue: null,
-    parse: (v) => parseAsInteger.parse(v),
+    parse: (v) => parseAsFloat.parse(v),
     sync: true,
   });
 
   const [swLat, setSwLat] = useQueryStateWithLocalStorage("/realestate?swLat", {
     defaultValue: null,
-    parse: (v) => parseAsInteger.parse(v),
+    parse: (v) => parseAsFloat.parse(v),
     sync: true,
   });
 
   const [swLng, setSwLng] = useQueryStateWithLocalStorage("/realestate?swLng", {
     defaultValue: null,
-    parse: (v) => parseAsInteger.parse(v),
+    parse: (v) => parseAsFloat.parse(v),
     sync: true,
   });
 
@@ -64,6 +67,12 @@ export function RealestateMap({
     [],
   );
 
+  const [markerListingId, setMarkerListingId] = useState<number | null>(null);
+
+  const onMarkerClick = useCallback((id: number | null) => {
+    setMarkerListingId(id);
+  }, []);
+
   return (
     <div className="flex-1 relative h-full">
       <div className="absolute inset-0 h-full">
@@ -71,8 +80,37 @@ export function RealestateMap({
           mapApiRef={mapApiRef}
           listings={realestate || []}
           onViewportChange={onViewportChange}
+          onMarkerClick={onMarkerClick}
+          priceType={params.get("dealType") as "rent" | "sale"}
         />
+        {markerListingId && <MapListingCard listingId={markerListingId} />}
       </div>
+    </div>
+  );
+}
+
+function MapListingCard({ listingId }: { listingId: number }) {
+  const {
+    data: listing,
+    isLoading,
+    isValidating,
+  } = useSWR<IRealestateOwnerList>(`/listings/list/${listingId}`);
+
+  return (
+    <div className="absolute right-0 top-0 w-[330px] h-[265px] bg-white">
+      {isLoading || isValidating ? (
+        <div className="w-full h-full flex justify-center items-center">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+      ) : listing ? (
+        <RealestateCard key={listing.id} data={listing} showPremiumFeatures />
+      ) : (
+        <div className="text-center py-8 m-3">
+          <p className="text-muted-foreground text-base">
+            No Reale State found
+          </p>
+        </div>
+      )}
     </div>
   );
 }

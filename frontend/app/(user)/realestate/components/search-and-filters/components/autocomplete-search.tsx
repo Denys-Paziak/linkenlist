@@ -79,7 +79,7 @@ export function AutocompleteSearch({
 
   return (
     <div className="flex items-center gap-2 max-md:relative max-md:flex-1">
-      <div className="relative md:w-80 max-md:flex-1">
+      <div className="relative w-0 md:w-80 max-md:flex-1">
         <div ref={hostRef} className="autocomplete-wrapper" />
       </div>
     </div>

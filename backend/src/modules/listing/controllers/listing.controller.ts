@@ -155,6 +155,11 @@ export class ListingController {
 		return await this.listingQueryService.getAllListings(query)
 	}
 
+	@Get('list/:id')
+	async getOneCardListing(@Param() params: ParamId) {
+		return await this.listingQueryService.getOneCardListing(params.id)
+	}
+
 	@Get('map')
 	getMapListings(@Query() dto: GetMapListingsDto) {
 		return this.listingQueryService.getMapListings(dto)

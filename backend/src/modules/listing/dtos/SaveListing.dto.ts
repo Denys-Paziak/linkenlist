@@ -60,10 +60,6 @@ class Location {
 	street?: string | null
 
 	@IsOptional()
-	@IsBoolean()
-	hideStreet: boolean
-
-	@IsOptional()
 	@IsString()
 	unit?: string | null
 

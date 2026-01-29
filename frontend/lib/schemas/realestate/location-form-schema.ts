@@ -13,7 +13,6 @@ const state = z.string();
 
 export const locationFormSchema = z.object({
   street: text255,
-  hideStreet: z.boolean(),
   unit: text150,
   city: text150,
   state,

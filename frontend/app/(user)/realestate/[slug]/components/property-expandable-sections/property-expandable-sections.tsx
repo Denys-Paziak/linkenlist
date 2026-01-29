@@ -24,7 +24,7 @@ export function PropertyExpandableSections({
 
   return (
     <div className="mt-8 space-y-4 ml-1.5 mr-1.5">
-      <MapLocation />
+      <MapLocation listing={listing} />
 
       {/* Video Tour */}
       {listing.virtualTourUrl && (

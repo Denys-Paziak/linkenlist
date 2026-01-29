@@ -83,17 +83,12 @@ export function SearchAndFilters({
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 md:hidden">
         <Button
           onClick={() => onViewModeChange(viewMode === "map" ? "grid" : "map")}
-          className="flex items-center gap-2 px-6 py-3 bg-[#002244] hover:bg-[#002244]/90 text-white rounded-lg shadow-lg border-0 text-sm font-medium"
+          className="flex items-center gap-2 px-6 py-3 bg-[#002244] hover:bg-[#042d57] text-white rounded-lg shadow-lg border-0 text-sm font-medium"
         >
           {viewMode === "map" ? (
             <>
               <LayoutGrid className="w-4 h-4" />
               List
-              {2 > 0 && (
-                <span className="bg-white text-[#002244] text-xs font-bold px-2 py-1 rounded-full ml-1">
-                  {2}
-                </span>
-              )}
             </>
           ) : (
             <>

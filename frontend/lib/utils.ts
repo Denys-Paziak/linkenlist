@@ -204,3 +204,46 @@ export function daysUntil(targetDate: Date | string): number {
 
   return Math.max(0, diffDays)
 }
+
+export function formatCompactNumber(num: number): string {
+  const sign = num < 0 ? "-" : "";
+  let n = Math.abs(num);
+
+  if (!Number.isFinite(n)) return `${num}`;
+
+  const units: Array<{ v: number; s: string }> = [
+    { v: 1_000_000_000, s: "B" },
+    { v: 1_000_000, s: "M" },
+    { v: 1_000, s: "K" },
+  ];
+
+  const trimZeros = (str: string) => str.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+
+  const pickDecimals = (value: number) => {
+    if (value >= 100) return 0;
+    if (value >= 10) return 1;
+    return 2;
+  };
+
+  for (let i = 0; i < units.length; i++) {
+    const { v, s } = units[i];
+    if (n >= v) {
+      let value = n / v;
+
+      const decimals = pickDecimals(value);
+      let out = Number(value.toFixed(decimals));
+
+      if (out >= 1000 && i > 0) {
+        const next = units[i - 1];
+        value = n / next.v;
+        const d2 = pickDecimals(value);
+        out = Number(value.toFixed(d2));
+        return sign + trimZeros(out.toFixed(d2)) + next.s;
+      }
+
+      return sign + trimZeros(out.toFixed(decimals)) + s;
+    }
+  }
+
+  return sign + String(Math.round(n) === n ? n : trimZeros(n.toFixed(2)));
+}

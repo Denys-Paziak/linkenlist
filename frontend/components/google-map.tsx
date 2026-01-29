@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/googleMaps";
+import { IRealestateMarkersList } from "../types/Realestate";
+import { formatCompactNumber } from "../lib/utils";
+
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 function debounce<T extends (...args: any[]) => void>(fn: T, ms: number) {
   let t: any;
@@ -11,57 +15,44 @@ function debounce<T extends (...args: any[]) => void>(fn: T, ms: number) {
   };
 }
 
-const mapStyle: google.maps.MapTypeStyle[] = [
-  {
-    featureType: "poi.business",
-    stylers: [
-      {
-        visibility: "off",
-      },
-    ],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text",
-    stylers: [
-      {
-        visibility: "off",
-      },
-    ],
-  },
-];
-
 type Bounds = { neLat: number; neLng: number; swLat: number; swLng: number };
-
-type ListingMarker = {
-  id: number | string;
-  lat: number;
-  lng: number;
-  title?: string;
-};
 
 export function GoogleMap({
   listings,
   onViewportChange,
+  onMarkerClick,
   mapApiRef,
+  priceType,
 }: {
-  listings: ListingMarker[];
+  listings: IRealestateMarkersList[];
   onViewportChange?: (bounds: Bounds) => void;
-  mapApiRef: React.MutableRefObject<any>;
+  onMarkerClick: (listingId: number | null) => void;
+  mapApiRef: React.MutableRefObject<{
+    fitBounds: (b: google.maps.LatLngBounds) => void;
+    setCenterZoom: (lat: number, lng: number, zoom: number) => void;
+  } | null>;
+  priceType: "sale" | "rent";
 }) {
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+
+  const advCtorRef = useRef<typeof google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new Map());
+
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+
+  const idleListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const [mapReadyTick, setMapReadyTick] = useState(0);
 
   const setBounds = useMemo(
     () =>
-      debounce(async (bounds: Bounds) => {
+      debounce((bounds: Bounds) => {
         onViewportChange?.(bounds);
       }, 700),
-    [],
+    [onViewportChange],
   );
-  
-  // 1) init map
+
+  // 1) init map + clusterer
   useEffect(() => {
     let cancelled = false;
 
@@ -69,15 +60,21 @@ export function GoogleMap({
       const { Map } = await loadGoogleMaps();
       if (cancelled || !divRef.current) return;
 
+      const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+      if (!mapId) throw new Error("Missing NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID");
+
+      const markerLib = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+      advCtorRef.current = markerLib.AdvancedMarkerElement;
+
       const saved = localStorage.getItem("map:last");
       const initial = saved ? JSON.parse(saved) : null;
 
       const map = new Map(divRef.current, {
         center: initial
-          ? { lat: initial.lat, lng: initial.lng }
+          ? { lat: Number(initial.lat), lng: Number(initial.lng) }
           : { lat: 39.8283, lng: -98.5795 },
         zoom: initial?.zoom ?? 12,
-        styles: mapStyle,
+        mapId,
         mapTypeControl: true,
         streetViewControl: false,
         fullscreenControl: false,
@@ -87,34 +84,26 @@ export function GoogleMap({
 
       mapRef.current = map;
 
-      // viewport sync
-      map.addListener("idle", () => {
+      idleListenerRef.current?.remove();
+      idleListenerRef.current = map.addListener("idle", () => {
         const bounds = map.getBounds();
         const center = map.getCenter();
         const zoom = map.getZoom();
-
         if (!bounds || !center || zoom == null) return;
 
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
 
-        setBounds({
-          neLat: ne.lat(),
-          neLng: ne.lng(),
-          swLat: sw.lat(),
-          swLng: sw.lng(),
-        });
+        setBounds({ neLat: ne.lat(), neLng: ne.lng(), swLat: sw.lat(), swLng: sw.lng() });
 
-        const mapState = {
-          lat: center.lat(),
-          lng: center.lng(),
-          zoom,
-        };
+        onMarkerClick(null)
 
-        localStorage.setItem("map:last", JSON.stringify(mapState));
+        localStorage.setItem(
+          "map:last",
+          JSON.stringify({ lat: center.lat(), lng: center.lng(), zoom }),
+        );
       });
 
-      // Places Autocomplete
       mapApiRef.current = {
         fitBounds: (b: google.maps.LatLngBounds) => map.fitBounds(b),
         setCenterZoom: (lat: number, lng: number, zoom: number) => {
@@ -122,51 +111,121 @@ export function GoogleMap({
           map.setZoom(zoom);
         },
       };
+
+      clustererRef.current?.setMap(null);
+      clustererRef.current = new MarkerClusterer({
+        map,
+        markers: [],
+        renderer: {
+          render: ({ count, position }) => {
+            const AdvancedMarkerElement = advCtorRef.current!;
+            return new AdvancedMarkerElement({
+              position,
+              content: createClusterPill(formatCompactNumber(count)),
+              zIndex: 1000 + count,
+            });
+          },
+        },
+      });
+
+      setMapReadyTick((x) => x + 1);
     })();
 
     return () => {
       cancelled = true;
-    };
-  }, [onViewportChange, mapApiRef]);
 
-  // 2) markers update
+      idleListenerRef.current?.remove();
+      idleListenerRef.current = null;
+
+      clustererRef.current?.clearMarkers();
+      clustererRef.current?.setMap(null);
+      clustererRef.current = null;
+
+      for (const m of markersRef.current.values()) m.map = null;
+      markersRef.current.clear();
+
+      mapApiRef.current = null;
+      mapRef.current = null;
+      advCtorRef.current = null;
+    };
+  }, [mapApiRef, setBounds]);
+
+  // 2) markers update + feed clusterer
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    const AdvancedMarkerElement = advCtorRef.current;
+    const clusterer = clustererRef.current;
+    if (!map || !AdvancedMarkerElement || !clusterer) return;
 
     const markers = markersRef.current;
-    const incomingIds = new Set(listings.map((l) => String(l.id)));
 
-    // remove markers that disappeared
+    const cleanListings = listings.filter(
+      (l) => Number.isFinite(Number(l.lat)) && Number.isFinite(Number(l.lng)),
+    );
+
+    const incomingIds = new Set(cleanListings.map((l) => String(l.id)));
+
+    // remove missing
     for (const [id, marker] of markers.entries()) {
       if (!incomingIds.has(id)) {
-        marker.setMap(null);
+        marker.map = null;
         markers.delete(id);
       }
     }
 
-    // add/update markers
-    for (const l of listings) {
+    // add/update
+    for (const l of cleanListings) {
       const id = String(l.id);
       const pos = { lat: Number(l.lat), lng: Number(l.lng) };
 
-      if (markers.has(id)) {
-        markers.get(id)!.setPosition(pos);
-      } else {
-        const marker = new google.maps.Marker({
-          map,
-          position: pos,
-          title: l.title ?? "",
-        });
+      const label =
+        priceType === "sale"
+          ? l.listPrice
+            ? formatCompactNumber(l.listPrice)
+            : "--"
+          : l.monthlyRent
+            ? formatCompactNumber(l.monthlyRent)
+            : "--";
 
-        marker.addListener("click", () => {
-          console.log("marker click", l.id);
-        });
-
-        markers.set(id, marker);
+      const existing = markers.get(id);
+      if (existing) {
+        existing.position = pos;
+        const node = existing.content as HTMLElement | null;
+        if (node) node.textContent = label;
+        continue;
       }
+
+      const marker = new AdvancedMarkerElement({
+        map,
+        position: pos,
+        title: l.title ?? "",
+        content: createPricePill(label),
+      });
+
+      marker.addListener("gmp-click", () => {
+        onMarkerClick(l.id);
+      });
+
+      markers.set(id, marker);
     }
-  }, [listings]);
+
+    clusterer.clearMarkers();
+    clusterer.addMarkers(Array.from(markers.values()));
+  }, [listings, priceType, mapReadyTick]);
 
   return <div ref={divRef} className="w-full h-full" />;
+}
+
+function createPricePill(label: string) {
+  const el = document.createElement("div");
+  el.className = "gmk-pill";
+  el.textContent = label;
+  return el;
+}
+
+function createClusterPill(label: string) {
+  const el = document.createElement("div");
+  el.className = "gmk-pill gmk-cluster";
+  el.textContent = label;
+  return el;
 }
