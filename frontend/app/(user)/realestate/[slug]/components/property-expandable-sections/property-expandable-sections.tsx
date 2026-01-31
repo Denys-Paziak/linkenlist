@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Flag, ExternalLink } from "lucide-react";
 import { IRealestate } from "../../../../../../types/Realestate";
 import { MapLocation } from "./components/map-location";
-import { HomesForYou } from "./components/homes-for-you";
 import { ReportDialog } from "./components/report-dialog";
+import { HomesForYou } from "./components/homes-for-you";
 
 export function PropertyExpandableSections({
   listing,
@@ -52,7 +52,7 @@ export function PropertyExpandableSections({
         </Card>
       )}
 
-      {/* <HomesForYou /> */}
+      <HomesForYou listingId={listing.id}/>
 
       <div className="mt-8 pt-6 border-t border-gray-200">
         <div className="bg-gray-50 rounded-lg p-4 mb-4 flex items-center justify-between">

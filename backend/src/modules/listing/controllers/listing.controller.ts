@@ -197,4 +197,9 @@ export class ListingController {
 			ok: true
 		}
 	}
+
+	@Get(':id/similar')
+	async getSimilarListings(@Param() params: ParamId) {
+		return await this.listingQueryService.getSimilarListings(params.id)
+	}
 }

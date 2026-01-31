@@ -18,6 +18,11 @@ export class StripeController {
 		this.stripe = new Stripe(this.configService.getOrThrow<string>('STRIPE_SECRET_KEY'))
 	}
 
+	@Get('default-price')
+	async getDefaultPrice() {
+		return await this.stripeQueryService.getDefaultPrice()
+	}
+
 	@Get('prices')
 	async getPrices() {
 		return await this.stripeQueryService.getPrices()

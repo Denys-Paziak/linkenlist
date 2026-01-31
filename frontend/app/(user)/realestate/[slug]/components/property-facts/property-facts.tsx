@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { MortgageCalculator } from "./components/mortgage-calculator/mortgage-calculator";
 import { BAHCalculator } from "./components/bah-calculator";
-import { NearbyMilitaryBases } from "./components/nearby-military-bases";
 import { IRealestate } from "../../../../../../types/Realestate";
 import { formatDurationFromMonths } from "../../../../../../lib/utils";
 
@@ -354,8 +353,6 @@ export function PropertyFacts({ listing }: { listing: IRealestate }) {
       {listing.forSale && <MortgageCalculator listing={listing} />}
 
       <BAHCalculator />
-
-      <NearbyMilitaryBases />
     </div>
   );
 }

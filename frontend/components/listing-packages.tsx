@@ -32,8 +32,8 @@ export function ListingPackages() {
     id: string;
     price: number;
     currency: string;
-    name: string;
-  }>("/payments/prices");
+    period: number | null;
+  }>("/payments/default-price");
 
   const router = useRouter();
   const { setShowLoginModal } = useUser();
@@ -285,125 +285,129 @@ export function ListingPackages() {
       </Card>
 
       {/* Premium Package Card */}
-      <Card className="rounded-2xl border-2 border-[#002244] bg-white/70 shadow-sm p-4 md:p-6 h-full flex flex-col relative">
-        <div className="absolute top-3 right-3">
-          <Badge
-            variant="secondary"
-            className="bg-gray-100 text-gray-700 text-xs"
-          >
-            180 days
-          </Badge>
-        </div>
-
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-          <Badge className="bg-[#002244] text-white px-4 py-1">
-            Most Popular
-          </Badge>
-        </div>
-
-        <CardHeader className="text-center pb-4">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Premium
-            </CardTitle>
-            <span className="text-3xl font-bold text-[#002244]">
-              {pricesData.data
-                ? "$" + pricesData.data?.price.toLocaleString("en-US")
-                : "0"}
-            </span>
+      {pricesData.data?.period && (
+        <Card className="rounded-2xl border-2 border-[#002244] bg-white/70 shadow-sm p-4 md:p-6 h-full flex flex-col relative">
+          <div className="absolute top-3 right-3">
+            <Badge
+              variant="secondary"
+              className="bg-gray-100 text-gray-700 text-xs"
+            >
+              {pricesData.data.period} days
+            </Badge>
           </div>
-        </CardHeader>
 
-        <CardContent className="flex flex-col flex-1">
-          {/* Package Features */}
-          <div className="space-y-2 pb-4 border-b border-gray-200 mb-4">
-            <div className="flex items-center gap-3">
-              <Camera className="h-4 w-4 text-[#002244]" />
-              <span className="text-sm">
-                Everything in Basic plus up to 40 photos
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <Badge className="bg-[#002244] text-white px-4 py-1">
+              Most Popular
+            </Badge>
+          </div>
+
+          <CardHeader className="text-center pb-4">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Premium
+              </CardTitle>
+              <span className="text-3xl font-bold text-[#002244]">
+                {pricesData.data
+                  ? "$" + pricesData.data?.price.toLocaleString("en-US")
+                  : "0"}
               </span>
             </div>
-            <div className="flex items-center gap-3">
-              <Star className="h-4 w-4 text-red-500" />
-              <span className="text-sm">
-                Red "Featured" badge on listing cards
-              </span>
-              <Badge className="bg-red-500 text-white text-xs px-2 py-0.5 ml-2">
-                Featured
-              </Badge>
-            </div>
-          </div>
+          </CardHeader>
 
-          {/* Included Features */}
-          <div className="flex-1 mb-4">
-            <ul className="space-y-1.5">
-              <li className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-gray-600">
-                  Listing page with map + nearest base
+          <CardContent className="flex flex-col flex-1">
+            {/* Package Features */}
+            <div className="space-y-2 pb-4 border-b border-gray-200 mb-4">
+              <div className="flex items-center gap-3">
+                <Camera className="h-4 w-4 text-[#002244]" />
+                <span className="text-sm">
+                  Everything in Basic plus up to 40 photos
                 </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-gray-600">
-                  BAH calculator, Unlimited edits
+              </div>
+              <div className="flex items-center gap-3">
+                <Star className="h-4 w-4 text-red-500" />
+                <span className="text-sm">
+                  Red "Featured" badge on listing cards
                 </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-gray-600">
-                  Tags: VA eligible, Assumable loan, PCS-Ready, 3D Tour
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* ZIP Form */}
-          <div className="mt-auto space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="premium-zip" className="text-sm font-medium">
-                Enter ZIP to start
-              </Label>
-
-              <div className="flex gap-2">
-                <div className="w-full relative">
-                  <Input
-                    id="premium-zip"
-                    type="text"
-                    placeholder="12345"
-                    value={premiumZip}
-                    onChange={(e) =>
-                      handleZipChange(e.target.value, EPackageType.PREMIUM)
-                    }
-                  />
-                  {premiumLoading && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <Loader2 className="animate-spin w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-                <ButtonSubmit
-                  onClick={() => handleSubmit(EPackageType.PREMIUM)}
-                  className="bg-[#002244] hover:bg-[#001122] text-white focus:ring-2 focus:ring-[#002244] focus:ring-offset-2 md:px-4"
-                  status={premiumStatus}
-                  statusText={{
-                    loading: "Creation...",
-                    success: "Created",
-                    error: "Try again",
-                    disabled: "Disabled",
-                  }}
-                  disabled={
-                    premiumStatus === "loading" || !premiumZip || premiumLoading
-                  }
-                >
-                  <ArrowRight className="h-4 w-4 md:hidden" />
-                  <span className="hidden md:inline">Start</span>
-                </ButtonSubmit>
+                <Badge className="bg-red-500 text-white text-xs px-2 py-0.5 ml-2">
+                  Featured
+                </Badge>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            {/* Included Features */}
+            <div className="flex-1 mb-4">
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">
+                    Listing page with map + nearest base
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">
+                    BAH calculator, Unlimited edits
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-600">
+                    Tags: VA eligible, Assumable loan, PCS-Ready, 3D Tour
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* ZIP Form */}
+            <div className="mt-auto space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="premium-zip" className="text-sm font-medium">
+                  Enter ZIP to start
+                </Label>
+
+                <div className="flex gap-2">
+                  <div className="w-full relative">
+                    <Input
+                      id="premium-zip"
+                      type="text"
+                      placeholder="12345"
+                      value={premiumZip}
+                      onChange={(e) =>
+                        handleZipChange(e.target.value, EPackageType.PREMIUM)
+                      }
+                    />
+                    {premiumLoading && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <Loader2 className="animate-spin w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <ButtonSubmit
+                    onClick={() => handleSubmit(EPackageType.PREMIUM)}
+                    className="bg-[#002244] hover:bg-[#001122] text-white focus:ring-2 focus:ring-[#002244] focus:ring-offset-2 md:px-4"
+                    status={premiumStatus}
+                    statusText={{
+                      loading: "Creation...",
+                      success: "Created",
+                      error: "Try again",
+                      disabled: "Disabled",
+                    }}
+                    disabled={
+                      premiumStatus === "loading" ||
+                      !premiumZip ||
+                      premiumLoading
+                    }
+                  >
+                    <ArrowRight className="h-4 w-4 md:hidden" />
+                    <span className="hidden md:inline">Start</span>
+                  </ButtonSubmit>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

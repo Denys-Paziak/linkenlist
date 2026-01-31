@@ -12,7 +12,7 @@ export class StripeCommandService {
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly listingSystemService: ListingSystemService,
+		private readonly listingSystemService: ListingSystemService
 	) {
 		this.stripe = new Stripe(this.configService.getOrThrow<string>('STRIPE_SECRET_KEY'))
 	}
@@ -22,10 +22,9 @@ export class StripeCommandService {
 			case 'checkout.session.completed': {
 				const session = event.data.object
 				const sessionMetadata = session.metadata
-
 				if (session.mode === 'payment') {
 					if (session.payment_status === 'paid') {
-						await this.handlePaymentSucceeded(Number(sessionMetadata?.listingId))
+						await this.handlePaymentSucceeded(Number(sessionMetadata?.listingId), Number(sessionMetadata?.period))
 					}
 				}
 				break
@@ -34,13 +33,13 @@ export class StripeCommandService {
 			case 'checkout.session.async_payment_succeeded': {
 				const session = event.data.object
 				const sessionMetadata = session.metadata
-				await this.handlePaymentSucceeded(Number(sessionMetadata?.listingId))
+				await this.handlePaymentSucceeded(Number(sessionMetadata?.listingId), Number(sessionMetadata?.period))
 				break
 			}
 		}
 	}
 
-	private async handlePaymentSucceeded(listingId: number) {
-		await this.listingSystemService.updateListingStatus(listingId, EListingStatus.ACTIVE, EPackageType.PREMIUM)
+	private async handlePaymentSucceeded(listingId: number, period: number) {
+		await this.listingSystemService.updateListingStatus(listingId, EListingStatus.ACTIVE, EPackageType.PREMIUM, period)
 	}
 }

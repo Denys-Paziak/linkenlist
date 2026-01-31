@@ -629,7 +629,7 @@ export class ListingCommandService {
 			}
 		}
 
-		return await this.stripeSystemService.createPaymentCheckout(listingId)
+		return await this.stripeSystemService.createPaymentCheckout(listingId, dto.priceId)
 	}
 
 	async deactivateListing(userId: number, listingId: number) {

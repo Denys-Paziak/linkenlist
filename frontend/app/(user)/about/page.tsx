@@ -1,13 +1,4 @@
-"use client";
-
-import { useEffect } from "react";
-
 export default function AboutPage() {
-  // Auto-scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   return (
     <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8">
       {/* Page Title */}

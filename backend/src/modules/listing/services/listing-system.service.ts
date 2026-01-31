@@ -44,7 +44,7 @@ export class ListingSystemService {
 		await this.listingPhotoRepository.update(id, { status })
 	}
 
-	async updateListingStatus(id: number, status: EListingStatus, listingPackage?: EPackageType) {
+	async updateListingStatus(id: number, status: EListingStatus, listingPackage?: EPackageType, packagePeriod?: number) {
 		if (status === EListingStatus.ACTIVE) {
 			await this.listingRepository
 				.createQueryBuilder()
@@ -59,7 +59,7 @@ export class ListingSystemService {
 						ELSE "published_at" 
 					END`
 				})
-				.setParameters({ days: listingPackage === EPackageType.PREMIUM ? 180 : 90 })
+				.setParameters({ days: listingPackage === EPackageType.PREMIUM ? packagePeriod : 90 })
 				.where('id = :id', { id })
 				.execute()
 		} else {

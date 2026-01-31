@@ -74,6 +74,7 @@ export function GoogleMap({
           ? { lat: Number(initial.lat), lng: Number(initial.lng) }
           : { lat: 39.8283, lng: -98.5795 },
         zoom: initial?.zoom ?? 12,
+        minZoom: 4,
         mapId,
         mapTypeControl: true,
         streetViewControl: false,

@@ -1,13 +1,4 @@
-"use client";
-
-import { useEffect } from "react";
-
 export default function FAQPage() {
-  // Auto-scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   const faqSections = [
     {
       title: "Getting started",

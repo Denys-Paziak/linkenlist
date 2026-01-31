@@ -42,6 +42,7 @@ export function BAHCalculator() {
   const [calculatedBAH, setCalculatedBAH] = useState<{
     withDependents: number;
     withoutDependents: number;
+    MHACode: string;
     search: string;
     paygrade: string;
   } | null>(null);
@@ -51,6 +52,7 @@ export function BAHCalculator() {
 
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
+  const [formWarn, setFormWarn] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -70,7 +72,8 @@ export function BAHCalculator() {
 
   const calculateBAH = async () => {
     setFormError(null);
-
+    setFormWarn(null);
+    setCalculatedBAH(null);
     setStatus("loading");
 
     try {
@@ -84,12 +87,19 @@ export function BAHCalculator() {
 
       if (data.results.length === 0) {
         setStatus("error");
-        setFormError("No BAH rates found for the provided location.");
+        setFormWarn("No BAH rates found for the provided location.");
+      }
+      if (data.results.length > 2) {
+        setStatus("idle");
+        setFormWarn(
+          "We found more than one result. Please enter a more specific address for accurate results.",
+        );
       } else {
         setStatus("success");
         setCalculatedBAH({
           withDependents: data.results[0].monthlyAmount,
           withoutDependents: data.results[1].monthlyAmount,
+          MHACode: data.results[0].mhaCode,
           search: data.search,
           paygrade: data.paygrade,
         });
@@ -202,13 +212,23 @@ export function BAHCalculator() {
           {calculatedBAH && (
             <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
               <div className="space-y-3">
-                <div className="text-center border-b border-gray-200 pb-3">
-                  <p className="text-gray-700 font-medium text-sm">
-                    BAH Rates for
-                  </p>
-                  <p className="text-lg font-bold text-[#002244]">
-                    {calculatedBAH.paygrade} - {calculatedBAH.search}
-                  </p>
+                <div className="text-center border-b border-gray-200 pb-3 flex items-center justify-center gap-10">
+                  <div>
+                    <p className="text-gray-700 font-medium text-sm">
+                      BAH Rates for
+                    </p>
+                    <p className="text-lg font-bold text-[#002244]">
+                      {calculatedBAH.paygrade} - {calculatedBAH.search}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700 font-medium text-sm">
+                      MHA Code
+                    </p>
+                    <p className="text-lg font-bold text-[#002244]">
+                      {calculatedBAH.MHACode}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,6 +250,15 @@ export function BAHCalculator() {
                       /month
                     </p>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {formWarn && (
+            <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="space-y-3">
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xl font-bold text-[#002244]">{formWarn}</p>
                 </div>
               </div>
             </div>

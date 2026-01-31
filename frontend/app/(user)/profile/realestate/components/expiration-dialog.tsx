@@ -29,17 +29,19 @@ export function ExpirationDialog({
   showDialog: boolean;
   handleCancel: () => void;
 }) {
-  const pricesData = useSWR<{
-    id: string;
-    price: number;
-    currency: string;
-    name: string;
-  }>("/payments/prices");
+  const pricesData = useSWR<
+    {
+      id: string;
+      price: number;
+      currency: string;
+      period: number | null;
+    }[]
+  >("/payments/prices");
 
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string | null>(null);
 
-  const handleExtendListing = async (packageType: EPackageType) => {
+  const handleExtendListing = async (priceId: string) => {
     setErrors(null);
     setStatus("loading");
 
@@ -50,9 +52,7 @@ export function ExpirationDialog({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          package: packageType,
-        }),
+        body: JSON.stringify({ priceId }),
       });
 
       if (data.url) {
@@ -60,7 +60,7 @@ export function ExpirationDialog({
       } else {
         handleCancel();
         mutate(
-          (key) => typeof key === "string" && key.startsWith("/listings/my?")
+          (key) => typeof key === "string" && key.startsWith("/listings/my?"),
         );
       }
 
@@ -86,23 +86,29 @@ export function ExpirationDialog({
           badgeClass: "bg-gray-100 text-gray-800",
         }
       : status === "success"
-      ? {
-          text: "Done",
-          Icon: CheckCircle2,
-          badgeClass: "bg-green-100 text-green-800",
-        }
-      : status === "error"
-      ? {
-          text: "Something went wrong",
-          Icon: XCircle,
-          badgeClass: "bg-red-100 text-red-800",
-        }
-      : null;
+        ? {
+            text: "Done",
+            Icon: CheckCircle2,
+            badgeClass: "bg-green-100 text-green-800",
+          }
+        : status === "error"
+          ? {
+              text: "Something went wrong",
+              Icon: XCircle,
+              badgeClass: "bg-red-100 text-red-800",
+            }
+          : null;
 
   const isBusy = status === "loading";
 
   return (
-    <Dialog open={showDialog} onOpenChange={handleCancel}>
+    <Dialog
+      open={showDialog}
+      onOpenChange={() => {
+        handleCancel();
+        setErrors(null);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         {errors ? (
           <div
@@ -176,27 +182,44 @@ export function ExpirationDialog({
               </div>
             ) : null}
             <div className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full justify-between p-4 h-auto bg-transparent"
-                onClick={() => handleExtendListing(EPackageType.PREMIUM)}
-                disabled={!pricesData.data || isBusy}
-              >
-                <span>Premium: extend 180 days</span>
-                <span className="font-semibold ">
-                  {pricesData.data ? (
-                    "$" + pricesData.data.price.toLocaleString("en-US")
-                  ) : (
-                    <span className="text-red-700">Unable to get price.</span>
-                  )}
-                </span>
-              </Button>
+              {pricesData.data?.map((item, i) => {
+                if (!item.period) {
+                  return null;
+                }
+
+                return (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    className="w-full justify-between p-4 h-auto bg-transparent"
+                    onClick={() => handleExtendListing(item.id)}
+                    disabled={!pricesData.data || isBusy}
+                  >
+                    <span>Premium: extend {item.period} days</span>
+                    <span className="font-semibold ">
+                      {pricesData.data ? (
+                        "$" + item.price.toLocaleString("en-US")
+                      ) : (
+                        <span className="text-red-700">
+                          Unable to get price.
+                        </span>
+                      )}
+                    </span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
           {/* Close Button */}
           <div className="flex justify-end">
-            <Button variant="outline" onClick={handleCancel}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                handleCancel();
+                setErrors(null);
+              }}
+            >
               Close
             </Button>
           </div>

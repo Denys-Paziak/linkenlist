@@ -1,11 +1,12 @@
-import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-
+import sgMail from '@sendgrid/mail'
 import { SettingSystemService } from '../setting/services/setting-system.service'
 
 @Injectable()
 export class MailService {
+	private readonly logger = new Logger(MailService.name)
+
 	private PRIMARY = '#2563eb'
 	private PRIMARY_SOFT_BG = '#eff6ff'
 	private BORDER = '#e5e7eb'
@@ -14,38 +15,39 @@ export class MailService {
 	private BG = '#f8fafc'
 	private CARD_BG = '#ffffff'
 
-	private ses: SESClient
-
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly settingSystemService: SettingSystemService
 	) {
-		this.ses = new SESClient({
-			region: this.configService.getOrThrow<string>('AWS_REGION'),
-			credentials: {
-				accessKeyId: this.configService.getOrThrow<string>('SES_ACCESS_KEY'),
-				secretAccessKey: this.configService.getOrThrow<string>('SES_SECRET_KEY')
-			}
-		})
+		const apiKey = this.configService.getOrThrow<string>('SENDGRID_API_KEY')
+		sgMail.setApiKey(apiKey)
 	}
 
 	private async send(to: string, subject: string, html: string) {
 		const from = this.configService.getOrThrow<string>('MAIL_FROM')
 		const replyTo = this.configService.get<string>('MAIL_REPLY_TO')
 
-		const cmd = new SendEmailCommand({
-			Source: from,
-			Destination: { ToAddresses: [to] },
-			ReplyToAddresses: replyTo ? [replyTo] : undefined,
-			Message: {
-				Subject: { Data: subject, Charset: 'UTF-8' },
-				Body: {
-					Html: { Data: html, Charset: 'UTF-8' }
-				}
-			}
-		})
+		try {
+			const [resp] = await sgMail.send({
+				to,
+				from,
+				subject,
+				html,
+				
+			})
 
-		return this.ses.send(cmd)
+			return {
+				statusCode: resp.statusCode,
+				headers: resp.headers
+			}
+		} catch (err: any) {
+			const details = err?.response?.body
+			this.logger.error(
+				`SendGrid send failed: ${err?.message || 'unknown error'}`,
+				details ? JSON.stringify(details) : undefined
+			)
+			throw err
+		}
 	}
 
 	async sendEmailForgotPassword(to: string, token: string, expires: string = '15 min.') {

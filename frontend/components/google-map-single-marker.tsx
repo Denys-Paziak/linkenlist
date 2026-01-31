@@ -37,6 +37,7 @@ export function GoogleMapSingleMarker({
       const map = new Map(divRef.current, {
         center: initialCenter,
         zoom,
+        minZoom: 4,
         mapId,
         mapTypeControl: false,
         streetViewControl: true,

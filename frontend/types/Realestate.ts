@@ -165,8 +165,6 @@ export interface IRealestateOwnerList {
   expiresAt: string | null;
   isExpired: boolean;
   photos: IListingPhoto[];
-  lat: number | null;
-  lng: number | null;
 }
 
 export interface IRealestateMarkersList {

@@ -1,6 +1,6 @@
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { Parser } from 'json2csv'
 import { Brackets, In, Repository } from 'typeorm'
 
 import { EContactInboxStatus } from '../../../interfaces/EContactInboxStatus'
@@ -17,7 +17,6 @@ import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
 import { BahRate } from '../entities/BAH.entity'
 import { Listing } from '../entities/Listing.entity'
 import { BahZipMapping } from '../entities/MHA.entity'
-import { Parser } from 'json2csv'
 
 @Injectable()
 export class ListingQueryService {
@@ -27,9 +26,7 @@ export class ListingQueryService {
 		@InjectRepository(BahRate)
 		private readonly bahRateRepository: Repository<BahRate>,
 		@InjectRepository(BahZipMapping)
-		private readonly bahZipMappingRepository: Repository<BahZipMapping>,
-		@Inject(CACHE_MANAGER)
-		private readonly cacheManager: Cache
+		private readonly bahZipMappingRepository: Repository<BahZipMapping>
 	) {}
 
 	async getAllListings(filters: GetAllListingsDto) {
@@ -174,8 +171,6 @@ export class ListingQueryService {
 
 		/**
 		 * IDs query:
-		 * - select тільки l.id (+ computed score для сортування)
-		 * - жодних join photos/base
 		 */
 		const idsQb = baseQb.clone().select('l.id', 'id').addSelect(relevanceExpr, 'relevance')
 
@@ -227,33 +222,37 @@ export class ListingQueryService {
 			.where('l.id IN (:...ids)', { ids })
 			.orderBy(orderCase, 'ASC')
 			.addOrderBy('p.position', 'ASC')
-			.addSelect('ST_Y(l.location::geometry)', 'lat')
-			.addSelect('ST_X(l.location::geometry)', 'lng')
 
-		const { entities, raw } = await qb.getRawAndEntities()
+		const entities = await qb.getMany()
 
-		const items = entities.map((e, i) => ({
-			id: e.id,
-			status: e.status,
-			listPrice: e.listPrice ?? null,
-			monthlyRent: e.monthlyRent ?? null,
-			premiumFeatures: e.premiumFeatures ?? null,
-			bedrooms: e.bedrooms ?? null,
-			bathroomsFull: e.bathroomsFull ?? null,
-			bathroomsHalf: e.bathroomsHalf ?? null,
-			interiorSize: e.interiorSize ?? null,
-			street: e.street ?? null,
-			unit: e.unit ?? null,
-			zip: e.zip ?? null,
-			state: e.state ?? null,
-			city: e.city ?? null,
-			slug: e.slug,
-			title: e.title ?? null,
-			photos: e.photos ?? [],
+		const items = entities.map(e => {
+			return {
+				id: e.id,
+				status: e.status,
 
-			lat: raw[i]?.lat != null ? Number(raw[i].lat) : null,
-			lng: raw[i]?.lng != null ? Number(raw[i].lng) : null
-		}))
+				listPrice: e.listPrice ?? null,
+				monthlyRent: e.monthlyRent ?? null,
+
+				premiumFeatures: e.premiumFeatures ?? null,
+
+				bedrooms: e.bedrooms ?? null,
+				bathroomsFull: e.bathroomsFull ?? null,
+				bathroomsHalf: e.bathroomsHalf ?? null,
+
+				interiorSize: e.interiorSize ?? null,
+
+				street: e.street ?? null,
+				unit: e.unit ?? null,
+				zip: e.zip ?? null,
+				state: e.state ?? null,
+				city: e.city ?? null,
+
+				slug: e.slug,
+				title: e.title ?? null,
+
+				photos: e.photos ?? []
+			}
+		})
 
 		return [items, total] as const
 	}
@@ -916,18 +915,18 @@ export class ListingQueryService {
 			const forSale = item.forSale ? ('sale' as const) : null
 
 			return {
-				"listing id": item.id,
-				"listing type": forRent && forSale ? ('both' as const) : forRent || forSale,
-				"rent cost": item.monthlyRent,
-				"buy cost": item.listPrice,
-				"date created": item.createdAt,
-				"date expires": item.expiresAt,
+				'listing id': item.id,
+				'listing type': forRent && forSale ? ('both' as const) : forRent || forSale,
+				'rent cost': item.monthlyRent,
+				'buy cost': item.listPrice,
+				'date created': item.createdAt,
+				'date expires': item.expiresAt,
 				username: item.owner.username,
 				slug: item.slug,
 				status: item.status,
 				city: item.city,
 				state: item.state,
-				"ZIP code": item.zip
+				'ZIP code': item.zip
 			}
 		})
 
@@ -936,5 +935,107 @@ export class ListingQueryService {
 		const csv = parser.parse(flattenData)
 
 		return csv
+	}
+
+	async getSimilarListings(listingId: number) {
+		const radiusMeters = 25 * 1609.344
+
+		const src = await this.listingRepository.findOne({
+			where: { id: listingId },
+			select: {
+				id: true,
+				location: true,
+				propertyType: true,
+				forSale: true,
+				forRent: true,
+				listPrice: true,
+				monthlyRent: true
+			} as any
+		})
+
+		if (!src || !src.location || !src.propertyType) {
+			return []
+		}
+
+		const [srcLng, srcLat] = src.location.coordinates
+
+		const dealType = src.forSale ? 'sale' : src.forRent ? 'rent' : null
+		if (!dealType) return []
+
+		const basePrice = dealType === 'sale' ? src.listPrice : src.monthlyRent
+
+		if (!basePrice) return []
+
+		const minPrice = Math.floor(basePrice * 0.85)
+		const maxPrice = Math.floor(basePrice * 1.15)
+
+		const srcGeoExpr = 'ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography'
+
+		const idsQb = this.listingRepository
+			.createQueryBuilder('l')
+			.select('l.id', 'id')
+			.addSelect('ST_Distance(l.location, ' + srcGeoExpr + ')', 'dist')
+			.where('l.id != :id', { id: listingId })
+			.andWhere('l.status = :status', { status: EListingStatus.ACTIVE })
+			.andWhere('l.isExpired = false')
+			.andWhere('l.location IS NOT NULL')
+			.andWhere('l.propertyType = :propertyType', { propertyType: src.propertyType })
+			.andWhere('l.forSale = :forSale', { forSale: src.forSale })
+			.andWhere('l.forRent = :forRent', { forRent: src.forRent })
+			.andWhere(`ST_DWithin(l.location, ${srcGeoExpr}, :radius)`, { radius: radiusMeters })
+			.andWhere(
+				dealType === 'sale'
+					? 'l.listPrice BETWEEN :minPrice AND :maxPrice'
+					: 'l.monthlyRent BETWEEN :minPrice AND :maxPrice',
+				{ minPrice, maxPrice }
+			)
+			.setParameters({ lat: srcLat, lng: srcLng })
+			.orderBy('dist', 'ASC')
+			.take(10)
+
+		const rawIds = await idsQb.getRawMany<{ id: number }>()
+		const ids = rawIds.map(r => Number(r.id)).filter(Number.isFinite)
+		if (!ids.length) return []
+
+		// 2) entities + photos
+		const orderCase = `CASE ${ids.map((id, i) => `WHEN l.id = ${id} THEN ${i}`).join(' ')} ELSE ${ids.length} END`
+
+		const qb = this.listingRepository
+			.createQueryBuilder('l')
+			.leftJoinAndSelect('l.photos', 'p')
+			.where('l.id IN (:...ids)', { ids })
+			.orderBy(orderCase, 'ASC')
+			.addOrderBy('p.position', 'ASC')
+
+		const entities = await qb.getMany()
+
+		return entities.map(e => {
+			return {
+				id: e.id,
+				status: e.status,
+
+				listPrice: e.listPrice ?? null,
+				monthlyRent: e.monthlyRent ?? null,
+
+				premiumFeatures: e.premiumFeatures ?? null,
+
+				bedrooms: e.bedrooms ?? null,
+				bathroomsFull: e.bathroomsFull ?? null,
+				bathroomsHalf: e.bathroomsHalf ?? null,
+
+				interiorSize: e.interiorSize ?? null,
+
+				street: e.street ?? null,
+				unit: e.unit ?? null,
+				zip: e.zip ?? null,
+				state: e.state ?? null,
+				city: e.city ?? null,
+
+				slug: e.slug,
+				title: e.title ?? null,
+
+				photos: e.photos ?? []
+			}
+		})
 	}
 }

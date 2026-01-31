@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.919.0",
-    "@aws-sdk/client-ses": "^3.971.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/multipart": "^9.3.0",
     "@fastify/oauth2": "^8.1.2",
@@ -46,6 +45,7 @@
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.5",
     "class-transformer": "^0.5.1",

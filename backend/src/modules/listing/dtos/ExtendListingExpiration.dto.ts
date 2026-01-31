@@ -1,8 +1,6 @@
-import { IsEnum } from 'class-validator'
-
-import { EPackageType } from '../../../interfaces/EPackageType'
+import { IsString } from 'class-validator'
 
 export class ExtendListingExpirationDto {
-	@IsEnum(EPackageType)
-	package: EPackageType
+	@IsString()
+	priceId: string
 }
