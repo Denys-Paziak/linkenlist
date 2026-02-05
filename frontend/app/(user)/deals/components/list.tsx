@@ -7,7 +7,7 @@ import { Pagination } from "../../../../components/ui/pagination";
 import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state-with-local-storage";
 import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 import { useDebounce } from "use-debounce";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { IDealListExtended } from "../../../../types/Deal";
 import { useEffect, useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
@@ -74,8 +74,19 @@ export function List() {
   if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/deals?${params.toString()}`;
-  const { data, isLoading, error } = useSWR<[IDealListExtended[], number]>(key);
+  const { data, isLoading, error, isValidating } = useSWR<[IDealListExtended[], number]>(key);
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
+
+  const { mutate } = useSWRConfig();
+
+  useEffect(() => {
+    if (showFavoritesOnly) {
+      if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly))
+
+      const keyFavorite = `/deals?${params.toString()}`;
+      mutate(keyFavorite)
+    }
+  }, [showFavoritesOnly])
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -115,18 +126,16 @@ export function List() {
                 const newValue = !showFavoritesOnly;
                 setShowFavoritesOnly(newValue);
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200 ${
-                showFavoritesOnly
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200 ${showFavoritesOnly
+                ? "bg-blue-50 border-blue-200 text-blue-700"
+                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <Star
-                className={`w-4 h-4 ${
-                  showFavoritesOnly
-                    ? "fill-blue-600 text-blue-600"
-                    : "text-gray-400"
-                }`}
+                className={`w-4 h-4 ${showFavoritesOnly
+                  ? "fill-blue-600 text-blue-600"
+                  : "text-gray-400"
+                  }`}
               />
               Saved
             </button>
@@ -187,20 +196,20 @@ export function List() {
               {(debouncedSearch.length >= 2 ||
                 selectedCategory ||
                 showFavoritesOnly) && (
-                <div className="mb-4 px-2">
-                  <p className="text-sm text-muted-foreground">
-                    {data?.[1]} result
-                    {data?.[1] !== 1 ? "s" : ""} found
-                    {selectedCategory && ` in ${selectedCategory}`}
-                    {searchQuery && ` matching "${searchQuery}"`}
-                    {showFavoritesOnly && ` in your favorites`}
-                  </p>
-                </div>
-              )}
+                  <div className="mb-4 px-2">
+                    <p className="text-sm text-muted-foreground">
+                      {data?.[1]} result
+                      {data?.[1] !== 1 ? "s" : ""} found
+                      {selectedCategory && ` in ${selectedCategory}`}
+                      {searchQuery && ` matching "${searchQuery}"`}
+                      {showFavoritesOnly && ` in your favorites`}
+                    </p>
+                  </div>
+                )}
               {data && data[0].length !== 0 ? (
                 <div className="grid-container-deals">
                   {data[0].map((deal) => (
-                    <DealCard key={deal.id} data={deal} isLoading={isLoading} />
+                    <DealCard key={deal.id} data={deal} isLoading={isLoading || isValidating} />
                   ))}
                 </div>
               ) : isLoading ? (

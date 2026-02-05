@@ -25,7 +25,8 @@ export const createListingDetailsSchema = (packageType: PackageType) => {
   return z.object({
     title: z
       .string()
-      .or(z.literal(""))
+      .trim()
+      .min(1, "This field is required. Please fill out this field to continue.")
       .refine((v) => v.length <= 100, {
         message: "Listing title: max 100 characters",
       }),

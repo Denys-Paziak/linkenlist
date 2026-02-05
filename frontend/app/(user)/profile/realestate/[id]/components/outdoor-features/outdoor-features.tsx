@@ -3,7 +3,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import {
-  Controller,
   FormProvider,
   useForm,
   useFormState,
@@ -12,7 +11,6 @@ import { OutdoorSpaces } from "./outdoor-spaces";
 import { Fencing } from "./fencing";
 import { View } from "./view";
 import { ParkingType } from "./parking-type";
-import { Checkbox } from "../../../../../../../components/ui/checkbox";
 import { LotFeatures } from "./lot-features";
 import { AdditionalDetails } from "./additional-details";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,7 +41,7 @@ export const OutdoorFeatures = forwardRef<
     data?: IOwnerRealestate;
   }
 >(function OutdoorFeatures({ data }, ref) {
-  const [expandedSections, setExpandedSections] = useState(false);
+  const [expandedSections, setExpandedSections] = useState(true);
 
   const form = useForm<IOutdoorFeaturesForm>({
     resolver: zodResolver(outdoorFeaturesFormSchema),
@@ -67,12 +65,12 @@ export const OutdoorFeatures = forwardRef<
     ref,
     () => ({
       submit: async () => {
+        const ok = await form.trigger();
+        if (!ok) return { ok: false as const };
+
         if (!isDirty) {
           return { ok: true, changed: false as const, data: undefined };
         }
-
-        const ok = await form.trigger();
-        if (!ok) return { ok: false as const };
 
         const values = form.getValues();
 
@@ -84,7 +82,7 @@ export const OutdoorFeatures = forwardRef<
               outdoorSpaces: [
                 ...values.outdoorSpaces,
                 values.otherOutdoorSpaces &&
-                  "OTHER:::" + values.otherOutdoorSpaces,
+                "OTHER:::" + values.otherOutdoorSpaces,
               ].filter(Boolean),
               poolType: values.poolType === "" ? null : values.poolType,
               fencing: [

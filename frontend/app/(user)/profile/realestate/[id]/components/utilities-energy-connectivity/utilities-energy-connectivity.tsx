@@ -59,12 +59,12 @@ export const UtilitiesEnergyConnectivity = forwardRef<
     ref,
     () => ({
       submit: async () => {
+        const ok = await form.trigger();
+        if (!ok) return { ok: false as const };
+
         if (!isDirty) {
           return { ok: true, changed: false as const, data: undefined };
         }
-
-        const ok = await form.trigger();
-        if (!ok) return { ok: false as const };
 
         const values = form.getValues();
 

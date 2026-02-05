@@ -622,7 +622,7 @@ export class ListingQueryService {
 		return listing
 	}
 
-	async getOneListing(listingSlug: string) {
+	async getOneListing(listingSlug: string, userId?: number) {
 		const qb = this.listingRepository
 			.createQueryBuilder('listing')
 			.leftJoinAndSelect('listing.photos', 'photo')
@@ -630,7 +630,14 @@ export class ListingQueryService {
 			.leftJoinAndSelect('owner.avatar', 'avatar')
 			.leftJoinAndSelect('listing.nearestBase', 'nearestBase')
 			.where('listing.slug = :listingSlug', { listingSlug })
-			.andWhere('listing.status = :status', { status: EListingStatus.ACTIVE })
+			.andWhere(
+				new Brackets(subQb => {
+					subQb.where('listing.status = :status', { status: EListingStatus.ACTIVE })
+					if (userId) {
+						subQb.orWhere('listing.ownerId = :userId', { userId })
+					}
+				})
+			)
 			.loadRelationCountAndMap('owner.forSaleCount', 'owner.listings', 'ol_sale', sub =>
 				sub.andWhere('ol_sale.forSale = true').andWhere('ol_sale.status = :activeStatus', {
 					activeStatus: EListingStatus.ACTIVE
@@ -665,6 +672,8 @@ export class ListingQueryService {
 					forRent: (listing.owner as any).forRentCount ?? 0
 				}
 			},
+			primaryPhone: listing.hideAlternativePhone ? null : listing.primaryPhone,
+			alternativePhone: listing.hideAlternativePhone ? null : listing.alternativePhone,
 			expiresAt: null,
 			updatedAt: null,
 			lat: lat !== null && lat !== undefined ? Number(lat) : null,

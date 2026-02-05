@@ -205,11 +205,11 @@ export function RegisterForm({
             />
             <label htmlFor="terms" className="ml-2 text-sm text-foreground">
               I agree to the{" "}
-              <Link href="./terms" className="text-accent hover:underline">
+              <Link href="../terms" className="text-accent hover:underline">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="./privacy" className="text-accent hover:underline">
+              <Link href="../privacy" className="text-accent hover:underline">
                 Privacy Policy
               </Link>
             </label>
@@ -231,6 +231,7 @@ export function RegisterForm({
           }}
           onClick={handleSubmit}
           className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 transition-colors"
+          disabled={!token}
         >
           Create Account
         </ButtonSubmit>

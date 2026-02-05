@@ -7,9 +7,9 @@ import {
   useWatch,
 } from "react-hook-form";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
 import { APPLIANCES_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IIndoorFeaturesForm } from "./indoor-features";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function Appliances() {
   const { register, control, setValue } = useFormContext<IIndoorFeaturesForm>();
@@ -79,9 +79,8 @@ export function Appliances() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {appliance}
                       </label>

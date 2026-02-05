@@ -1,8 +1,8 @@
 'use client'
 
 import { useFormContext, useFormState, useWatch } from "react-hook-form";
-import { Input } from "../../../../../../../components/ui/input";
 import { IIndoorFeaturesForm } from "./indoor-features";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function SpecialFeatures() {
   const { register, control } = useFormContext<IIndoorFeaturesForm>();

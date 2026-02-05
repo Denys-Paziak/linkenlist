@@ -3,7 +3,6 @@
 import { AlertCircle, Loader2, X } from "lucide-react";
 import { IListingPhoto } from "../../../../../../../../types/Realestate";
 import { Label } from "../../../../../../../../components/ui/label";
-import { Input } from "../../../../../../../../components/ui/input";
 import { ButtonSubmitStatus } from "../../../../../../../../components/ui/button-submit";
 import Image from "next/image";
 import { useSortable } from "@dnd-kit/react/sortable";
@@ -11,6 +10,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { Dispatch, SetStateAction } from "react";
 import { move } from "@dnd-kit/helpers";
 import { Button } from "../../../../../../../../components/ui/button";
+import { Input } from "../../../../../../../../components/ui/input-listing-variant";
 
 export function PhotoPreview({
   status,
@@ -79,7 +79,7 @@ export function PhotoPreview({
                         id={`photo-comment-${index}`}
                         type="text"
                         placeholder="Add a description for this photo..."
-                        onChange={(e) => {}}
+                        onChange={(e) => { }}
                         className="text-sm pr-12"
                         maxLength={200}
                       />
@@ -99,8 +99,8 @@ export function PhotoPreview({
                       <div className="p-2 flex flex-col gap-1 justify-center items-center bg-white rounded-sm">
                         <AlertCircle className="w-14 h-14 text-red-600" />
                         <p className="text-center">The photo could not be uploaded. <br /> Please delete it and try again.</p>
-                        <Button 
-                          variant="destructive"                      
+                        <Button
+                          variant="destructive"
                           onClick={() => {
                             setPlugs(state => state.filter(item => item !== plugUrl))
                           }}
@@ -183,6 +183,7 @@ function Photo({
               placeholder="Add a description for this photo..."
               value={photoData.caption || ""}
               onChange={(e) => {
+                setIsDirty();
                 setPhotos((state) =>
                   state.map((item) => {
                     if (item.id === photoData.id) {

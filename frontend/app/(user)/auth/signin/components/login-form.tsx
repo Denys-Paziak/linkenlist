@@ -112,6 +112,7 @@ export function LoginFrom({ token }: { token: string | null }) {
           }}
           onClick={handleSubmit}
           className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 transition-colors"
+          disabled={!token}
         >
           Sign In
         </ButtonSubmit>

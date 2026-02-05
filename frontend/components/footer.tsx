@@ -89,16 +89,31 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="/auth/signin?tab=login"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Sign In
+                  <Link href="/realestate" className="text-gray-300 hover:text-white transition-colors">
+                    Real Estate
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/links" className="text-gray-300 hover:text-white transition-colors">
+                    Links
                   </Link>
                 </li>
                 <li>
                   <Link href="/deals" className="text-gray-300 hover:text-white transition-colors">
                     Deals
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/resources" className="text-gray-300 hover:text-white transition-colors">
+                    Resources
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/auth/signin?tab=login"
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    Sign In
                   </Link>
                 </li>
               </ul>
@@ -157,7 +172,7 @@ export function Footer() {
           {/* Copyright */}
           <div className="border-t border-gray-700 pt-4 text-center">
             <p className="text-gray-400 text-xs">
-              © 2025 NodEd LLC d/b/a LinkEnlist. All rights reserved. • Images and logos are intellectual property of
+              © 2026 NodEd LLC d/b/a LinkEnlist. All rights reserved. • Images and logos are intellectual property of
               their site owners and do not belong to LinkEnlist.com
             </p>
           </div>

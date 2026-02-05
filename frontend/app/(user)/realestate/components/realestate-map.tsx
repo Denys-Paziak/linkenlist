@@ -49,7 +49,7 @@ export function RealestateMap({
   params.set("neLng", String(neLng));
   params.set("swLat", String(swLat));
   params.set("swLng", String(swLng));
-  const key = `/listings/map?${params.toString()}`;
+  const key = !neLat || !neLng || !swLat || !swLng ? null : `/listings/map?${params.toString()}`;
   const { data: realestate } = useSWR<IRealestateMarkersList[]>(key);
 
   const onViewportChange = useCallback(

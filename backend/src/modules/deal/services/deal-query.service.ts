@@ -83,7 +83,7 @@ export class DealQueryService {
 			`cat:${query.category ?? 'all'}|` +
 			`isFeatured:${query.isFeatured ?? false}`
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			const cached = await this.cacheManager.get<[Deal[], number]>(cacheKey)
 			if (cached) return cached
 		}
@@ -214,7 +214,7 @@ export class DealQueryService {
 		const items = await qb.getMany()
 		const result: [Deal[], number] = [items, Number(cnt?.cnt || 0)]
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			await this.cacheManager.set(cacheKey, result, 60000)
 		}
 

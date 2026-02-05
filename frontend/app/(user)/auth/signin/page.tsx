@@ -150,14 +150,14 @@ export default function SignInPage() {
               By {tab === "register" ? "creating an account" : "signing in"},
               you agree to our{" "}
               <Link
-                href="./privacy"
+                href="../privacy"
                 className="text-foreground hover:text-accent underline"
               >
                 Privacy Policy
               </Link>{" "}
               and{" "}
               <Link
-                href="./terms"
+                href="../terms"
                 className="text-foreground hover:text-accent underline"
               >
                 Terms of Service

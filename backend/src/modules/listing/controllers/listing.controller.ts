@@ -14,13 +14,13 @@ import { MultipartOptions } from '../../../utils/file.util'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
+import { GetMapListingsDto } from '../dtos/GetMapListings.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
 import { InitListingDto } from '../dtos/InitListing.dto'
 import { SaveListingDto } from '../dtos/SaveListing.dto'
 import { ListingCommandService } from '../services/listing-command.service'
 import { ListingQueryService } from '../services/listing-query.service'
 import { ListingSystemService } from '../services/listing-system.service'
-import { GetMapListingsDto } from '../dtos/GetMapListings.dto'
 
 const IMAGE_MAX_MB = 15
 const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024
@@ -165,9 +165,12 @@ export class ListingController {
 		return this.listingQueryService.getMapListings(dto)
 	}
 
+	@OptionalAuthorization()
 	@Get(':slug')
-	async getOneListing(@Param() params: ParamSlug) {
-		return await this.listingQueryService.getOneListing(params.slug)
+	async getOneListing(@Req() request: FastifyRequest, @Param() params: ParamSlug) {
+		const userFromToken = request.user as ITokenUser | undefined
+
+		return await this.listingQueryService.getOneListing(params.slug, userFromToken?.id)
 	}
 
 	@Get('bah-rates')

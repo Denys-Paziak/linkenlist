@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import sgMail from '@sendgrid/mail'
+
 import { SettingSystemService } from '../setting/services/setting-system.service'
 
 @Injectable()
@@ -30,10 +31,12 @@ export class MailService {
 		try {
 			const [resp] = await sgMail.send({
 				to,
-				from,
+				from: {
+					email: from,
+					name: 'LinkEnlist'
+				},
 				subject,
-				html,
-				
+				html
 			})
 
 			return {

@@ -1,34 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  ButtonSubmit,
-  ButtonSubmitStatus,
-} from "../../../../../components/ui/button-submit";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../../../../components/ui/dialog";
-import { Button } from "../../../../../components/ui/button";
-import { fetcherUser } from "../../../../../lib/fetcher";
-import {
-  EPackageType,
-  IRealestateOwnerList,
-} from "../../../../../types/Realestate";
+import { useState, useEffect } from "react";
 import { mutate } from "swr";
+import { Button } from "../../../../../../components/ui/button";
+import { ButtonSubmitStatus, ButtonSubmit } from "../../../../../../components/ui/button-submit";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../../../../../components/ui/dialog";
+import { fetcherUser } from "../../../../../../lib/fetcher";
+import { IRealestateOwnerList, EPackageType } from "../../../../../../types/Realestate";
 
 export function PublishDialog({
   listing,
   showDialog,
   handleCancel,
+  isSaved
 }: {
   listing: Pick<IRealestateOwnerList, "id" | "package" | "expiresAt" | "isExpired">;
   showDialog: boolean;
   handleCancel: () => void;
+  isSaved: boolean
 }) {
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string | null>(null);
@@ -94,6 +83,13 @@ export function PublishDialog({
               The announcement will be published after successful payment.
             </DialogDescription>
           )}
+          {
+            isSaved
+              ? null
+              : <DialogDescription>
+                Save your changes before publishing.
+              </DialogDescription>
+          }
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleCancel()}>
@@ -111,7 +107,7 @@ export function PublishDialog({
             onClick={() => {
               handleSubmit();
             }}
-            disabled={status === "loading"}
+            disabled={status === "loading" || !isSaved}
           >
             Publish
           </ButtonSubmit>

@@ -15,19 +15,23 @@ import {
   EListingStatus,
   EPackageType,
   IOwnerRealestate,
+  IRealestateOwnerList,
 } from "../../../../../types/Realestate";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import {
   ButtonSubmitStatus,
   ButtonSubmit,
 } from "../../../../../components/ui/button-submit";
 import { ErrorAlert } from "../../../../../components/ui/error-alert";
-import { capitalize } from "../../../../../lib/utils";
+import { capitalize, cn } from "../../../../../lib/utils";
 import { Media } from "./components/media/media";
 import { Pricing } from "./components/pricing/pricing";
 import { Property } from "./components/property/property";
 import { IUser } from "../../../../../types/User";
+import { Button } from "../../../../../components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { PublishDialog } from "./components/publish-dialog";
 
 export interface FormHandle {
   submit: () => Promise<
@@ -40,10 +44,12 @@ export interface FormHandle {
 }
 
 export default function EditRealestatePage() {
-  const userStatus = useSWR<IUser>("/users/self");  
+  const userStatus = useSWR<IUser>("/users/self");
   const adminStatus = useSWR("/admin/users/self");
 
   const router = useRouter();
+  const searchParams = useSearchParams()
+  const step = searchParams.get("step")
 
   useEffect(() => {
     if (
@@ -62,6 +68,7 @@ export default function EditRealestatePage() {
   const {
     data: realestate,
     isLoading,
+    isValidating,
     error: loadError,
   } = useSWR<IOwnerRealestate>("/listings/my/" + id);
 
@@ -81,7 +88,14 @@ export default function EditRealestatePage() {
   const mediaRef = useRef<FormHandle>(null);
 
   const getFormsData = async () => {
-    const formsResults = await Promise.all([
+    const formsResults = await Promise.all(!step ? [
+      sellerRef.current?.submit(),
+      locationRef.current?.submit(),
+      pricingRef.current?.submit(),
+      propertyRef.current?.submit(),
+      listingDetailsRef.current?.submit(),
+      amenitiesRef.current?.submit(),
+    ] : [
       sellerRef.current?.submit(),
       locationRef.current?.submit(),
       pricingRef.current?.submit(),
@@ -98,14 +112,12 @@ export default function EditRealestatePage() {
     let formsData = {};
 
     for (const res of formsResults) {
-      if (!res) {
-        throw new Error("One of forms is not mounted");
-      }
+      if (!res) continue
 
       if (!res.ok) {
         setSaveStatus("error");
         setFormError("Please fix the errors below.");
-        return;
+        return
       }
 
       if (res.changed) {
@@ -124,7 +136,18 @@ export default function EditRealestatePage() {
     setSaveStatus("loading");
 
     const formsData = await getFormsData();
-    if (!formsData) return;
+
+    if (formsData === undefined) {
+      return
+    }
+
+    if (Object.keys(formsData).length === 0) {
+      if (!step) {
+        setSaveStatus("idle");
+        router.push(`/profile/realestate/${id}?step=2`)
+      }
+      return
+    };
 
     try {
       await fetcherUser(`/listings/${id}`, {
@@ -136,19 +159,36 @@ export default function EditRealestatePage() {
         body: JSON.stringify(formsData),
       });
 
-      setSaveStatus("success");
+      if (!step) {
+        setSaveStatus("idle");
+      } else {
+        setSaveStatus("success");
+      }
 
-      sellerRef.current?.resetDirty()
-      locationRef.current?.resetDirty()
-      pricingRef.current?.resetDirty()
-      propertyRef.current?.resetDirty()
-      listingDetailsRef.current?.resetDirty()
-      amenitiesRef.current?.resetDirty()
-      outdoorFeaturesRef.current?.resetDirty()
-      indoorFeaturesRef.current?.resetDirty()
-      constructionAndLegalRecordsRef.current?.resetDirty()
-      utilitiesEnergyConnectivityRef.current?.resetDirty()
-      mediaRef.current?.resetDirty()
+      if (!step) {
+        sellerRef.current?.resetDirty()
+        locationRef.current?.resetDirty()
+        pricingRef.current?.resetDirty()
+        propertyRef.current?.resetDirty()
+        listingDetailsRef.current?.resetDirty()
+        amenitiesRef.current?.resetDirty()
+      } else {
+        sellerRef.current?.resetDirty()
+        locationRef.current?.resetDirty()
+        pricingRef.current?.resetDirty()
+        propertyRef.current?.resetDirty()
+        listingDetailsRef.current?.resetDirty()
+        amenitiesRef.current?.resetDirty()
+        outdoorFeaturesRef.current?.resetDirty()
+        indoorFeaturesRef.current?.resetDirty()
+        constructionAndLegalRecordsRef.current?.resetDirty()
+        utilitiesEnergyConnectivityRef.current?.resetDirty()
+        mediaRef.current?.resetDirty()
+      }
+
+      if (!step) {
+        router.push(`/profile/realestate/${id}?step=2`)
+      }
     } catch (err: any) {
       setFormError(err?.message ?? "Unable to save the listing.");
       setSaveStatus("error");
@@ -157,17 +197,26 @@ export default function EditRealestatePage() {
           .replace("Missing fields:", "")
           .split(",");
 
-        sellerRef.current?.setError?.(fields);
-        locationRef.current?.setError?.(fields);
-        pricingRef.current?.setError?.(fields);
-        propertyRef.current?.setError?.(fields);
-        listingDetailsRef.current?.setError?.(fields);
-        amenitiesRef.current?.setError?.(fields);
-        outdoorFeaturesRef.current?.setError?.(fields);
-        indoorFeaturesRef.current?.setError?.(fields);
-        constructionAndLegalRecordsRef.current?.setError?.(fields);
-        utilitiesEnergyConnectivityRef.current?.setError?.(fields);
-        mediaRef.current?.setError?.(fields);
+        if (!step) {
+          sellerRef.current?.setError?.(fields);
+          locationRef.current?.setError?.(fields);
+          pricingRef.current?.setError?.(fields);
+          propertyRef.current?.setError?.(fields);
+          listingDetailsRef.current?.setError?.(fields);
+          amenitiesRef.current?.setError?.(fields);
+        } else {
+          sellerRef.current?.setError?.(fields);
+          locationRef.current?.setError?.(fields);
+          pricingRef.current?.setError?.(fields);
+          propertyRef.current?.setError?.(fields);
+          listingDetailsRef.current?.setError?.(fields);
+          amenitiesRef.current?.setError?.(fields);
+          outdoorFeaturesRef.current?.setError?.(fields);
+          indoorFeaturesRef.current?.setError?.(fields);
+          constructionAndLegalRecordsRef.current?.setError?.(fields);
+          utilitiesEnergyConnectivityRef.current?.setError?.(fields);
+          mediaRef.current?.setError?.(fields);
+        }
       }
     }
   };
@@ -185,7 +234,7 @@ export default function EditRealestatePage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-0">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create New Real Estate Listing
+              Edit Real Estate Listing
             </h1>
             <p className="text-gray-600">
               Fill out your seller information and property details
@@ -196,7 +245,7 @@ export default function EditRealestatePage() {
           ) : null}
           {formError ? <ErrorAlert message={formError} /> : null}
 
-          <fieldset disabled={isLoading || loadError} className="mb-1">
+          <fieldset disabled={isLoading || isValidating || loadError} className="mb-1">
             <div className="grid grid-cols-1 gap-8 w-full">
               <div className="max-w-6xl mx-auto p-6 space-y-8 px-0 py-0 pt-8 w-full">
                 {realestate?.status === EListingStatus.ACTIVE &&
@@ -207,7 +256,7 @@ export default function EditRealestatePage() {
                     </p>
                   )}
                 {realestate?.status === EListingStatus.ACTIVE &&
-                realestate?.package === EPackageType.BASIC ? (
+                  realestate?.package === EPackageType.BASIC ? (
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
                       <Seller ref={sellerRef} data={realestate} />
@@ -216,69 +265,105 @@ export default function EditRealestatePage() {
                   </>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <Seller ref={sellerRef} data={realestate} />
-                      <Location ref={locationRef} data={realestate} />
+                    <div className={cn("hidden space-y-8 w-full", !step && "block")}>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Seller ref={sellerRef} data={realestate} />
+                        <Location ref={locationRef} data={realestate} />
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Pricing ref={pricingRef} data={realestate} />
+                        <Property ref={propertyRef} data={realestate} />
+                      </div>
+                      <ListingDetails ref={listingDetailsRef} data={realestate} />
+                      <Amenities ref={amenitiesRef} data={realestate} />
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <Pricing ref={pricingRef} data={realestate} />
-                      <Property ref={propertyRef} data={realestate} />
+                    <div className={cn("hidden space-y-8 w-full", step === "2" && "block")}>
+                      <OutdoorFeatures
+                        ref={outdoorFeaturesRef}
+                        data={realestate}
+                      />
+                      <IndoorFeatures ref={indoorFeaturesRef} data={realestate} />
+                      <ConstructionAndLegalRecords
+                        ref={constructionAndLegalRecordsRef}
+                        data={realestate}
+                      />
+                      <UtilitiesEnergyConnectivity
+                        ref={utilitiesEnergyConnectivityRef}
+                        data={realestate}
+                      />
+                      <Media
+                        ref={mediaRef}
+                        data={realestate?.photos}
+                        selectedPackage={
+                          realestate?.package || EPackageType.BASIC
+                        }
+                      />
                     </div>
-                    <ListingDetails ref={listingDetailsRef} data={realestate} />
-                    <Amenities ref={amenitiesRef} data={realestate} />
-                    <OutdoorFeatures
-                      ref={outdoorFeaturesRef}
-                      data={realestate}
-                    />
-                    <IndoorFeatures ref={indoorFeaturesRef} data={realestate} />
-                    <ConstructionAndLegalRecords
-                      ref={constructionAndLegalRecordsRef}
-                      data={realestate}
-                    />
-                    <UtilitiesEnergyConnectivity
-                      ref={utilitiesEnergyConnectivityRef}
-                      data={realestate}
-                    />
-                    <Media
-                      ref={mediaRef}
-                      data={realestate?.photos}
-                      selectedPackage={
-                        realestate?.package || EPackageType.BASIC
-                      }
-                    />
                   </>
                 )}
                 <div className="space-y-4">
                   <div className="flex gap-2 sm:gap-4 ml-auto">
-                    <ButtonSubmit
-                      type="button"
-                      onClick={handleSaveDraft}
-                      status={saveStatus}
-                      statusText={{
-                        loading: "Saving...",
-                        success: "Saved",
-                        error: "Try again",
-                        disabled: "Disabled",
-                      }}
-                    >
-                      Save
-                    </ButtonSubmit>
+                    {
+                      !step ? (
+                        <ButtonSubmit
+                          type="button"
+                          onClick={handleSaveDraft}
+                          status={saveStatus}
+                          className="w-full"
+                          statusText={{
+                            loading: "Saving...",
+                            success: "Saved",
+                            error: "Try again",
+                            disabled: "Disabled",
+                          }}
+                        >
+                          Continue
+                        </ButtonSubmit>
+                      ) : step === "2" ? (
+                        <div className="flex justify-between w-full">
+                          <Button variant="outline" onClick={() => {
+                            router.push(`/profile/realestate/${id}`)
+                          }}>
+                            <ArrowLeft />
+                            Back
+                          </Button>
+                          <div className="flex gap-3">
+                            <ButtonSubmit
+                              variant="outline"
+                              type="button"
+                              onClick={handleSaveDraft}
+                              status={saveStatus}
+                              statusText={{
+                                loading: "Saving...",
+                                success: "Saved",
+                                error: "Try again",
+                                disabled: "Disabled",
+                              }}
+                            >
+                              Save
+                            </ButtonSubmit>
+                            {realestate?.status !== EListingStatus.ACTIVE &&
+                              realestate?.status !== EListingStatus.PENDING &&
+                              !realestate?.isExpired && (
+                                <PublishButton data={realestate} onClick={async () => {
+                                  const formsData = await getFormsData();
+
+                                  if (formsData === undefined) {
+                                    return true
+                                  }
+
+                                  return !!Object.keys(formsData).length
+                                }} />
+                              )}
+                          </div>
+                        </div>
+                      ) : null
+                    }
                   </div>
                 </div>
               </div>
             </div>
           </fieldset>
-          <div className="text-sm text-gray-600 leading-relaxed">
-            By clicking "Publish Listing" you agree to LinkEnlist's{" "}
-            <Link href="/terms" className="text-blue-600 hover:underline">
-              Terms & Conditions
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </div>
         </div>
       </main>
     </div>
@@ -299,4 +384,34 @@ export function otherFieldSplit<const F extends string>(
     [fieldName]: main,
     [`other${capitalize(fieldName)}`]: other,
   } as Record<F, string[]> & Record<`other${Capitalize<F>}`, string>;
+}
+
+function PublishButton({ data, onClick }: {
+  data?: Pick<IRealestateOwnerList, "id" | "package" | "expiresAt" | "isExpired">,
+  onClick: () => Promise<boolean>
+}) {
+  const [showPublishDialog, setShowPublishDialog] = useState<boolean>(false)
+  const [isChanges, setIsChanges] = useState<boolean>(false)
+
+  return (
+    <>
+      <Button onClick={async () => {
+        const changes = await onClick()
+        setIsChanges(changes)
+        setShowPublishDialog(true)
+      }}>
+        Publish Listing
+      </Button>
+      {
+        data
+          ? <PublishDialog
+            isSaved={!isChanges}
+            listing={data}
+            showDialog={showPublishDialog}
+            handleCancel={() => setShowPublishDialog(false)}
+          />
+          : null
+      }
+    </>
+  )
 }

@@ -7,7 +7,7 @@ import { Pagination } from "../../../../components/ui/pagination";
 import { useQueryStateWithLocalStorage } from "../../../../hooks/use-query-state-with-local-storage";
 import { parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 import { useDebounce } from "use-debounce";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { useEffect, useState } from "react";
 import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { IResourceListExtended } from "../../../../types/Resource";
@@ -84,9 +84,19 @@ export function List() {
   if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly));
 
   const key = `/resources?${params.toString()}`;
-  const { data, isLoading, error } =
-    useSWR<[IResourceListExtended[], number]>(key);
+  const { data, isLoading, error, isValidating } = useSWR<[IResourceListExtended[], number]>(key);
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
+
+  const { mutate } = useSWRConfig();
+
+  useEffect(() => {
+    if (showFavoritesOnly) {
+      if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly))
+
+      const keyFavorite = `/resources?${params.toString()}`;
+      mutate(keyFavorite)
+    }
+  }, [showFavoritesOnly])
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -100,7 +110,7 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-     window.scrollTo({
+    window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
@@ -126,18 +136,16 @@ export function List() {
                 const newValue = !showFavoritesOnly;
                 setShowFavoritesOnly(newValue);
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200 ${
-                showFavoritesOnly
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200 ${showFavoritesOnly
+                ? "bg-blue-50 border-blue-200 text-blue-700"
+                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
             >
               <Star
-                className={`w-4 h-4 ${
-                  showFavoritesOnly
-                    ? "fill-blue-600 text-blue-600"
-                    : "text-gray-400"
-                }`}
+                className={`w-4 h-4 ${showFavoritesOnly
+                  ? "fill-blue-600 text-blue-600"
+                  : "text-gray-400"
+                  }`}
               />
               Saved
             </button>
@@ -200,27 +208,27 @@ export function List() {
               {(debouncedSearch.length >= 2 ||
                 selectedCategory ||
                 showFavoritesOnly) && (
-                <div className="mb-4 px-2">
-                  <p className="text-sm text-muted-foreground">
-                    {data?.[1]} result
-                    {data?.[1] !== 1 ? "s" : ""} found
-                    {selectedCategory && ` in ${selectedCategory}`}
-                    {searchQuery && ` matching "${searchQuery}"`}
-                    {showFavoritesOnly && ` in your favorites`}
-                  </p>
-                </div>
-              )}
+                  <div className="mb-4 px-2">
+                    <p className="text-sm text-muted-foreground">
+                      {data?.[1]} result
+                      {data?.[1] !== 1 ? "s" : ""} found
+                      {selectedCategory && ` in ${selectedCategory}`}
+                      {searchQuery && ` matching "${searchQuery}"`}
+                      {showFavoritesOnly && ` in your favorites`}
+                    </p>
+                  </div>
+                )}
               {data && data[0].length !== 0 ? (
                 <div className="grid-container-resources">
                   {data[0].map((resource) => (
                     <ResourceCard
                       key={resource.id}
                       data={resource}
-                      isLoading={isLoading}
+                      isLoading={isLoading || isValidating}
                     />
                   ))}
                 </div>
-              ) : isLoading ? (
+              ) : (isLoading) ? (
                 <div className="w-full max-h-full h-full flex-grow flex items-center justify-center">
                   <Loader2 className="animate-spin w-14 h-14" />
                 </div>

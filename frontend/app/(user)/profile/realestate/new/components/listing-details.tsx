@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Textarea } from "../../../../../../components/ui/textarea";
 import { useForm, useFormState } from "react-hook-form";
-import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { cn } from "../../../../../../lib/utils";
 import { createListingDetailsSchema } from "../../../../../../lib/schemas/realestate/listing-details-form-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +17,7 @@ export const ListingDetails = forwardRef<
     data?: IOwnerRealestate;
   }
 >(function ListingDetails({ data }, ref) {
-  const [expandedSections, setExpandedSections] = useState(false);
+  const [expandedSections, setExpandedSections] = useState(true);
   const schema = useMemo(
     () => createListingDetailsSchema(data?.package || "basic"),
     [data?.package]
@@ -77,6 +77,10 @@ export const ListingDetails = forwardRef<
     }),
     [form, isDirty]
   );
+
+  useEffect(() => {
+    setExpandedSections(false)
+  }, [])
 
   const wordLimit = getWordLimit(data?.package || "basic");
 

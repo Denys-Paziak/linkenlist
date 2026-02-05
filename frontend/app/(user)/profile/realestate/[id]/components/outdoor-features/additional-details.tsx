@@ -1,5 +1,4 @@
 import { Controller, useFormContext, useFormState } from "react-hook-form";
-import { Input } from "../../../../../../../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,6 +8,7 @@ import {
 } from "../../../../../../../components/ui/select";
 import { POOL_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IOutdoorFeaturesForm } from "./outdoor-features";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function AdditionalDetails() {
   const { register, control } = useFormContext<IOutdoorFeaturesForm>();

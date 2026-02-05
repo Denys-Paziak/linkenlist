@@ -75,4 +75,33 @@ export const pricingFormSchema = z.object({
   leaseTerm: textOptional("Lease term", 50),
 
   petPolicy: z.array(z.string()),
+}).superRefine((data, ctx) => {
+  if (data.forSale) {
+    const listPrice = data.listPrice?.trim() ?? "";
+    if (!listPrice) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "This field is required. Please fill out this field to continue.",
+        path: ["listPrice"],
+      });
+    }
+  }
+  if (data.forRent) {
+    const leaseTerm = data.leaseTerm?.trim() ?? "";
+    if (!leaseTerm) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "This field is required. Please fill out this field to continue.",
+        path: ["leaseTerm"],
+      });
+    }
+    const monthlyRent = data.monthlyRent?.trim() ?? "";
+    if (!monthlyRent) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "This field is required. Please fill out this field to continue.",
+        path: ["monthlyRent"],
+      });
+    }
+  }
 });

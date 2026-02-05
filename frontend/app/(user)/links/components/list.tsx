@@ -12,7 +12,7 @@ import { ErrorAlert } from "../../../../components/ui/error-alert";
 import { Card } from "./card";
 import { Pagination } from "../../../../components/ui/pagination";
 import { SearchBarMobile } from "./search-bar-mobile";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { ILink } from "../../../../types/Link";
 
 export function List() {
@@ -83,10 +83,22 @@ export function List() {
   if (selectedBranch !== "all") params.set("branch", selectedBranch);
   if (selectedCategory !== "all") params.set("category", selectedCategory);
   if (selectedSort !== "default") params.set("sort", selectedSort);
+  if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly))
 
   const key = `/links?${params.toString()}`;
-  const { data, isLoading, error } = useSWR<[ILink[], number]>(key);
+  const { data, isLoading, error, isValidating } = useSWR<[ILink[], number]>(key);
   const totalPages = Math.ceil((data?.[1] || 0) / limit);
+
+  const { mutate } = useSWRConfig();
+
+  useEffect(() => {
+    if (showFavoritesOnly) {
+      if (showFavoritesOnly) params.set("isFavorite", String(showFavoritesOnly))
+
+      const keyFavorite = `/links?${params.toString()}`;
+      mutate(keyFavorite)
+    }
+  }, [showFavoritesOnly])
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -102,7 +114,7 @@ export function List() {
 
   const handleLimitPageChange = (limit: number) => {
     setLimit(limit);
-     window.scrollTo({
+    window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
@@ -136,17 +148,15 @@ export function List() {
                   const newValue = !showFavoritesOnly;
                   setShowFavoritesOnly(newValue);
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
-                  showFavoritesOnly
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${showFavoritesOnly
+                  ? "bg-blue-600 text-white"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                  }`}
                 style={{ touchAction: "manipulation" }}
               >
                 <Star
-                  className={`h-4 w-4 ${
-                    showFavoritesOnly ? "fill-current" : ""
-                  }`}
+                  className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""
+                    }`}
                 />
                 Saved
               </button>
@@ -207,21 +217,21 @@ export function List() {
             selectedBranch !== "all" ||
             selectedCategory !== "all" ||
             showFavoritesOnly) && (
-            <div className="mb-4 px-2">
-              <p className="text-sm text-muted-foreground">
-                {data?.[1]} result
-                {data?.[1] !== 1 ? "s" : ""} found
-                {selectedBranch && ` for ${selectedBranch}`}
-                {selectedCategory && ` in ${selectedCategory}`}
-                {searchQuery && ` matching "${searchQuery}"`}
-                {showFavoritesOnly && ` in your favorites`}
-              </p>
-            </div>
-          )}
+              <div className="mb-4 px-2">
+                <p className="text-sm text-muted-foreground">
+                  {data?.[1]} result
+                  {data?.[1] !== 1 ? "s" : ""} found
+                  {selectedBranch && ` for ${selectedBranch}`}
+                  {selectedCategory && ` in ${selectedCategory}`}
+                  {searchQuery && ` matching "${searchQuery}"`}
+                  {showFavoritesOnly && ` in your favorites`}
+                </p>
+              </div>
+            )}
           {data && data[0].length !== 0 ? (
             <div className="grid-container-links">
               {data[0].map((link) => (
-                <Card key={link.id} data={link} isLoading={isLoading} />
+                <Card key={link.id} data={link} isLoading={isLoading || isValidating} />
               ))}
             </div>
           ) : isLoading ? (

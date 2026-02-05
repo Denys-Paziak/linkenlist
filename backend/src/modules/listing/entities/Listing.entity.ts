@@ -18,7 +18,7 @@ import { User } from '../../user/entities/User.entity'
 import { ListingPhoto } from './ListingPhoto.entity'
 import { MilitaryBase } from './MilitaryBase.entity'
 
-type GeoPoint = { type: 'Point'; coordinates: [number, number] };
+type GeoPoint = { type: 'Point'; coordinates: [number, number] }
 
 @Entity('listings')
 @Unique(['slug'])
@@ -28,11 +28,9 @@ export class Listing {
 	@PrimaryGeneratedColumn()
 	id: number
 
-	// Пакет
 	@Column({ type: 'enum', enum: EPackageType, default: EPackageType.BASIC })
 	package: EPackageType
 
-	// Продавець
 	@ManyToOne(() => User, u => u.listings, { onDelete: 'CASCADE' })
 	owner: User
 	@Column({ name: 'first_name', type: 'varchar', length: 150, nullable: true })
@@ -43,12 +41,17 @@ export class Listing {
 	company: string | null
 	@Column({ name: 'primary_phone', type: 'varchar', length: 20, nullable: true })
 	primaryPhone: string | null
+	@Column({ name: 'hide_primary_phone', type: 'boolean', default: false })
+	hidePrimaryPhone: boolean
 	@Column({ name: 'alternative_phone', type: 'varchar', length: 20, nullable: true })
 	alternativePhone: string | null
+	@Column({ name: 'hide_alternative_phone', type: 'boolean', default: false })
+	hideAlternativePhone: boolean
 	@Column({ name: 'email', type: 'varchar', length: 255, nullable: true })
 	email: string | null
+	@Column({ name: 'hide_email', type: 'boolean', default: false })
+	hideEmail: boolean
 
-	// Адреса/гео та приватність
 	@Column({ type: 'text', nullable: true })
 	street: string | null
 	@Column({ type: 'text', nullable: true })
@@ -63,7 +66,6 @@ export class Listing {
 	@Column({ type: 'geography', spatialFeatureType: 'Point', srid: 4326, nullable: true })
 	location: GeoPoint | null
 
-	// Тип угоди та ціни
 	@Column({ name: 'for_sale', type: 'boolean', default: false })
 	forSale: boolean
 	@Column({ name: 'for_rent', type: 'boolean', default: false })
@@ -83,7 +85,6 @@ export class Listing {
 	@Column({ name: 'pet_policy', type: 'text', array: true, nullable: true })
 	petPolicy: string[] | null
 
-	// Характеристики нерухомості
 	@Column({ name: 'property_type', type: 'text', nullable: true })
 	propertyType: string | null
 	@Column({ type: 'int', nullable: true })
@@ -110,7 +111,6 @@ export class Listing {
 	@Column({ name: 'services_included', type: 'text', array: true, nullable: true })
 	servicesIncluded: string[] | null
 
-	// Загальна інформація
 	@Column({ type: 'text', nullable: true })
 	title: string | null
 	@Column({ type: 'text', unique: true, nullable: true })

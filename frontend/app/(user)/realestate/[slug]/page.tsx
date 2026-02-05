@@ -51,44 +51,44 @@ export async function generateMetadata({
 
     alternates: isIndexable
       ? {
-          canonical: url,
-        }
+        canonical: url,
+      }
       : undefined,
 
     robots: isIndexable
       ? {
-          index: true,
-          follow: true,
-        }
+        index: true,
+        follow: true,
+      }
       : {
+        index: false,
+        follow: false,
+        nocache: true,
+        googleBot: {
           index: false,
           follow: false,
-          nocache: true,
-          googleBot: {
-            index: false,
-            follow: false,
-          },
         },
+      },
 
     openGraph: {
       title: realestate.title,
       description: realestate.description.slice(0, 100) + "...",
       type: "article",
       url: url,
-      images: [
+      images: realestate.photos[0] ? [
         {
           url: realestate.photos[0].url,
           width: realestate.photos[0].width,
           height: realestate.photos[0].height,
           alt: realestate.title,
         },
-      ],
+      ] : [],
     },
     twitter: {
       card: "summary_large_image",
       title: realestate.title,
       description: realestate.description.slice(0, 100) + "...",
-      images: [realestate.photos[0]],
+      images: realestate.photos[0] ? [realestate.photos[0]] : [],
     },
   };
 }

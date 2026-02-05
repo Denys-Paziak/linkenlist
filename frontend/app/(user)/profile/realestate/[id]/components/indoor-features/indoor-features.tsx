@@ -61,12 +61,12 @@ export const IndoorFeatures = forwardRef<
     ref,
     () => ({
       submit: async () => {
+        const ok = await form.trigger();
+        if (!ok) return { ok: false as const };
+
         if (!isDirty) {
           return { ok: true, changed: false as const, data: undefined };
         }
-
-        const ok = await form.trigger();
-        if (!ok) return { ok: false as const };
 
         const values = form.getValues();
 
@@ -94,7 +94,7 @@ export const IndoorFeatures = forwardRef<
               laundryFeatures: [
                 ...values.laundryFeatures,
                 values.otherLaundryFeatures &&
-                  "OTHER:::" + values.otherLaundryFeatures,
+                "OTHER:::" + values.otherLaundryFeatures,
               ].filter(Boolean),
               premiumFeatures:
                 values.premiumFeatures === "" ? null : values.premiumFeatures,

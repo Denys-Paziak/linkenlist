@@ -90,7 +90,7 @@ export class LinkQueryService {
 			`branch:${query.branch ?? 'all'}|` +
 			`sort:${query.sort ?? 'default'}`
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			const cached = await this.cacheManager.get<[Link[], number]>(cacheKey)
 			if (cached) return cached
 		}
@@ -241,7 +241,7 @@ export class LinkQueryService {
 		const items = await qb.getMany()
 		const result: [Link[], number] = [items, Number(cnt?.cnt || 0)]
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			await this.cacheManager.set(cacheKey, result, 60000)
 		}
 

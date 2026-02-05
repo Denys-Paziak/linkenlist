@@ -7,9 +7,9 @@ import {
   useWatch,
 } from "react-hook-form";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
 import { CONSTRUCTION_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IConstructionForm } from "./construction-and-legal-records";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function Construction() {
   const { register, control, setValue } = useFormContext<IConstructionForm>();

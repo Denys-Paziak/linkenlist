@@ -50,10 +50,6 @@ export const Media = forwardRef<
           },
         };
       },
-      setError: (fields) => {
-        if (fields.includes("photos"))
-          setError("You need to add at least one photo.");
-      },
       resetDirty: () => {
         setIsDirty(false);
       },

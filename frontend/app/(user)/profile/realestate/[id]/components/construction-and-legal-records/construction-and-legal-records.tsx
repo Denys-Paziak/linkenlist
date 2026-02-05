@@ -52,12 +52,12 @@ export const ConstructionAndLegalRecords = forwardRef<
     ref,
     () => ({
       submit: async () => {
+        const ok = await form.trigger();
+        if (!ok) return { ok: false as const };
+
         if (!isDirty) {
           return { ok: true, changed: false as const, data: undefined };
         }
-
-        const ok = await form.trigger();
-        if (!ok) return { ok: false as const };
 
         const values = form.getValues();
 
@@ -69,7 +69,7 @@ export const ConstructionAndLegalRecords = forwardRef<
               construction: [
                 ...values.construction,
                 values.otherConstruction &&
-                  "OTHER:::" + values.otherConstruction,
+                "OTHER:::" + values.otherConstruction,
               ].filter(Boolean),
               newConstruction: values.newConstruction,
               builder: values.builder === "" ? null : values.builder,

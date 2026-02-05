@@ -44,14 +44,26 @@ class Seller {
 	primaryPhone?: string | null
 
 	@IsOptional()
+	@IsBoolean()
+	hidePrimaryPhone?: boolean
+
+	@IsOptional()
 	@IsString()
 	@MaxLength(20)
 	alternativePhone?: string | null
 
 	@IsOptional()
+	@IsBoolean()
+	hideAlternativePhone?: boolean
+
+	@IsOptional()
 	@IsEmail()
 	@MaxLength(255)
 	email?: string | null
+
+	@IsOptional()
+	@IsBoolean()
+	hideEmail?: boolean
 }
 
 class Location {

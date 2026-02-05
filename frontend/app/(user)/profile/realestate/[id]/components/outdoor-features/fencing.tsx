@@ -9,7 +9,7 @@ import {
 import { FENCING_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IOutdoorFeaturesForm } from "./outdoor-features";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function Fencing() {
   const { register, control, setValue } = useFormContext<IOutdoorFeaturesForm>();
@@ -79,9 +79,8 @@ export function Fencing() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {fence}
                       </label>

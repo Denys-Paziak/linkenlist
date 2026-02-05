@@ -6,8 +6,8 @@ import {
   useFormState,
 } from "react-hook-form";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
 import { IConstructionForm } from "./construction-and-legal-records";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function NewConstruction() {
   const { register, control } = useFormContext<IConstructionForm>();

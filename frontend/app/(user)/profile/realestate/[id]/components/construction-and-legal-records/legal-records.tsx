@@ -7,7 +7,6 @@ import {
   useWatch,
 } from "react-hook-form";
 import { IConstructionForm } from "./construction-and-legal-records";
-import { Input } from "../../../../../../../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
   OWNERSHIP_TYPES,
 } from "../../../../../../../constants/real-estate-options";
 import { useState } from "react";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function LegalRecords() {
   const { register, control } = useFormContext<IConstructionForm>();

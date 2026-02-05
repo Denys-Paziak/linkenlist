@@ -101,35 +101,13 @@ export function ListingPackages() {
       return;
     }
 
-    if (packageType === EPackageType.BASIC) {
-      setBasicStatus("loading");
-    } else {
-      setPremiumStatus("loading");
-    }
-    try {
-      const data = await fetcherUser(`/listings/init`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          package: packageType,
-          zip: packageType === EPackageType.BASIC ? basicZip : premiumZip,
-          ...(packageType === EPackageType.BASIC
-            ? basicLocation
-            : premiumLocation),
-        }),
-      });
-
-      router.push(`/profile/realestate/${data.listingId}`);
-    } catch (err: any) {
-      if (packageType === EPackageType.BASIC) {
-        setBasicStatus("error");
-      } else {
-        setPremiumStatus("error");
-      }
-    }
+    router.push(`/profile/realestate/new?package=${packageType}&zip=${packageType === EPackageType.BASIC
+      ? basicZip
+      : premiumZip}&city=${packageType === EPackageType.BASIC
+        ? basicLocation?.city
+        : premiumLocation?.city}&state=${packageType === EPackageType.BASIC
+          ? basicLocation?.state
+          : premiumLocation?.state}`);
   };
 
   useEffect(() => {

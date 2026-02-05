@@ -9,7 +9,7 @@ import {
 import { IIndoorFeaturesForm } from "./indoor-features";
 import { FLOORING_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function Flooring() {
   const { register, control, setValue } = useFormContext<IIndoorFeaturesForm>();
@@ -52,7 +52,7 @@ export function Flooring() {
                         onCheckedChange={(v) => {
                           const isChecked = v === true;
 
-                           if (floor === "None") {
+                          if (floor === "None") {
                             if (isChecked) {
                               field.onChange(["None"]);
 
@@ -79,9 +79,8 @@ export function Flooring() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {floor}
                       </label>

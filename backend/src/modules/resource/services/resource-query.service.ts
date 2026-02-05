@@ -84,7 +84,7 @@ export class ResourceQueryService {
 			`format:${query.format ?? 'all'}|` +
 			`isFeatured:${query.isFeatured ?? false}`
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			const cached = await this.cacheManager.get<[Resource[], number]>(cacheKey)
 			if (cached) return cached
 		}
@@ -224,7 +224,7 @@ export class ResourceQueryService {
 		const items = await qb.getMany()
 		const result: [Resource[], number] = [items, Number(cnt?.cnt || 0)]
 
-		if (!query.search || query.isFavorite) {
+		if (!query.search && !query.isFavorite) {
 			await this.cacheManager.set(cacheKey, result, 60000)
 		}
 

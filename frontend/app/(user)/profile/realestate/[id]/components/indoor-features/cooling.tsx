@@ -9,7 +9,7 @@ import {
 import { COOLING_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IIndoorFeaturesForm } from "./indoor-features";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function Cooling() {
   const { register, control, setValue } = useFormContext<IIndoorFeaturesForm>();
@@ -79,9 +79,8 @@ export function Cooling() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {cool}
                       </label>

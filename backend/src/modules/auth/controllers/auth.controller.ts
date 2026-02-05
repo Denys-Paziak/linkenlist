@@ -56,7 +56,7 @@ export class AuthController {
 			return response.redirect(this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL'), 302)
 		} catch (error) {
 			return response.redirect(
-				this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL') + '?message=' + (error as any).message,
+				this.configService.getOrThrow('CONFIRM_EMAIL_FRONT_URL') + '?message=' + + encodeURIComponent((error as any).message),
 				302
 			)
 		}

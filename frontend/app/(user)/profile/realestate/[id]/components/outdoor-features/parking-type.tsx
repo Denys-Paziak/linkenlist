@@ -9,7 +9,7 @@ import {
 import { PARKING_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IOutdoorFeaturesForm } from "./outdoor-features";
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
-import { Input } from "../../../../../../../components/ui/input";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function ParkingType() {
   const { register, control, setValue } =
@@ -80,9 +80,7 @@ export function ParkingType() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""}`}
                       >
                         {parking}
                       </label>

@@ -70,6 +70,14 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
               </Link>
             </DropdownMenuItem>
           )}
+          {data.status !== EListingStatus.ACTIVE && (
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <Link href={`/profile/realestate/preview/${data.slug}`}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Preview
+              </Link>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem className="cursor-pointer" asChild>
             <Link href={`/profile/realestate/${data.id}`}>
@@ -90,13 +98,13 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
 
           {(data.status === EListingStatus.ACTIVE ||
             data.status === EListingStatus.PENDING) && (
-            <DropdownMenuItem
-              onClick={() => setShowDeactivateDialog(true)}
-              className="cursor-pointer text-orange-600 focus:text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
-            >
-              <AlertCircle className="h-4 w-4 mr-2" /> Deactivate Listing
-            </DropdownMenuItem>
-          )}
+              <DropdownMenuItem
+                onClick={() => setShowDeactivateDialog(true)}
+                className="cursor-pointer text-orange-600 focus:text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
+              >
+                <AlertCircle className="h-4 w-4 mr-2" /> Deactivate Listing
+              </DropdownMenuItem>
+            )}
 
           <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}

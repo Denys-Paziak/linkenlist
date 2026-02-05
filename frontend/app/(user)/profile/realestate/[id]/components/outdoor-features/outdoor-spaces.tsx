@@ -7,7 +7,7 @@ import {
 import { Checkbox } from "../../../../../../../components/ui/checkbox";
 import { OUTDOOR_SPACES_OPTIONS } from "../../../../../../../constants/real-estate-options";
 import { IOutdoorFeaturesForm } from "./outdoor-features";
-import { Input } from "../../../../../../../components/ui/input";
+import { Input } from "../../../../../../../components/ui/input-listing-variant";
 
 export function OutdoorSpaces() {
   const { register, control, setValue } =
@@ -78,9 +78,8 @@ export function OutdoorSpaces() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {space}
                       </label>

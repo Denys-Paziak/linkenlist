@@ -45,7 +45,7 @@ export function RealestateList({
   params.set("neLng", String(neLng));
   params.set("swLat", String(swLat));
   params.set("swLng", String(swLng));
-  const key = `/listings?${params.toString()}`;
+  const key = !neLat || !neLng || !swLat || !swLng ? null : `/listings?${params.toString()}`;
   const {
     data: realestate,
     isLoading,
