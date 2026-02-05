@@ -45,7 +45,7 @@ export function RealestateCard({
         method: "PATCH",
         credentials: "include",
       });
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -54,7 +54,7 @@ export function RealestateCard({
         className={cn(
           "card group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm h-fit",
           data.status === EListingStatus.ACTIVE &&
-            "transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
+          "transition-all duration-300 ease-in-out hover:shadow-lg cursor-pointer",
           isLoading && "pointer-events-none",
         )}
       >
@@ -63,6 +63,15 @@ export function RealestateCard({
           <Link
             onClick={handleCardClick}
             href={`/realestate/${data.slug}`}
+            className={cn(
+              "absolute inset-0 z-[5]",
+              isLoading && "pointer-events-none",
+            )}
+          />
+        )}
+        {data.status !== EListingStatus.ACTIVE && (
+          <Link
+            href={`/profile/realestate/preview/${data.slug}`}
             className={cn(
               "absolute inset-0 z-[5]",
               isLoading && "pointer-events-none",
@@ -163,7 +172,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => [...(draft || []), id], {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const deleteFavorite = async () => {
@@ -176,7 +185,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => draft?.filter((item) => item !== id), {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const isFavorite = data?.includes(id);
@@ -198,11 +207,10 @@ function FavoriteButton({ id }: { id: number }) {
       aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
     >
       <Star
-        className={`w-3.5 h-3.5 transition-colors duration-200 ${
-          isFavorite
+        className={`w-3.5 h-3.5 transition-colors duration-200 ${isFavorite
             ? "fill-[#dc2626] text-[#dc2626]"
             : "text-gray-400 hover:text-gray-600"
-        }`}
+          }`}
       />
     </button>
   );
@@ -259,11 +267,10 @@ function Photos({ photos }: { photos: IListingPhoto[] }) {
               {photos.map((_, index) => (
                 <button
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 border border-white/30 ${
-                    index === currentImageIndex
+                  className={`w-2 h-2 rounded-full transition-all duration-200 border border-white/30 ${index === currentImageIndex
                       ? "bg-white shadow-sm"
                       : "bg-white/60 hover:bg-white/80"
-                  }`}
+                    }`}
                   onClick={() => {
                     setCurrentImageIndex(index);
                   }}

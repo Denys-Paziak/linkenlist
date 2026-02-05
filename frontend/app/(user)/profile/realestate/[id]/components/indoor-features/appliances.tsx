@@ -43,7 +43,7 @@ export function Appliances() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={appliance}>
+                  <div key={appliance} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

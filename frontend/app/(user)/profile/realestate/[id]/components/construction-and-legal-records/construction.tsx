@@ -43,7 +43,7 @@ export function Construction() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={construction}>
+                  <div key={construction} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

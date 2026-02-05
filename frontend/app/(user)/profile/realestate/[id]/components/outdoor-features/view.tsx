@@ -44,7 +44,7 @@ export function View() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={view}>
+                  <div key={view} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

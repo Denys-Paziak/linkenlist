@@ -47,7 +47,7 @@ export async function generateMetadata({
 
   return {
     title: realestate.title,
-    description: realestate.description.slice(0, 100) + "...",
+    description: realestate.description ? realestate.description.slice(0, 100) + "..." : "",
 
     alternates: isIndexable
       ? {
@@ -72,7 +72,7 @@ export async function generateMetadata({
 
     openGraph: {
       title: realestate.title,
-      description: realestate.description.slice(0, 100) + "...",
+      description: realestate.description ? realestate.description.slice(0, 100) + "..." : "",
       type: "article",
       url: url,
       images: realestate.photos[0] ? [
@@ -87,7 +87,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: realestate.title,
-      description: realestate.description.slice(0, 100) + "...",
+      description: realestate.description ? realestate.description.slice(0, 100) + "..." : "",
       images: realestate.photos[0] ? [realestate.photos[0]] : [],
     },
   };

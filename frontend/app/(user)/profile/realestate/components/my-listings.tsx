@@ -3,24 +3,12 @@ import { Card, CardContent } from "../../../../../components/ui/card";
 import { Button } from "../../../../../components/ui/button";
 import { RealestateCard } from "../../../../../components/realestate-card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../../../../../components/ui/dropdown-menu";
-import {
-  AlertCircle,
-  Calendar,
-  Edit,
   Eye,
   Home,
   Loader2,
-  MoreVertical,
-  Trash2,
 } from "lucide-react";
 import useSWR from "swr";
 import {
-  EListingStatus,
   IRealestateOwnerList,
 } from "../../../../../types/Realestate";
 import { Pagination } from "../../../../../components/ui/pagination";

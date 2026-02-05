@@ -45,7 +45,7 @@ export function UtilitiesAvailable() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={utility}>
+                  <div key={utility} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}
@@ -81,9 +81,8 @@ export function UtilitiesAvailable() {
                       />
                       <label
                         htmlFor={`utility-${utility.toLowerCase()}`}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {utility}
                       </label>

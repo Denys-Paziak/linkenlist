@@ -44,7 +44,7 @@ export function ParkingType() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={parking}>
+                  <div key={parking} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

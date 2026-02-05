@@ -15,7 +15,9 @@ import { Loader2 } from "lucide-react";
 export default function RealestatePreviewPage() {
     const { slug } = useParams()
 
-    const { data: listing, isLoading } = useSWR<IRealestate>(`/listings/${slug}`)
+    const { data: listing, isLoading } = useSWR<IRealestate>(`/listings/${slug}`, {
+        revalidateOnMount: true
+    })
 
     if (isLoading) {
         return (

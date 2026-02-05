@@ -43,7 +43,7 @@ export function Heating() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={heat}>
+                  <div key={heat} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

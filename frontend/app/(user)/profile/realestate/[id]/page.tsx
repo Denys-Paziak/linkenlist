@@ -340,7 +340,7 @@ export default function EditRealestatePage() {
                                 disabled: "Disabled",
                               }}
                             >
-                              Save
+                              Save Draft
                             </ButtonSubmit>
                             {realestate?.status !== EListingStatus.ACTIVE &&
                               realestate?.status !== EListingStatus.PENDING &&
@@ -395,12 +395,12 @@ function PublishButton({ data, onClick }: {
 
   return (
     <>
-      <Button onClick={async () => {
+      <Button className="bg-green-600 hover:bg-green-700" onClick={async () => {
         const changes = await onClick()
         setIsChanges(changes)
         setShowPublishDialog(true)
       }}>
-        Publish Listing
+        Submit Listing
       </Button>
       {
         data

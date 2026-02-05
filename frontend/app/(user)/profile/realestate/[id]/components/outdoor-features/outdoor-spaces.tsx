@@ -42,7 +42,7 @@ export function OutdoorSpaces() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={space}>
+                  <div key={space} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

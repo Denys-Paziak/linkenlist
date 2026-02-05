@@ -43,7 +43,7 @@ export function Flooring() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={floor}>
+                  <div key={floor} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

@@ -105,7 +105,7 @@ export default function EditRealestatePage() {
     }
 
     const formsData = await getFormsDataContinue();
-    if (!formsData) return;
+    if (Object.keys(formsData).length === 0) return;
 
     try {
       let listingId: undefined | number = undefined

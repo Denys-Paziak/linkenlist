@@ -10,6 +10,10 @@ export function PropertyDescription({ listing }: { listing: IRealestate }) {
 
   const [showFullDescription, setShowFullDescription] = useState(false);
 
+  if (!listing.description) {
+    return null
+  }
+
   const isLongDescription = listing.description.length > 450;
   const truncatedDescription = isLongDescription
     ? listing.description.substring(0, 450) + "..."

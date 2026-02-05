@@ -47,7 +47,7 @@ export function SmartDevices() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={device}>
+                  <div key={device} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}
@@ -83,9 +83,8 @@ export function SmartDevices() {
                       />
                       <label
                         htmlFor={checkboxId}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {device}
                       </label>

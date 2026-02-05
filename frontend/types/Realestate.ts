@@ -138,7 +138,6 @@ export interface IRealestate extends IOwnerRealestate {
   bathroomsHalf: number;
   interiorSize: number;
   title: string;
-  description: string;
   publishedAt: string;
   lat: number | null;
   lng: number | null;

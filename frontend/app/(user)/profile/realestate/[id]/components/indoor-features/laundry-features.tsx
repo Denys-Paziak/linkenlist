@@ -46,7 +46,7 @@ export function LaundryFeatures() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={laundry}>
+                  <div key={laundry} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

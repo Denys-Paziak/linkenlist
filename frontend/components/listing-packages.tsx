@@ -101,13 +101,20 @@ export function ListingPackages() {
       return;
     }
 
-    router.push(`/profile/realestate/new?package=${packageType}&zip=${packageType === EPackageType.BASIC
+    const params = new URLSearchParams();
+
+    params.set("package", packageType);
+    params.set("zip", String(packageType === EPackageType.BASIC
       ? basicZip
-      : premiumZip}&city=${packageType === EPackageType.BASIC
-        ? basicLocation?.city
-        : premiumLocation?.city}&state=${packageType === EPackageType.BASIC
-          ? basicLocation?.state
-          : premiumLocation?.state}`);
+      : premiumZip));
+    params.set("city", String(packageType === EPackageType.BASIC
+      ? basicLocation?.city ?? ""
+      : premiumLocation?.city ?? ""));
+    params.set("state", String(packageType === EPackageType.BASIC
+      ? basicLocation?.state ?? ""
+      : premiumLocation?.state ?? ""));
+
+    router.push(`/profile/realestate/new?${params.toString()}`);
   };
 
   useEffect(() => {

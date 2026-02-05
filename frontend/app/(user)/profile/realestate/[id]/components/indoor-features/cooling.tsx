@@ -43,7 +43,7 @@ export function Cooling() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={cool}>
+                  <div key={cool} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}

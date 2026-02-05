@@ -47,7 +47,7 @@ export function InternetOptions() {
                   .replace(/\s+/g, "-")}`;
 
                 return (
-                  <div key={option}>
+                  <div key={option} className="mb-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={checkboxId}
@@ -83,9 +83,8 @@ export function InternetOptions() {
                       />
                       <label
                         htmlFor={`internet-${option.toLowerCase()}`}
-                        className={`text-sm font-medium ${
-                          isDisabled ? "text-gray-400" : ""
-                        }`}
+                        className={`text-sm font-medium ${isDisabled ? "text-gray-400" : ""
+                          }`}
                       >
                         {option}
                       </label>
