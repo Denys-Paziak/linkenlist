@@ -149,7 +149,7 @@ export default function EditRealestatePage() {
       listingDetailsRef.current?.resetDirty()
       amenitiesRef.current?.resetDirty()
 
-      router.push(`/profile/realestate/${listingId}?step=2`)
+      router.push(`/profile/realestate/${listingId}?step=2&create=success`)
     } catch (err: any) {
       setFormError(err?.message ?? "Unable to save the listing.");
       setSaveStatus("error");
