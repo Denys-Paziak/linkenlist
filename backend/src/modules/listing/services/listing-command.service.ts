@@ -158,7 +158,7 @@ export class ListingCommandService {
 		}
 
 		if (listing.hoaPresent) {
-			if (!listing.hoaFee !== null) errorFields.push('hoaFee')
+			if (!listing.hoaFee === null) errorFields.push('hoaFee')
 			if (!listing.hoaFrequency) errorFields.push('hoaFrequency')
 		}
 

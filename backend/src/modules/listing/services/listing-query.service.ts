@@ -444,38 +444,55 @@ export class ListingQueryService {
 		const limit = Math.max(1, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
-		const [items, total] = await this.listingRepository.findAndCount({
-			where: { owner: { id: userId } },
-			relations: ['photos'],
-			select: {
-				id: true,
-				status: true,
-				listPrice: true,
-				monthlyRent: true,
-				premiumFeatures: true,
-				bedrooms: true,
-				bathroomsFull: true,
-				bathroomsHalf: true,
-				interiorSize: true,
-				street: true,
-				unit: true,
-				zip: true,
-				state: true,
-				city: true,
-				slug: true,
-				package: true,
-				title: true,
-				expiresAt: true,
-				isExpired: true,
-				photos: true,
-				createdAt: true
-			},
-			skip: offset,
-			take: limit,
-			order: {
-				createdAt: 'DESC'
-			}
-		})
+		const idsQb = this.listingRepository
+			.createQueryBuilder('l')
+			.select('l.id', 'id')
+			.where('l.ownerId = :userId', { userId })
+			.orderBy('l.createdAt', 'DESC')
+			.skip(offset)
+			.take(limit)
+
+		const totalQb = this.listingRepository.createQueryBuilder('l').where('l.ownerId = :userId', { userId })
+
+		const [rawIds, total] = await Promise.all([idsQb.getRawMany<{ id: number }>(), totalQb.getCount()])
+
+		const ids = rawIds.map(r => r.id)
+
+		let items: any[] = []
+		if (ids.length) {
+			items = await this.listingRepository
+				.createQueryBuilder('l')
+				.leftJoinAndSelect('l.photos', 'p')
+				.where('l.id IN (:...ids)', { ids })
+				.select([
+					'l.id',
+					'l.status',
+					'l.listPrice',
+					'l.monthlyRent',
+					'l.premiumFeatures',
+					'l.bedrooms',
+					'l.bathroomsFull',
+					'l.bathroomsHalf',
+					'l.interiorSize',
+					'l.street',
+					'l.unit',
+					'l.zip',
+					'l.state',
+					'l.city',
+					'l.slug',
+					'l.package',
+					'l.title',
+					'l.expiresAt',
+					'l.isExpired',
+					'l.createdAt',
+					'p'
+				])
+				.orderBy('l.createdAt', 'DESC')
+				.addOrderBy('p.position', 'ASC')
+				.addOrderBy('array_position(:ids, l.id)', 'ASC')
+				.setParameter('ids', ids)
+				.getMany()
+		}
 
 		const activeCount = await this.listingRepository.count({
 			where: {
