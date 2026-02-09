@@ -7,8 +7,7 @@ const csp = [
   "default-src 'self'",
 
   // Сумісно з Next + 3rd-party (Turnstile/CF insights/Maps)
-  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com`
-    .trim(),
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com`,
 
   // Next часто потребує inline styles + Google Fonts stylesheet
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -20,10 +19,12 @@ const csp = [
   `img-src 'self' data: blob: https://${CLOUD_FRONT_HOST} https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com`,
 
   // Same-domain API + Maps extra endpoint
-  "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com",
+  "connect-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com",
 
   // Якщо медіа/файли віддаються через CloudFront
   `media-src 'self' blob: https://${CLOUD_FRONT_HOST}`,
+
+  "frame-src 'self' https://challenges.cloudflare.com",
 
   // Для blob workers (React/Next/інколи Maps)
   "worker-src 'self' blob:",
