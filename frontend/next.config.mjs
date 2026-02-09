@@ -2,33 +2,24 @@
 const isProd = process.env.NODE_ENV === "production";
 const CLOUD_FRONT_HOST = "d3lehtoxndxwf6.cloudfront.net";
 
-// Мінімально-потрібний CSP (enforce), щоб не ламати Next + Turnstile + CF Insights + Maps + Fonts
 const csp = [
   "default-src 'self'",
 
-  // Сумісно з Next + 3rd-party (Turnstile/CF insights/Maps)
   `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com`,
 
-  // Next часто потребує inline styles + Google Fonts stylesheet
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 
-  // Google Fonts font files
   "font-src 'self' data: https://fonts.gstatic.com",
 
-  // CloudFront assets + Google avatars + Maps images
   `img-src 'self' data: blob: https://${CLOUD_FRONT_HOST} https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com`,
 
-  // Same-domain API + Maps extra endpoint
-  "connect-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com",
+  "connect-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com https://api.zippopotam.us",
 
-  // Якщо медіа/файли віддаються через CloudFront
   `media-src 'self' blob: https://${CLOUD_FRONT_HOST}`,
 
   "frame-src 'self' https://challenges.cloudflare.com",
 
-  // Для blob workers (React/Next/інколи Maps)
   "worker-src 'self' blob:",
-  "child-src 'self' blob:",
 
   "object-src 'none'",
   "base-uri 'self'",
@@ -51,7 +42,6 @@ const securityHeaders = [
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 
-  // ✅ Enforced CSP (мінімально потрібний)
   { key: "Content-Security-Policy", value: csp },
 ];
 
@@ -64,8 +54,6 @@ const nextConfig = {
     unoptimized: false,
     remotePatterns: [
       { protocol: "https", hostname: CLOUD_FRONT_HOST, pathname: "/**" },
-      // Google OAuth avatars (payload.picture)
-      { protocol: "https", hostname: "*.googleusercontent.com", pathname: "/**" },
     ],
   },
 
