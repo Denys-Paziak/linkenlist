@@ -1,77 +1,32 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
-
 const CLOUD_FRONT_HOST = "d3lehtoxndxwf6.cloudfront.net";
 
-const allowedImgHosts = [
-  `https://${CLOUD_FRONT_HOST}`,
-  "https://*.googleusercontent.com",
-  "https://maps.gstatic.com",
-  "https://maps.googleapis.com",
-];
-
-const allowedConnectHosts = [
-  "'self'",
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
-  // Google Maps additional resources (your violation shows this exact domain)
-  "https://mapsresources-pa.googleapis.com",
-  // If you really call accounts.google.com from browser you can keep it,
-  // otherwise it can be removed.
-  "https://accounts.google.com",
-];
-
-const allowedScriptHosts = [
-  // Google Maps (if used)
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
-
-  // Cloudflare Turnstile + Cloudflare Insights
-  "https://challenges.cloudflare.com",
-  "https://static.cloudflareinsights.com",
-];
-
-const allowedStyleHosts = [
-  // Google Fonts stylesheet (you have evidence in console logs)
-  "https://fonts.googleapis.com",
-];
-
-const allowedFontHosts = [
-  "'self'",
-  "data:",
-  // Google Fonts font files (evidence: fonts.gstatic.com)
-  "https://fonts.gstatic.com",
-];
-
-
-// CSP baseline (enforced)
+// Мінімально-потрібний CSP (enforce), щоб не ламати Next + Turnstile + CF Insights + Maps + Fonts
 const csp = [
   "default-src 'self'",
 
-  // Inline scripts allowed (compat); restrict external script elements separately
-  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"}`.trim(),
+  // Сумісно з Next + 3rd-party (Turnstile/CF insights/Maps)
+  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com`
+    .trim(),
 
-  // External <script src="..."> allowlist (this fixes your Turnstile/Insights blocks)
-  `script-src-elem 'self' ${allowedScriptHosts.join(" ")}`.trim(),
+  // Next часто потребує inline styles + Google Fonts stylesheet
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 
-  // Styles (inline allowed) + Google Fonts stylesheet
-  `style-src 'self' 'unsafe-inline' ${allowedStyleHosts.join(" ")}`.trim(),
+  // Google Fonts font files
+  "font-src 'self' data: https://fonts.gstatic.com",
 
-  // Images
-  `img-src 'self' data: blob: ${allowedImgHosts.join(" ")}`.trim(),
+  // CloudFront assets + Google avatars + Maps images
+  `img-src 'self' data: blob: https://${CLOUD_FRONT_HOST} https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com`,
 
-  // Fonts
-  `font-src ${allowedFontHosts.join(" ")}`.trim(),
+  // Same-domain API + Maps extra endpoint
+  "connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com",
 
-  // API calls (Maps extra domain included)
-  `connect-src ${allowedConnectHosts.join(" ")}`.trim(),
-
-  // Media
+  // Якщо медіа/файли віддаються через CloudFront
   `media-src 'self' blob: https://${CLOUD_FRONT_HOST}`,
 
-  // ✅ Fix for "Creating a worker from blob violates CSP"
+  // Для blob workers (React/Next/інколи Maps)
   "worker-src 'self' blob:",
-  // Some browsers use child-src fallback for workers
   "child-src 'self' blob:",
 
   "object-src 'none'",
@@ -79,7 +34,7 @@ const csp = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
-].filter(Boolean).join("; ");
+].join("; ");
 
 const securityHeaders = [
   {
@@ -95,7 +50,7 @@ const securityHeaders = [
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 
-  // ✅ Enforced CSP (hardening)
+  // ✅ Enforced CSP (мінімально потрібний)
   { key: "Content-Security-Policy", value: csp },
 ];
 
@@ -108,11 +63,8 @@ const nextConfig = {
     unoptimized: false,
     remotePatterns: [
       { protocol: "https", hostname: CLOUD_FRONT_HOST, pathname: "/**" },
-      // For Google OAuth avatars in next/image
+      // Google OAuth avatars (payload.picture)
       { protocol: "https", hostname: "*.googleusercontent.com", pathname: "/**" },
-      // Enable only if you use Google Maps images via next/image (usually not needed)
-      { protocol: "https", hostname: "maps.gstatic.com", pathname: "/**" },
-      { protocol: "https", hostname: "maps.googleapis.com", pathname: "/**" },
     ],
   },
 
