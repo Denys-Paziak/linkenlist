@@ -26,39 +26,39 @@ export class ListingAdminController {
 		private readonly listingQueryService: ListingQueryService
 	) {}
 
-	@Authorization(ERoleName.ADMIN)
-	@Post('import-bah-rates')
-	@UseInterceptors(
-		MultipartInterceptor({
-			globalFileSizeLimit: FILE_MAX_BYTES,
-			maxFiles: 1,
-			validators: [new MultipartOptions(FILE_MAX_BYTES)]
-		})
-	)
-	async importBahRatesFromJson(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
-		const file = Object.values(files)?.[0]?.[0]
+	// @Authorization(ERoleName.ADMIN)
+	// @Post('import-bah-rates')
+	// @UseInterceptors(
+	// 	MultipartInterceptor({
+	// 		globalFileSizeLimit: FILE_MAX_BYTES,
+	// 		maxFiles: 1,
+	// 		validators: [new MultipartOptions(FILE_MAX_BYTES)]
+	// 	})
+	// )
+	// async importBahRatesFromJson(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
+	// 	const file = Object.values(files)?.[0]?.[0]
 
-		return await this.listingCommandService.importBahRatesFromJson(file, {
-			dryRun: dryRun === '1' || dryRun === 'true'
-		})
-	}
+	// 	return await this.listingCommandService.importBahRatesFromJson(file, {
+	// 		dryRun: dryRun === '1' || dryRun === 'true'
+	// 	})
+	// }
 
-	@Authorization(ERoleName.ADMIN)
-	@Post('import-bah-zip-mappings')
-	@UseInterceptors(
-		MultipartInterceptor({
-			globalFileSizeLimit: FILE_MAX_BYTES,
-			maxFiles: 1,
-			validators: [new MultipartOptions(FILE_MAX_BYTES)]
-		})
-	)
-	async importBahZipMappingsFromCsv(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
-		const file = Object.values(files)?.[0]?.[0]
+	// @Authorization(ERoleName.ADMIN)
+	// @Post('import-bah-zip-mappings')
+	// @UseInterceptors(
+	// 	MultipartInterceptor({
+	// 		globalFileSizeLimit: FILE_MAX_BYTES,
+	// 		maxFiles: 1,
+	// 		validators: [new MultipartOptions(FILE_MAX_BYTES)]
+	// 	})
+	// )
+	// async importBahZipMappingsFromCsv(@Files() files: Record<string, IMultipartFile[]>, @Query('dryRun') dryRun?: string) {
+	// 	const file = Object.values(files)?.[0]?.[0]
 
-		return await this.listingCommandService.importBahZipMappingsFromCsv(file, {
-			dryRun: dryRun === '1' || dryRun === 'true'
-		})
-	}
+	// 	return await this.listingCommandService.importBahZipMappingsFromCsv(file, {
+	// 		dryRun: dryRun === '1' || dryRun === 'true'
+	// 	})
+	// }
 
 	@Authorization(ERoleName.ADMIN)
 	@Get()

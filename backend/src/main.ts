@@ -1,4 +1,5 @@
 import cookie from '@fastify/cookie'
+import helmet from '@fastify/helmet'
 import multipart from '@fastify/multipart'
 import fastifyOauth2 from '@fastify/oauth2'
 import { ValidationPipe } from '@nestjs/common'
@@ -32,6 +33,11 @@ async function bootstrap() {
 	await app.register(multipart)
 	const fastify = app.getHttpAdapter().getInstance()
 	await fastify.register(cookie)
+
+	await fastify.register(helmet, {
+		contentSecurityPolicy: false,
+		crossOriginEmbedderPolicy: false
+	})
 
 	await fastify.register(fastifyOauth2, {
 		name: 'googleOAuth2',
