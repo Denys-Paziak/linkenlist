@@ -39,9 +39,9 @@ export function RealestateCard({
   showFavoriteButton?: boolean;
   isLoading?: boolean;
 }) {
-  const handleCardClick = async () => {
+  const handleCardClick = () => {
     try {
-      await fetcherUser(`/listings/${data.id}/add-view`, {
+      fetcherUser(`/listings/${data.id}/add-view`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -208,8 +208,8 @@ function FavoriteButton({ id }: { id: number }) {
     >
       <Star
         className={`w-3.5 h-3.5 transition-colors duration-200 ${isFavorite
-            ? "fill-[#dc2626] text-[#dc2626]"
-            : "text-gray-400 hover:text-gray-600"
+          ? "fill-[#dc2626] text-[#dc2626]"
+          : "text-gray-400 hover:text-gray-600"
           }`}
       />
     </button>
@@ -268,8 +268,8 @@ function Photos({ photos }: { photos: IListingPhoto[] }) {
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full transition-all duration-200 border border-white/30 ${index === currentImageIndex
-                      ? "bg-white shadow-sm"
-                      : "bg-white/60 hover:bg-white/80"
+                    ? "bg-white shadow-sm"
+                    : "bg-white/60 hover:bg-white/80"
                     }`}
                   onClick={() => {
                     setCurrentImageIndex(index);

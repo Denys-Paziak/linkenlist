@@ -115,11 +115,19 @@ export class ListingCommandService {
 			.execute()
 	}
 
-	private async generateSlugUnique(id: number, title: string) {
-		let slug = generateSlug(title)
+	private async generateSlugUnique(id: number, address: string) {
+		let slug = generateSlug(address)
 		const exists = await this.listingRepository.exists({ where: { slug, id: Not(id) } })
 		if (exists) slug = `${slug}-${generateRandomSuffix()}`
 		return slug
+	}
+
+	private renderAddress(data: { unit: string; street: string; city: string; state: string; zip: string }) {
+		if (data.unit && data.street) {
+			return data.unit + ' ' + data.street + ', ' + data.city + ', ' + data.state + ' ' + data.zip
+		}
+
+		return data.city + ', ' + data.state + ' ' + data.zip
 	}
 
 	private checkRequiredFields(listing: Listing) {
@@ -137,7 +145,6 @@ export class ListingCommandService {
 		if (!listing.bathroomsFull === null) errorFields.push('bathroomsFull')
 		if (listing.bathroomsHalf === null) errorFields.push('bathroomsHalf')
 		if (!listing.interiorSize === null) errorFields.push('interiorSize')
-		if (!listing.title) errorFields.push('title')
 		if (!listing.forSale && !listing.forRent) {
 			errorFields.push('forSale')
 			errorFields.push('forRent')
@@ -229,9 +236,20 @@ export class ListingCommandService {
 
 	async initListing(userId: number, dto: InitListingDto) {
 		let slug: string | undefined
+		let title: string | undefined
 
-		if (dto.listingDetails?.title) {
-			slug = await this.generateSlugUnique(-1, dto.listingDetails.title)
+		if (dto.location) {
+			title = this.renderAddress({
+				city: dto.location.city,
+				state: dto.location.state,
+				street: dto.location.street,
+				unit: dto.location.unit,
+				zip: dto.location.zip
+			})
+		}
+
+		if (title) {
+			slug = await this.generateSlugUnique(-1, title)
 		}
 
 		let location: { lat: number; lng: number } | undefined = undefined
@@ -277,6 +295,7 @@ export class ListingCommandService {
 				...dto.pricing,
 				...dto.property,
 				...dto.seller,
+				title,
 				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable),
 				location: location
 					? {
@@ -312,9 +331,20 @@ export class ListingCommandService {
 
 	async initListingAdmin(dto: InitListingAdminDto) {
 		let slug: string | undefined
+		let title: string | undefined
 
-		if (dto.listingDetails?.title) {
-			slug = await this.generateSlugUnique(-1, dto.listingDetails.title)
+		if (dto.location) {
+			title = this.renderAddress({
+				city: dto.location.city,
+				state: dto.location.state,
+				street: dto.location.street,
+				unit: dto.location.unit,
+				zip: dto.location.zip
+			})
+		}
+
+		if (title) {
+			slug = await this.generateSlugUnique(-1, title)
 		}
 
 		let location: { lat: number; lng: number } | undefined = undefined
@@ -355,6 +385,7 @@ export class ListingCommandService {
 				...dto.pricing,
 				...dto.property,
 				...dto.seller,
+				title,
 				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable),
 				location: location
 					? {
@@ -380,9 +411,20 @@ export class ListingCommandService {
 		const deletePhoto: { id: number; originalKey?: string | null; processedKey?: string | null }[] = []
 
 		let slug: string | undefined
+		let title: string | undefined
 
-		if (dto.listingDetails?.title) {
-			slug = await this.generateSlugUnique(listingId, dto.listingDetails.title)
+		if (dto.location) {
+			title = this.renderAddress({
+				city: dto.location.city,
+				state: dto.location.state,
+				street: dto.location.street,
+				unit: dto.location.unit,
+				zip: dto.location.zip
+			})
+		}
+
+		if (title) {
+			slug = await this.generateSlugUnique(listingId, title)
 		}
 
 		let location: { lat: number; lng: number } | undefined = undefined
@@ -418,7 +460,7 @@ export class ListingCommandService {
 
 			if (!listing) throw new NotFoundException('Listing not found.')
 
-			if (listing.title === dto.listingDetails?.title) {
+			if (listing.title === title) {
 				slug = undefined
 			}
 
@@ -479,6 +521,7 @@ export class ListingCommandService {
 				...data.property,
 				...data.seller,
 				...data.utilitiesEnergyConnectivity,
+				title,
 				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable),
 				location: location
 					? {

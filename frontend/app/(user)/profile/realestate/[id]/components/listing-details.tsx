@@ -26,7 +26,6 @@ export const ListingDetails = forwardRef<
   const form = useForm({
     resolver: zodResolver(schema),
     values: {
-      title: data?.title || "",
       description: data?.description || "",
       virtualTourUrl: data?.virtualTourUrl || "",
     },
@@ -56,18 +55,11 @@ export const ListingDetails = forwardRef<
           changed: true as const,
           data: {
             listingDetails: {
-              title: values.title === "" ? null : values.title,
               description: values.description === "" ? null : values.description,
               virtualTourUrl: values.virtualTourUrl === "" ? null : values.virtualTourUrl,
             },
           },
         };
-      },
-      setError: (fields) => {
-        if (fields.includes("title")) {
-          setExpandedSections(true)
-          form.setError("title", { message: "Title is required" });
-        }
       },
       resetDirty: () => {
         form.reset(form.getValues(), {
@@ -102,19 +94,6 @@ export const ListingDetails = forwardRef<
       {expandedSections && (
         <div className="px-4 pb-4 border-t border-gray-200 bg-white">
           <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Listing Title *"
-                requiredMark
-                {...form.register("title")}
-                error={!!form.formState.errors.title}
-                errorMessage={form.formState.errors.title?.message}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {form.watch("title").length}/100 characters
-              </p>
-            </div>
-
             <div className="space-y-2">
               <Textarea
                 id="listingDescription"

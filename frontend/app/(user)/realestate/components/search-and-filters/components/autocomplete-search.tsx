@@ -14,14 +14,6 @@ export function AutocompleteSearch({
     location?: google.maps.LatLng;
   }) => void;
 }) {
-  const [search, setSearch] = useQueryStateWithLocalStorage(
-    "/realestate?search",
-    {
-      defaultValue: "",
-      parse: (v) => parseAsString.parse(v),
-      sync: true,
-    },
-  );
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const elRef = useRef<any>(null);
@@ -43,7 +35,6 @@ export function AutocompleteSearch({
           "placeholder",
           "Search by base, ZIP, or city",
         );
-        elRef.current.setAttribute("value", search);
       }
 
       if (!listenerAttachedRef.current) {
@@ -55,7 +46,6 @@ export function AutocompleteSearch({
           await place.fetchFields({ fields: ["location", "viewport"] });
           const label = prediction.text?.text;
 
-          setSearch(label);
           onPlace(place);
         });
 
@@ -70,12 +60,6 @@ export function AutocompleteSearch({
       destroyed = true;
     };
   }, [hostRef, onPlace]);
-
-  useEffect(() => {
-    if (elRef.current) {
-      elRef.current.setAttribute("value", search);
-    }
-  }, [search]);
 
   return (
     <div className="flex items-center gap-2 max-md:relative max-md:flex-1">

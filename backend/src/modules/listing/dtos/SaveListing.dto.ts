@@ -67,25 +67,20 @@ class Seller {
 }
 
 class Location {
-	@IsOptional()
 	@IsString()
-	street?: string | null
+	street: string
 
-	@IsOptional()
 	@IsString()
-	unit?: string | null
+	unit: string
 
-	@IsOptional()
 	@IsString()
-	zip?: string | null
+	zip: string
 
-	@IsOptional()
 	@IsString()
-	state?: string | null
+	state: string
 
-	@IsOptional()
 	@IsString()
-	city?: string | null
+	city: string
 }
 
 class Pricing {
@@ -199,11 +194,6 @@ class Property {
 }
 
 class ListingDetails {
-	@IsOptional()
-	@IsString()
-	@MaxLength(100)
-	title?: string | null
-
 	@IsOptional()
 	@IsString()
 	@DescriptionLengthByPackage()

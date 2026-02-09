@@ -18,24 +18,24 @@ export function DealCard({
   data: IDealListExtended;
   isLoading?: boolean;
 }) {
-  const handleExternalClick = async () => {
+  const handleExternalClick = () => {
     try {
-      await fetcherUser(`/deals/${data.id}/add-view`, {
+      fetcherUser(`/deals/${data.id}/add-view`, {
         method: "PATCH",
         credentials: "include",
       });
-    } catch {}
+    } catch { }
 
     window.open(data.outboundUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleCardClick = async () => {
+  const handleCardClick = () => {
     try {
-      await fetcherUser(`/deals/${data.id}/add-view`, {
+      fetcherUser(`/deals/${data.id}/add-view`, {
         method: "PATCH",
         credentials: "include",
       });
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -178,7 +178,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => [...(draft || []), id], {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const deleteFavorite = async () => {
@@ -191,7 +191,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => draft?.filter((item) => item !== id), {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const isFavorite = data?.includes(id);
@@ -213,11 +213,10 @@ function FavoriteButton({ id }: { id: number }) {
       aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
     >
       <Star
-        className={`w-3.5 h-3.5 transition-colors duration-200 ${
-          isFavorite
-            ? "fill-[#dc2626] text-[#dc2626]"
-            : "text-gray-400 hover:text-gray-600"
-        }`}
+        className={`w-3.5 h-3.5 transition-colors duration-200 ${isFavorite
+          ? "fill-[#dc2626] text-[#dc2626]"
+          : "text-gray-400 hover:text-gray-600"
+          }`}
       />
     </button>
   );

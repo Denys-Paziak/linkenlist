@@ -101,7 +101,6 @@ export class FavoriteService {
 					city: true,
 					slug: true,
 					package: true,
-					title: true,
 					expiresAt: true,
 					isExpired: true,
 					photos: true,

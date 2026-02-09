@@ -17,10 +17,10 @@ interface CardProps {
 }
 
 export function ResourceCard({ data, isLoading = false }: CardProps) {
-  const handleCardClick = async () => {
+  const handleCardClick = () => {
     try {
-      await fetcherUser(`/resources/${data.id}/add-view`, { method: "PATCH", credentials: "include" });
-    } catch {}
+      fetcherUser(`/resources/${data.id}/add-view`, { method: "PATCH", credentials: "include" });
+    } catch { }
   };
 
   return (
@@ -155,7 +155,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => [...(draft || []), id], {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const deleteFavorite = async () => {
@@ -168,7 +168,7 @@ function FavoriteButton({ id }: { id: number }) {
       mutate((draft) => draft?.filter((item) => item !== id), {
         revalidate: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const isFavorite = data?.includes(id);
@@ -190,11 +190,10 @@ function FavoriteButton({ id }: { id: number }) {
       aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
     >
       <Star
-        className={`w-3.5 h-3.5 transition-colors duration-200 ${
-          isFavorite
-            ? "fill-[#dc2626] text-[#dc2626]"
-            : "text-gray-400 hover:text-gray-600"
-        }`}
+        className={`w-3.5 h-3.5 transition-colors duration-200 ${isFavorite
+          ? "fill-[#dc2626] text-[#dc2626]"
+          : "text-gray-400 hover:text-gray-600"
+          }`}
       />
     </button>
   );
