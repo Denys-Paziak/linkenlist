@@ -3,68 +3,76 @@ const isProd = process.env.NODE_ENV === "production";
 
 const CLOUD_FRONT_HOST = "d3lehtoxndxwf6.cloudfront.net";
 
-/**
- * External origins (tight allowlist)
- * - CloudFront: your asset CDN
- * - googleusercontent: Google OAuth avatars (payload.picture)
- */
 const allowedImgHosts = [
   `https://${CLOUD_FRONT_HOST}`,
   "https://*.googleusercontent.com",
-  // Google Maps tiles/static assets (enable only if you use Google Maps)
   "https://maps.gstatic.com",
   "https://maps.googleapis.com",
 ];
 
 const allowedConnectHosts = [
   "'self'",
-  // Google Maps API calls (enable only if you use Google Maps)
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
-  // Google APIs (enable only if you call them from browser)
+  // Google Maps additional resources (your violation shows this exact domain)
+  "https://mapsresources-pa.googleapis.com",
+  // If you really call accounts.google.com from browser you can keep it,
+  // otherwise it can be removed.
   "https://accounts.google.com",
 ];
 
 const allowedScriptHosts = [
-  // by default: only self; enable maps domains only if needed
+  // Google Maps (if used)
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
+
+  // Cloudflare Turnstile + Cloudflare Insights
+  "https://challenges.cloudflare.com",
+  "https://static.cloudflareinsights.com",
 ];
 
 const allowedStyleHosts = [
-  // If you actually use Google Fonts stylesheets:
+  // Google Fonts stylesheet (you have evidence in console logs)
   "https://fonts.googleapis.com",
 ];
 
 const allowedFontHosts = [
   "'self'",
   "data:",
-  // If you actually use Google Fonts font files:
+  // Google Fonts font files (evidence: fonts.gstatic.com)
   "https://fonts.gstatic.com",
 ];
+
 
 // CSP baseline (enforced)
 const csp = [
   "default-src 'self'",
 
-  // Next app router: keep unsafe-inline for compatibility unless you implement nonce.
-  // Remove https: wildcard to keep it tight.
-  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"} ${allowedScriptHosts.join(" ")}`.trim(),
+  // Inline scripts allowed (compat); restrict external script elements separately
+  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"}`.trim(),
 
-  // Keep unsafe-inline for styles (Next/various libs may inline styles).
+  // External <script src="..."> allowlist (this fixes your Turnstile/Insights blocks)
+  `script-src-elem 'self' ${allowedScriptHosts.join(" ")}`.trim(),
+
+  // Styles (inline allowed) + Google Fonts stylesheet
   `style-src 'self' 'unsafe-inline' ${allowedStyleHosts.join(" ")}`.trim(),
 
-  // Images: self + data/blob + explicit external hosts (CloudFront + googleusercontent)
+  // Images
   `img-src 'self' data: blob: ${allowedImgHosts.join(" ")}`.trim(),
 
-  // Fonts: self + data (+ optional fonts.gstatic.com)
+  // Fonts
   `font-src ${allowedFontHosts.join(" ")}`.trim(),
 
-  // Same-domain API: self (plus optional explicit external APIs)
+  // API calls (Maps extra domain included)
   `connect-src ${allowedConnectHosts.join(" ")}`.trim(),
 
-  // Media: self + blob + CloudFront (if you serve videos/audio/files from there)
+  // Media
   `media-src 'self' blob: https://${CLOUD_FRONT_HOST}`,
+
+  // ✅ Fix for "Creating a worker from blob violates CSP"
+  "worker-src 'self' blob:",
+  // Some browsers use child-src fallback for workers
+  "child-src 'self' blob:",
 
   "object-src 'none'",
   "base-uri 'self'",
