@@ -30,7 +30,6 @@ async function bootstrap() {
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 	})
 
-	await app.register(multipart)
 	const fastify = app.getHttpAdapter().getInstance()
 	await fastify.register(cookie)
 
@@ -38,6 +37,8 @@ async function bootstrap() {
 		contentSecurityPolicy: false,
 		crossOriginEmbedderPolicy: false
 	})
+
+	await fastify.register(multipart)
 
 	await fastify.register(fastifyOauth2, {
 		name: 'googleOAuth2',
