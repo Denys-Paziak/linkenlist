@@ -19,6 +19,8 @@ const csp = [
 
   "frame-src 'self' https://challenges.cloudflare.com",
 
+  "child-src 'self' blob: https://challenges.cloudflare.com",
+
   "worker-src 'self' blob:",
 
   "object-src 'none'",
@@ -54,6 +56,7 @@ const nextConfig = {
     unoptimized: false,
     remotePatterns: [
       { protocol: "https", hostname: CLOUD_FRONT_HOST, pathname: "/**" },
+      { protocol: "https", hostname: "*.googleusercontent.com", pathname: "/**" },
     ],
   },
 
