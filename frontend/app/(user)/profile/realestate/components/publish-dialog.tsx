@@ -104,7 +104,7 @@ export function PublishDialog({
             status={status}
             statusText={{
               loading: "Publish...",
-              success: "Published",
+              success: "Success!",
               error: "Try again",
               disabled: "Disabled",
             }}

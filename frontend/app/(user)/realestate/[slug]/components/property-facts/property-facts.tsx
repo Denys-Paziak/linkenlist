@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { MortgageCalculator } from "./components/mortgage-calculator/mortgage-calculator";
-import { BAHCalculator } from "./components/bah-calculator";
+import { BAHCalculator } from "./components/bah-calculator/bah-calculator";
 import { IRealestate } from "../../../../../../types/Realestate";
 import { formatDurationFromMonths } from "../../../../../../lib/utils";
 
@@ -342,9 +342,8 @@ export function PropertyFacts({ listing }: { listing: IRealestate }) {
           >
             {showAllFacts ? "Show Less" : "Show More"}
             <ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${
-                showAllFacts ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform duration-200 ${showAllFacts ? "rotate-180" : ""
+                }`}
             />
           </button>
         </div>

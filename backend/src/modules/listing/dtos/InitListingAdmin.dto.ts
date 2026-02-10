@@ -70,8 +70,9 @@ class Location {
 	@IsString()
 	street: string
 
+	@IsOptional()
 	@IsString()
-	unit: string
+	unit?: string
 
 	@IsString()
 	zip: string

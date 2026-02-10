@@ -122,12 +122,12 @@ export class ListingCommandService {
 		return slug
 	}
 
-	private renderAddress(data: { unit: string; street: string; city: string; state: string; zip: string }) {
-		if (data.unit && data.street) {
+	private renderAddress(data: { unit?: string; street: string; city: string; state: string; zip: string }) {
+		if (data.unit) {
 			return data.unit + ' ' + data.street + ', ' + data.city + ', ' + data.state + ' ' + data.zip
 		}
 
-		return data.city + ', ' + data.state + ' ' + data.zip
+		return data.street + ', ' + data.city + ', ' + data.state + ' ' + data.zip
 	}
 
 	private checkRequiredFields(listing: Listing) {

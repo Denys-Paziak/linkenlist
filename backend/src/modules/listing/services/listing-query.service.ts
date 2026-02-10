@@ -689,7 +689,7 @@ export class ListingQueryService {
 					forRent: (listing.owner as any).forRentCount ?? 0
 				}
 			},
-			primaryPhone: listing.hideAlternativePhone ? null : listing.primaryPhone,
+			primaryPhone: listing.primaryPhone ? null : listing.primaryPhone,
 			alternativePhone: listing.hideAlternativePhone ? null : listing.alternativePhone,
 			expiresAt: null,
 			updatedAt: null,

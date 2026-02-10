@@ -56,7 +56,7 @@ export function PropertyHeader({ listing }: { listing: IRealestate }) {
           <div className="grid grid-cols-2 gap-2 mb-4">
             <div className="bg-gray-100 rounded-lg px-3 py-2 text-left min-h-[2.5rem] flex items-center">
               <span className="text-xs font-medium text-gray-900">
-                {formatDateDiff(listing.publishedAt)}
+                {listing.publishedAt ? formatDateDiff(listing.publishedAt) : "0 days"}
               </span>
               <span className="text-xs text-gray-600 ml-1">On LinkEnlist</span>
             </div>

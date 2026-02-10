@@ -104,8 +104,7 @@ export const Location = forwardRef<
         />
 
         <Input
-          placeholder="Unit/Apt *"
-          requiredMark
+          placeholder="Unit/Apt"
           {...form.register("unit")}
           error={!!form.formState.errors.unit}
           errorMessage={form.formState.errors.unit?.message}

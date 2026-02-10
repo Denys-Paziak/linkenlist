@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   ButtonSubmit,
   ButtonSubmitStatus,
-} from "../../../../../../../components/ui/button-submit";
-import { fetcherUser } from "../../../../../../../lib/fetcher";
-import { ErrorAlert } from "../../../../../../../components/ui/error-alert";
+} from "../../../../../../../../components/ui/button-submit";
+import { fetcherUser } from "../../../../../../../../lib/fetcher";
+import { ErrorAlert } from "../../../../../../../../components/ui/error-alert";
+import { AutocompleteSearch } from "./autocomplete-search";
 
 const paygrades = [
   {
@@ -125,19 +126,14 @@ export function BAHCalculator() {
         </h3>
 
         <div className="space-y-4">
-          {formError ? <ErrorAlert message={formError} /> : null}
           <div className="flex gap-3 items-end">
             <div className="flex-[2]">
               <label className="block text-gray-700 font-medium mb-1 text-sm">
                 Duty Station ZIP Code or City:
               </label>
-              <input
-                type="text"
-                placeholder="Biloxi, MS"
-                value={dutyStation}
-                onChange={(e) => setDutyStation(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-[#002244] font-semibold text-sm"
-              />
+              <AutocompleteSearch onPlace={(zip) => {
+                setDutyStation(zip)
+              }} />
             </div>
 
             <div className="flex-1" ref={dropdownRef}>
@@ -169,16 +165,14 @@ export function BAHCalculator() {
                               setSelectedPaygrade(option);
                               setIsDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm whitespace-nowrap ${
-                              selectedPaygrade === option
-                                ? "bg-primary/10 text-primary"
-                                : ""
-                            } ${
-                              group.options[group.options.length - 1] ===
+                            className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm whitespace-nowrap ${selectedPaygrade === option
+                              ? "bg-primary/10 text-primary"
+                              : ""
+                              } ${group.options[group.options.length - 1] ===
                                 option && groupIndex === paygrades.length - 1
                                 ? "last:rounded-b-lg"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {option}
                           </button>

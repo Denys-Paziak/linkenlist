@@ -121,7 +121,7 @@ export default function EditRealestatePage() {
       if (!res.ok) {
         setSaveStatus("error");
         setFormError("Please fix the errors below.");
-        return;
+        break;
       }
 
       if (res.changed) {
@@ -140,10 +140,6 @@ export default function EditRealestatePage() {
     setSaveStatus("loading");
 
     const formsData = await getFormsData();
-
-    if (formsData === undefined) {
-      return;
-    }
 
     if (Object.keys(formsData).length === 0) {
       if (!step) {

@@ -105,7 +105,10 @@ export default function EditRealestatePage() {
     }
 
     const formsData = await getFormsDataContinue();
-    if (Object.keys(formsData).length === 0) return;
+    if (Object.keys(formsData).length === 0) {
+      setSaveStatus("idle");
+      return
+    };
 
     try {
       let listingId: undefined | number = undefined

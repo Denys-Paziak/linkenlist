@@ -2,15 +2,12 @@
 
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { loadGoogleMaps } from "../../../../../../lib/googleMaps";
+import { loadGoogleMaps } from "../../../../../../../../lib/googleMaps";
 
 export function AutocompleteSearch({
   onPlace,
 }: {
-  onPlace: (place: {
-    viewport?: google.maps.LatLngBounds;
-    location?: google.maps.LatLng;
-  }) => void;
+  onPlace: (zipOrlabel: string) => void;
 }) {
 
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -31,7 +28,7 @@ export function AutocompleteSearch({
 
         elRef.current.setAttribute(
           "placeholder",
-          "Search by base, ZIP, or city",
+          "Biloxi, MS",
         );
       }
 
@@ -41,9 +38,17 @@ export function AutocompleteSearch({
           if (!prediction) return;
 
           const place = await prediction.toPlace();
-          await place.fetchFields({ fields: ["location", "viewport"] });
+          await place.fetchFields({
+            fields: ["addressComponents"],
+          });
 
-          onPlace(place);
+          const zipCode = place.addressComponents?.find((component: any) =>
+            component.types.includes("postal_code"),
+          )?.shortText;
+
+          const label = prediction.text?.text;
+
+          onPlace(zipCode || label);
         });
 
         listenerAttachedRef.current = true;
@@ -59,10 +64,8 @@ export function AutocompleteSearch({
   }, [hostRef, onPlace]);
 
   return (
-    <div className="flex items-center gap-2 max-md:relative max-md:flex-1">
-      <div className="relative w-0 md:w-80 max-md:flex-1">
-        <div ref={hostRef} className="autocomplete-wrapper" />
-      </div>
+    <div className=" w-full">
+      <div ref={hostRef} className="autocomplete-wrapper" />
     </div>
   );
 }
