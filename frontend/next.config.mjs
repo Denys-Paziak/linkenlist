@@ -13,7 +13,7 @@ const csp = [
 
   `img-src 'self' data: blob: https://${CLOUD_FRONT_HOST} https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com`,
 
-  "connect-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com https://api.zippopotam.us",
+  "connect-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://mapsresources-pa.googleapis.com https://places.googleapis.com https://api.zippopotam.us",
 
   `media-src 'self' blob: https://${CLOUD_FRONT_HOST}`,
 
