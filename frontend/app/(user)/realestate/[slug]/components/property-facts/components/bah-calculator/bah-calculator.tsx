@@ -126,8 +126,8 @@ export function BAHCalculator() {
         </h3>
 
         <div className="space-y-4">
-          <div className="flex gap-3 items-end">
-            <div className="flex-[2]">
+          <div className="flex gap-3 items-end max-sm:flex-col">
+            <div className="flex-shrink w-full">
               <label className="block text-gray-700 font-medium mb-1 text-sm">
                 Duty Station ZIP Code or City:
               </label>
@@ -136,7 +136,7 @@ export function BAHCalculator() {
               }} />
             </div>
 
-            <div className="flex-1" ref={dropdownRef}>
+            <div className="flex-shrink max-sm:w-full" ref={dropdownRef}>
               <label className="block text-gray-700 font-medium mb-1 text-sm">
                 Paygrade:
               </label>
@@ -184,7 +184,7 @@ export function BAHCalculator() {
               </div>
             </div>
 
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 max-sm:mx-auto">
               <ButtonSubmit
                 type="button"
                 onClick={calculateBAH}

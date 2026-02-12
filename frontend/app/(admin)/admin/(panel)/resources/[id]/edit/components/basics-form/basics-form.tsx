@@ -63,25 +63,25 @@ export function BasicsForm() {
     resolver: zodResolver(basicFormSchema),
     values: data
       ? {
-          featuredDealId: data.featuredDeal?.id || null,
-          image: data.image?.url || "",
-          title: data?.title || "",
-          slug: data?.slug || "",
-          teaser: data?.teaser || "",
-          categories: data?.categories || [],
-          tags: data?.tags.map((item) => item.name) || [],
-          format: data?.format || "",
-        }
+        featuredDealId: data.featuredDeal?.id || null,
+        image: data.image?.url || "",
+        title: data?.title || "",
+        slug: data?.slug || "",
+        teaser: data?.teaser || "",
+        categories: data?.categories || [],
+        tags: data?.tags.map((item) => item.name) || [],
+        format: data?.format || "",
+      }
       : {
-          featuredDealId: null,
-          image: "",
-          title: "",
-          slug: "",
-          teaser: "",
-          categories: [],
-          tags: [],
-          format: "",
-        },
+        featuredDealId: null,
+        image: "",
+        title: "",
+        slug: "",
+        teaser: "",
+        categories: [],
+        tags: [],
+        format: "",
+      },
     mode: "onBlur",
   });
 
@@ -132,7 +132,7 @@ export function BasicsForm() {
     try {
       const values = form.getValues();
       const dirty = pickDirty(values, form.formState.dirtyFields);
-      console.log(dirty);
+
       const formData = new FormData();
 
       formData.append(

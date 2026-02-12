@@ -104,7 +104,6 @@ export default async function RealestateDetailPage({
   if (!listing) {
     notFound();
   }
-  console.log(listing)
 
   return (
     <div className="relative">

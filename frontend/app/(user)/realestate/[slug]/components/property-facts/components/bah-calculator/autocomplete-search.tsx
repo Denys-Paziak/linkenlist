@@ -64,7 +64,7 @@ export function AutocompleteSearch({
   }, [hostRef, onPlace]);
 
   return (
-    <div className=" w-full">
+    <div className="w-full">
       <div ref={hostRef} className="autocomplete-wrapper" />
     </div>
   );
