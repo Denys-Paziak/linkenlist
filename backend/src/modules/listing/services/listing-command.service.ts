@@ -986,6 +986,9 @@ export class ListingCommandService {
 			select: {
 				id: true,
 				title: true,
+				firstName: true,
+				lastName: true,
+				email: true,
 				owner: { id: true }
 			},
 			relations: ['owner']
