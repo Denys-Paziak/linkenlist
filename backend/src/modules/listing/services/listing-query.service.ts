@@ -71,8 +71,10 @@ export class ListingQueryService {
 		} else {
 			baseQb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
 
-			if (dealType === EDealType.RENT) baseQb.andWhere('l.forRent = true')
-			else baseQb.andWhere('l.forSale = true')
+			if (dealType) {
+				if (dealType === EDealType.RENT) baseQb.andWhere('l.forRent = true')
+				else baseQb.andWhere('l.forSale = true')
+			}
 		}
 
 		// 2) Price
@@ -328,8 +330,10 @@ export class ListingQueryService {
 		} else {
 			qb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
 
-			if (dealType === EDealType.RENT) qb.andWhere('l.forRent = true')
-			else qb.andWhere('l.forSale = true')
+			if (dealType) {
+				if (dealType === EDealType.RENT) qb.andWhere('l.forRent = true')
+				else qb.andWhere('l.forSale = true')
+			}
 		}
 
 		// 3) price

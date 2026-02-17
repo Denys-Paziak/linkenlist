@@ -53,8 +53,9 @@ export enum ESortBy {
 }
 
 export class GetAllListingsDto {
+	@IsOptional()
 	@IsEnum(EDealType)
-	dealType: EDealType
+	dealType?: EDealType
 
 	@IsOptional()
 	@Type(() => Number)
