@@ -455,4 +455,50 @@ export class MailService {
 			</html>`
 		)
 	}
+
+	async sendListingReject(to: string, name: string, message: string) {
+		await this.send(
+			to,
+			`Listing Reject`,
+			`<!doctype html>
+				<html lang="en">
+				<head>
+					<meta charset="utf-8" />
+					<meta name="viewport" content="width=device-width, initial-scale=1" />
+					<meta name="x-apple-disable-message-reformatting" />
+					<title>Your listing was rejected</title>
+				</head>
+				<body style="margin:0;padding:0;background:${this.BG};">
+					<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${this.BG};">
+					<tr>
+						<td align="center" style="padding:32px 16px;">
+						<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+							<tr>
+							<td style="background:${this.CARD_BG};border:1px solid ${this.BORDER};border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+								<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+								<tr>
+									<td style="padding:28px 28px 12px 28px;">
+									<h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:${this.TEXT};font-weight:700;">
+										Hello ${name},
+									</h1>
+									</td>
+								</tr>
+								<tr>
+									<td style="padding:0 28px 24px 28px;">
+									<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:${this.MUTED};">
+										${message}
+									</p>
+									</td>
+								</tr>
+								</table>
+							</td>
+							</tr>
+						</table>
+						</td>
+					</tr>
+					</table>
+				</body>
+			</html>`
+		)
+	}
 }

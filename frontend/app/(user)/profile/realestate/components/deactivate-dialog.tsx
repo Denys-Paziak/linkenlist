@@ -17,8 +17,6 @@ import {
 } from "../../../../../components/ui/dialog";
 import { fetcherUser } from "../../../../../lib/fetcher";
 import {
-  EListingStatus,
-  EPackageType,
   IRealestateOwnerList,
 } from "../../../../../types/Realestate";
 
@@ -82,12 +80,7 @@ export function DeactivateDialog({
         <DialogHeader>
           <DialogTitle>Deactivate Listing</DialogTitle>
           <DialogDescription>
-            After deactivating the listing, users will not be able to view it
-            and it will disappear from search results.
-            <br />
-            {listing.package === EPackageType.BASIC && listing.status === EListingStatus.ACTIVE && (
-                <b>With the basic package, the listing will be checked again before being republished.</b>
-            )}
+            The listing will be removed from the For Sale or For Rent listings.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

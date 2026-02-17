@@ -49,7 +49,7 @@ const buttonSubitVariants = cva(
 
 export interface ButtonSubmitProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonSubitVariants> {
+  VariantProps<typeof buttonSubitVariants> {
   asChild?: boolean;
 
   status?: "idle" | "loading" | "success" | "error" | "disabled";
@@ -96,7 +96,7 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
     return (
       <button
         className={cn(
-          buttonSubitVariants({ variant, size, status, className }),
+          buttonSubitVariants({ className, variant, size, status }),
           "relative"
         )}
         ref={ref}
@@ -113,10 +113,10 @@ const ButtonSubmit = React.forwardRef<HTMLButtonElement, ButtonSubmitProps>(
             {status === "loading"
               ? "Loading"
               : status === "success"
-              ? "Success"
-              : status === "error"
-              ? "Error"
-              : "Disabled"}
+                ? "Success"
+                : status === "error"
+                  ? "Error"
+                  : "Disabled"}
           </span>
         ) : null}
       </button>

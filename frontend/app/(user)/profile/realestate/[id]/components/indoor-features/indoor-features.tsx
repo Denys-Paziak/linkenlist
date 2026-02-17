@@ -98,9 +98,7 @@ export const IndoorFeatures = forwardRef<
               ].filter(Boolean),
               premiumFeatures:
                 values.premiumFeatures === "" ? null : values.premiumFeatures,
-              specialFeatures: values.specialFeatures.map((item) =>
-                item === "" ? null : item
-              ),
+              specialFeatures: values.specialFeatures.filter((item) => item),
             },
           },
         };

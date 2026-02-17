@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Parser } from 'json2csv'
-import { Brackets, In, Repository } from 'typeorm'
+import { Brackets, In, Or, Repository } from 'typeorm'
 
 import { EContactInboxStatus } from '../../../interfaces/EContactInboxStatus'
 import { EListingStatus } from '../../../interfaces/EListingStatus'
@@ -10,7 +10,7 @@ import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { ContactInbox } from '../../contact-inbox/entities/ContactInbox.entity'
 import { ExportListingsDto } from '../dtos/ExportListings.dto'
 import { GetAdminAllListingsDto, ListingAdminFilter } from '../dtos/GetAdminAllListings.dto'
-import { ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
+import { EDealType, ESortBy, GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
 import { GetMapListingsDto } from '../dtos/GetMapListings.dto'
 import { GetOwnerAllListingsDto } from '../dtos/GetOwnerAllListings.dto'
@@ -66,10 +66,12 @@ export class ListingQueryService {
 		const baseQb = this.listingRepository.createQueryBuilder('l')
 
 		// 1) Active + dealType
-		baseQb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
+		if (dealType === EDealType.INACTIVE) {
+			baseQb.andWhere('l.status = :status', { status: EListingStatus.INACTIVE })
+		} else {
+			baseQb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
 
-		if (dealType) {
-			if (dealType === 'rent') baseQb.andWhere('l.forRent = true')
+			if (dealType === EDealType.RENT) baseQb.andWhere('l.forRent = true')
 			else baseQb.andWhere('l.forSale = true')
 		}
 
@@ -78,7 +80,7 @@ export class ListingQueryService {
 		const hasMax = typeof maxPrice === 'number' && Number.isFinite(maxPrice)
 		const invalidRange = hasMin && hasMax && minPrice! > maxPrice!
 		if (!invalidRange && (hasMin || hasMax)) {
-			const col = dealType === 'rent' ? 'l.monthlyRent' : 'l.listPrice'
+			const col = dealType === EDealType.RENT ? 'l.monthlyRent' : 'l.listPrice'
 			if (hasMin) baseQb.andWhere(`${col} >= :minPrice`, { minPrice })
 			if (hasMax) baseQb.andWhere(`${col} <= :maxPrice`, { maxPrice })
 		}
@@ -259,7 +261,10 @@ export class ListingQueryService {
 
 	async getOneCardListing(listingId: number) {
 		return await this.listingRepository.findOne({
-			where: { id: listingId },
+			where: [
+				{ id: listingId, status: EListingStatus.ACTIVE },
+				{ id: listingId, status: EListingStatus.INACTIVE }
+			],
 			relations: ['photos'],
 			select: [
 				'id',
@@ -317,12 +322,13 @@ export class ListingQueryService {
 
 		const qb = this.listingRepository.createQueryBuilder('l')
 
-		// 1) active
-		qb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
+		// 1) Active + dealType
+		if (dealType === EDealType.INACTIVE) {
+			qb.andWhere('l.status = :status', { status: EListingStatus.INACTIVE })
+		} else {
+			qb.andWhere('l.status = :activeStatus', { activeStatus: EListingStatus.ACTIVE })
 
-		// 2) dealType
-		if (dealType) {
-			if (dealType === 'rent') qb.andWhere('l.forRent = true')
+			if (dealType === EDealType.RENT) qb.andWhere('l.forRent = true')
 			else qb.andWhere('l.forSale = true')
 		}
 
@@ -331,7 +337,7 @@ export class ListingQueryService {
 		const hasMax = typeof maxPrice === 'number' && Number.isFinite(maxPrice)
 		const invalidRange = hasMin && hasMax && minPrice! > maxPrice!
 		if (!invalidRange && (hasMin || hasMax)) {
-			const col = dealType === 'rent' ? 'l.monthlyRent' : 'l.listPrice'
+			const col = dealType === EDealType.RENT ? 'l.monthlyRent' : 'l.listPrice'
 			if (hasMin) qb.andWhere(`${col} >= :minPrice`, { minPrice })
 			if (hasMax) qb.andWhere(`${col} <= :maxPrice`, { maxPrice })
 		}
@@ -515,10 +521,7 @@ export class ListingQueryService {
 		const limit = Math.max(1, Number(query.limit ?? 16))
 		const offset = (page - 1) * limit
 
-		const qb = this.listingRepository
-			.createQueryBuilder('listing')
-			.leftJoinAndSelect('listing.photos', 'photos')
-			.leftJoinAndSelect('listing.owner', 'owner')
+		const qb = this.listingRepository.createQueryBuilder('listing').leftJoinAndSelect('listing.photos', 'photos')
 
 		if (query.filter === ListingAdminFilter.DRAFT) {
 			qb.andWhere('listing.status = :status', { status: EListingStatus.DRAFT })
@@ -573,9 +576,8 @@ export class ListingQueryService {
 				'listing.createdAt',
 				'listing.totalViews',
 				'photos',
-				'owner.id',
-				'owner.firstName',
-				'owner.lastName',
+				'listing.firstName',
+				'listing.lastName',
 				'reports.id',
 				'reports.reportReason'
 			])
@@ -639,27 +641,74 @@ export class ListingQueryService {
 		return listing
 	}
 
-	async getOneListing(listingSlug: string, userId?: number) {
+	async getOneListing(listingSlug: string) {
 		const qb = this.listingRepository
 			.createQueryBuilder('listing')
 			.leftJoinAndSelect('listing.photos', 'photo')
 			.leftJoinAndSelect('listing.owner', 'owner')
 			.leftJoinAndSelect('owner.avatar', 'avatar')
-			.leftJoinAndSelect('listing.nearestBase', 'nearestBase')
 			.where('listing.slug = :listingSlug', { listingSlug })
-			.andWhere(
-				new Brackets(subQb => {
-					subQb.where('listing.status = :status', { status: EListingStatus.ACTIVE })
-					if (userId) {
-						subQb.orWhere('listing.ownerId = :userId', { userId })
-					}
-				})
-			)
+			.andWhere('listing.status IN (:...statuses)', { statuses: [EListingStatus.ACTIVE, EListingStatus.INACTIVE] })
 			.loadRelationCountAndMap('owner.forSaleCount', 'owner.listings', 'ol_sale', sub =>
 				sub.andWhere('ol_sale.forSale = true').andWhere('ol_sale.status = :activeStatus', {
 					activeStatus: EListingStatus.ACTIVE
 				})
 			)
+			.loadRelationCountAndMap('owner.forRentCount', 'owner.listings', 'ol_rent', sub =>
+				sub.andWhere('ol_rent.forRent = true').andWhere('ol_rent.status = :activeStatus', {
+					activeStatus: EListingStatus.ACTIVE
+				})
+			)
+			.addSelect('ST_Y(listing.location::geometry)', 'lat')
+			.addSelect('ST_X(listing.location::geometry)', 'lng')
+			.orderBy('photo.position', 'ASC')
+
+		const { entities, raw } = await qb.getRawAndEntities()
+
+		const listing = entities[0]
+		if (!listing) throw new NotFoundException('Listing not found.')
+
+		const lat = raw[0]?.lat
+		const lng = raw[0]?.lng
+
+		return {
+			...listing,
+			owner: {
+				id: listing.owner.id,
+				professionalTitle: listing.owner.professionalTitle,
+				avatar: listing.owner.avatar,
+				createdAt: listing.owner.createdAt,
+				listings: {
+					forSale: (listing.owner as any).forSaleCount ?? 0,
+					forRent: (listing.owner as any).forRentCount ?? 0
+				}
+			},
+			primaryPhone: listing.primaryPhone ? null : listing.primaryPhone,
+			alternativePhone: listing.hideAlternativePhone ? null : listing.alternativePhone,
+			expiresAt: null,
+			updatedAt: null,
+			lat: lat !== null && lat !== undefined ? Number(lat) : null,
+			lng: lng !== null && lng !== undefined ? Number(lng) : null
+		}
+	}
+
+	async getPreviewOneListing(listingSlug: string, user: ITokenUser) {
+		const qb = this.listingRepository
+			.createQueryBuilder('listing')
+			.leftJoinAndSelect('listing.photos', 'photo')
+			.leftJoinAndSelect('listing.owner', 'owner')
+			.leftJoinAndSelect('owner.avatar', 'avatar')
+			.where('listing.slug = :listingSlug', { listingSlug })
+
+		if (user.role === ERoleName.USER) {
+			qb.andWhere('listing.ownerId = :userId', { userId: user.id })
+		}
+
+		qb.loadRelationCountAndMap('owner.forSaleCount', 'owner.listings', 'ol_sale', sub =>
+			sub.andWhere('ol_sale.forSale = true').andWhere('ol_sale.status = :activeStatus', {
+				activeStatus: EListingStatus.ACTIVE
+			})
+		)
 			.loadRelationCountAndMap('owner.forRentCount', 'owner.listings', 'ol_rent', sub =>
 				sub.andWhere('ol_rent.forRent = true').andWhere('ol_rent.status = :activeStatus', {
 					activeStatus: EListingStatus.ACTIVE

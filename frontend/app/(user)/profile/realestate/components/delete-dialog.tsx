@@ -80,16 +80,9 @@ export function DeleteDialog({
         ) : null}
         <DialogHeader>
           <DialogTitle>Delete Listing</DialogTitle>
-          {listing.status === EListingStatus.ACTIVE ? (
-            <DialogDescription>
-              An active listing cannot be deleted. To delete it, first make the
-              listing inactive.
-            </DialogDescription>
-          ) : (
-            <DialogDescription>
-              Deleting an listing is irreversible.
-            </DialogDescription>
-          )}
+          <DialogDescription>
+            Deleting an listing is irreversible.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleCancel()}>

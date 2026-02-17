@@ -143,11 +143,6 @@ export function SavedListings() {
               Browse properties and bookmark the ones you're interested in to
               see them here.
             </p>
-            <Link href="/realestate">
-              <Button className="bg-[#002244] hover:bg-[#001122]">
-                Browse Properties
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       )}

@@ -201,7 +201,8 @@ export interface IRealestateAdminList {
   isExpired: boolean;
   totalViews: number;
   photos: IListingPhoto[];
-  owner: Pick<IUser, "id" | "firstName" | "lastName">;
+  firstName: string;
+  lastName: string;
   reports: Pick<IContactInbox, "id" | "reportReason">[];
 }
 

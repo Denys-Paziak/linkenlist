@@ -529,7 +529,7 @@ body {
   justify-content: center;
   padding: 4px 10px;
   border-radius: 9999px;
-  
+
   color: #fff;
   font-weight: 700;
   font-size: 12px;
@@ -549,8 +549,12 @@ body {
   background: #7a0005;
 }
 
-.gmk-cluster{
+.gmk-cluster {
   @apply bg-primary;
-  border: 2px solid rgba(255,255,255,.25);
+  border: 2px solid rgba(255, 255, 255, .25);
   font-size: 14px;
+}
+
+.gmk-pill-inactive {
+  @apply bg-gray-600;
 }

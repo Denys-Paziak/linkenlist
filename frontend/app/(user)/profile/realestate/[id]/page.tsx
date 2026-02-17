@@ -32,6 +32,7 @@ import { IUser } from "../../../../../types/User";
 import { Button } from "../../../../../components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PublishDialog } from "./components/publish-dialog";
+import { SaveStatusDialog } from "./components/save-status-dialog";
 
 export interface FormHandle {
   submit: () => Promise<
@@ -70,10 +71,15 @@ export default function EditRealestatePage() {
     isLoading,
     isValidating,
     error: loadError,
-  } = useSWR<IOwnerRealestate>("/listings/my/" + id);
+  } = useSWR<IOwnerRealestate>("/listings/my/" + id, {
+    revalidateIfStale: true,
+  });
 
   const [saveStatus, setSaveStatus] = useState<ButtonSubmitStatus>("idle");
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [showSaveStatusDialog, setShowSaveStatusDialog] = useState<boolean>(false);
+  const [textSaveStatusDialog, setTextSaveStatusDialog] = useState<string>("");
 
   const sellerRef = useRef<FormHandle>(null);
   const locationRef = useRef<FormHandle>(null);
@@ -88,30 +94,19 @@ export default function EditRealestatePage() {
   const mediaRef = useRef<FormHandle>(null);
 
   const getFormsData = async () => {
-    const formsResults = await Promise.all(
-      !step
-        ? [
-          sellerRef.current?.submit(),
-          locationRef.current?.submit(),
-          pricingRef.current?.submit(),
-          propertyRef.current?.submit(),
-          listingDetailsRef.current?.submit(),
-          amenitiesRef.current?.submit(),
-        ]
-        : [
-          sellerRef.current?.submit(),
-          locationRef.current?.submit(),
-          pricingRef.current?.submit(),
-          propertyRef.current?.submit(),
-          listingDetailsRef.current?.submit(),
-          amenitiesRef.current?.submit(),
-          outdoorFeaturesRef.current?.submit(),
-          indoorFeaturesRef.current?.submit(),
-          constructionAndLegalRecordsRef.current?.submit(),
-          utilitiesEnergyConnectivityRef.current?.submit(),
-          mediaRef.current?.submit(),
-        ],
-    );
+    const formsResults = await Promise.all([
+      sellerRef.current?.submit(),
+      locationRef.current?.submit(),
+      pricingRef.current?.submit(),
+      propertyRef.current?.submit(),
+      listingDetailsRef.current?.submit(),
+      amenitiesRef.current?.submit(),
+      outdoorFeaturesRef.current?.submit(),
+      indoorFeaturesRef.current?.submit(),
+      constructionAndLegalRecordsRef.current?.submit(),
+      utilitiesEnergyConnectivityRef.current?.submit(),
+      mediaRef.current?.submit(),
+    ]);
 
     let formsData = {};
 
@@ -121,7 +116,7 @@ export default function EditRealestatePage() {
       if (!res.ok) {
         setSaveStatus("error");
         setFormError("Please fix the errors below.");
-        break;
+        return "error"
       }
 
       if (res.changed) {
@@ -139,14 +134,17 @@ export default function EditRealestatePage() {
     setFormError(null);
     setSaveStatus("loading");
 
-    const formsData = await getFormsData();
+    const formsData = await getFormsData() as any;
 
     if (Object.keys(formsData).length === 0) {
-      if (!step) {
-        setSaveStatus("idle");
-        router.push(`/profile/realestate/${id}?step=2`);
+      setSaveStatus("success");
+      if (!(realestate?.status !== EListingStatus.ACTIVE &&
+        realestate?.status !== EListingStatus.PENDING &&
+        !realestate?.isExpired)) {
+        setShowSaveStatusDialog(true)
+        setTextSaveStatusDialog("Changes were successfully applied to your listing.")
       }
-      return;
+      return true;
     }
 
     try {
@@ -159,36 +157,39 @@ export default function EditRealestatePage() {
         body: JSON.stringify(formsData),
       });
 
-      if (!step) {
-        setSaveStatus("idle");
-      } else {
-        setSaveStatus("success");
+      setSaveStatus("success");
+
+      if (!(realestate?.status !== EListingStatus.ACTIVE &&
+        realestate?.status !== EListingStatus.PENDING &&
+        !realestate?.isExpired)) {
+        setShowSaveStatusDialog(true)
+        const toPending = Boolean(
+          formsData.location ||
+          formsData.property ||
+          formsData.listingDetails ||
+          formsData.amenities ||
+          formsData.outdoorFeatures ||
+          formsData.indoorFeatures ||
+          formsData.constructionAndLegalRecords ||
+          formsData.utilitiesEnergyConnectivity ||
+          formsData.photos
+        )
+        setTextSaveStatusDialog(toPending ? "Your edits will take effect upon review by a moderator (within 24 hrs). No other action is required at this time." : "Changes were successfully applied to your listing.")
       }
 
-      if (!step) {
-        sellerRef.current?.resetDirty();
-        locationRef.current?.resetDirty();
-        pricingRef.current?.resetDirty();
-        propertyRef.current?.resetDirty();
-        listingDetailsRef.current?.resetDirty();
-        amenitiesRef.current?.resetDirty();
-      } else {
-        sellerRef.current?.resetDirty();
-        locationRef.current?.resetDirty();
-        pricingRef.current?.resetDirty();
-        propertyRef.current?.resetDirty();
-        listingDetailsRef.current?.resetDirty();
-        amenitiesRef.current?.resetDirty();
-        outdoorFeaturesRef.current?.resetDirty();
-        indoorFeaturesRef.current?.resetDirty();
-        constructionAndLegalRecordsRef.current?.resetDirty();
-        utilitiesEnergyConnectivityRef.current?.resetDirty();
-        mediaRef.current?.resetDirty();
-      }
+      sellerRef.current?.resetDirty();
+      locationRef.current?.resetDirty();
+      pricingRef.current?.resetDirty();
+      propertyRef.current?.resetDirty();
+      listingDetailsRef.current?.resetDirty();
+      amenitiesRef.current?.resetDirty();
+      outdoorFeaturesRef.current?.resetDirty();
+      indoorFeaturesRef.current?.resetDirty();
+      constructionAndLegalRecordsRef.current?.resetDirty();
+      utilitiesEnergyConnectivityRef.current?.resetDirty();
+      mediaRef.current?.resetDirty();
 
-      if (!step) {
-        router.push(`/profile/realestate/${id}?step=2`);
-      }
+      return true;
     } catch (err: any) {
       setFormError(err?.message ?? "Unable to save the listing.");
       setSaveStatus("error");
@@ -197,27 +198,20 @@ export default function EditRealestatePage() {
           .replace("Missing fields:", "")
           .split(",");
 
-        if (!step) {
-          sellerRef.current?.setError?.(fields);
-          locationRef.current?.setError?.(fields);
-          pricingRef.current?.setError?.(fields);
-          propertyRef.current?.setError?.(fields);
-          listingDetailsRef.current?.setError?.(fields);
-          amenitiesRef.current?.setError?.(fields);
-        } else {
-          sellerRef.current?.setError?.(fields);
-          locationRef.current?.setError?.(fields);
-          pricingRef.current?.setError?.(fields);
-          propertyRef.current?.setError?.(fields);
-          listingDetailsRef.current?.setError?.(fields);
-          amenitiesRef.current?.setError?.(fields);
-          outdoorFeaturesRef.current?.setError?.(fields);
-          indoorFeaturesRef.current?.setError?.(fields);
-          constructionAndLegalRecordsRef.current?.setError?.(fields);
-          utilitiesEnergyConnectivityRef.current?.setError?.(fields);
-          mediaRef.current?.setError?.(fields);
-        }
+        sellerRef.current?.setError?.(fields);
+        locationRef.current?.setError?.(fields);
+        pricingRef.current?.setError?.(fields);
+        propertyRef.current?.setError?.(fields);
+        listingDetailsRef.current?.setError?.(fields);
+        amenitiesRef.current?.setError?.(fields);
+        outdoorFeaturesRef.current?.setError?.(fields);
+        indoorFeaturesRef.current?.setError?.(fields);
+        constructionAndLegalRecordsRef.current?.setError?.(fields);
+        utilitiesEnergyConnectivityRef.current?.setError?.(fields);
+        mediaRef.current?.setError?.(fields);
       }
+
+      return false
     }
   };
 
@@ -294,97 +288,80 @@ export default function EditRealestatePage() {
           >
             <div className="grid grid-cols-1 gap-8 w-full">
               <div className="max-w-6xl mx-auto p-6 space-y-8 px-0 py-0 w-full">
-                {realestate?.status === EListingStatus.ACTIVE &&
-                  realestate?.package === EPackageType.BASIC && (
-                    <p className="text-gray-600 font-bold">
-                      To be able to edit any information, set the listing to
-                      inactive status.
-                    </p>
+                <div
+                  className={cn(
+                    "hidden space-y-8 w-full",
+                    !step && "block",
                   )}
-                {realestate?.status === EListingStatus.ACTIVE &&
-                  realestate?.package === EPackageType.BASIC ? (
-                  <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-                      <Seller ref={sellerRef} data={realestate} />
-                      <Pricing ref={pricingRef} data={realestate} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className={cn(
-                        "hidden space-y-8 w-full",
-                        !step && "block",
-                      )}
-                    >
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Seller ref={sellerRef} data={realestate} />
-                        <Location ref={locationRef} data={realestate} />
-                      </div>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Pricing ref={pricingRef} data={realestate} />
-                        <Property ref={propertyRef} data={realestate} />
-                      </div>
-                      <ListingDetails
-                        ref={listingDetailsRef}
-                        data={realestate}
-                      />
-                      <Amenities ref={amenitiesRef} data={realestate} />
-                    </div>
-                    <div
-                      className={cn(
-                        "hidden space-y-8 w-full",
-                        step === "2" && "block",
-                      )}
-                    >
-                      <OutdoorFeatures
-                        ref={outdoorFeaturesRef}
-                        data={realestate}
-                      />
-                      <IndoorFeatures
-                        ref={indoorFeaturesRef}
-                        data={realestate}
-                      />
-                      <ConstructionAndLegalRecords
-                        ref={constructionAndLegalRecordsRef}
-                        data={realestate}
-                      />
-                      <UtilitiesEnergyConnectivity
-                        ref={utilitiesEnergyConnectivityRef}
-                        data={realestate}
-                      />
-                      <Media
-                        ref={mediaRef}
-                        data={realestate?.photos}
-                        selectedPackage={
-                          realestate?.package || EPackageType.BASIC
-                        }
-                      />
-                    </div>
-                  </>
-                )}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <Seller ref={sellerRef} data={realestate} />
+                    <Location ref={locationRef} data={realestate} />
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <Pricing ref={pricingRef} data={realestate} />
+                    <Property ref={propertyRef} data={realestate} />
+                  </div>
+                  <ListingDetails
+                    ref={listingDetailsRef}
+                    data={realestate}
+                  />
+                  <Amenities ref={amenitiesRef} data={realestate} />
+                </div>
+                <div
+                  className={cn(
+                    "hidden space-y-8 w-full",
+                    step === "2" && "block",
+                  )}
+                >
+                  <OutdoorFeatures
+                    ref={outdoorFeaturesRef}
+                    data={realestate}
+                  />
+                  <IndoorFeatures
+                    ref={indoorFeaturesRef}
+                    data={realestate}
+                  />
+                  <ConstructionAndLegalRecords
+                    ref={constructionAndLegalRecordsRef}
+                    data={realestate}
+                  />
+                  <UtilitiesEnergyConnectivity
+                    ref={utilitiesEnergyConnectivityRef}
+                    data={realestate}
+                  />
+                  <Media
+                    ref={mediaRef}
+                    data={realestate?.photos}
+                    selectedPackage={
+                      realestate?.package || EPackageType.BASIC
+                    }
+                  />
+                </div>
                 <div className="space-y-4">
                   <div className="flex gap-2 sm:gap-4 ml-auto">
                     {!step ? (
-                      <ButtonSubmit
+                      <Button
                         type="button"
-                        onClick={handleSaveDraft}
-                        status={saveStatus}
-                        className="w-full"
-                        statusText={{
-                          loading: "Saving...",
-                          success: "Saved",
-                          error: "Try again",
-                          disabled: "Disabled",
+                        onClick={async () => {
+                          const res = await getFormsData();
+                          if (res === "error") {
+                            return
+                          };
+                          setSaveStatus("idle");
+                          setFormError(null);
+                          router.push(`/profile/realestate/${id}?step=2`);
                         }}
+                        className="w-full"
                       >
                         Continue
-                      </ButtonSubmit>
+                      </Button>
                     ) : step === "2" ? (
                       <div className="flex justify-between w-full">
                         <Button
                           variant="outline"
-                          onClick={() => {
+                          onClick={async () => {
+
                             router.push(`/profile/realestate/${id}`);
                           }}
                         >
@@ -392,36 +369,36 @@ export default function EditRealestatePage() {
                           Back
                         </Button>
                         <div className="flex gap-3">
-                          <ButtonSubmit
-                            variant="outline"
-                            type="button"
-                            onClick={handleSaveDraft}
-                            status={saveStatus}
-                            statusText={{
-                              loading: "Saving...",
-                              success: "Saved",
-                              error: "Try again",
-                              disabled: "Disabled",
-                            }}
-                          >
-                            Save Draft
-                          </ButtonSubmit>
+
                           {realestate?.status !== EListingStatus.ACTIVE &&
                             realestate?.status !== EListingStatus.PENDING &&
-                            !realestate?.isExpired && (
-                              <PublishButton
-                                data={realestate}
-                                onClick={async () => {
-                                  const formsData = await getFormsData();
-
-                                  if (formsData === undefined) {
-                                    return true;
-                                  }
-
-                                  return !!Object.keys(formsData).length;
+                            !realestate?.isExpired ? (
+                            <PublishButton
+                              listing={realestate}
+                              onClick={handleSaveDraft}
+                              saveStatusLoading={saveStatus === "loading"}
+                              setErrors={setFormError}
+                            />
+                          ) : (
+                            <>
+                              <ButtonSubmit
+                                type="button"
+                                onClick={handleSaveDraft}
+                                status={saveStatus}
+                                statusText={{
+                                  loading: "Saving...",
+                                  success: "Saved",
+                                  error: "Try again",
+                                  disabled: "Disabled",
                                 }}
-                              />
-                            )}
+                              >
+                                Save
+                              </ButtonSubmit>
+                              <SaveStatusDialog showDialog={showSaveStatusDialog} handleCancel={() => {
+                                setShowSaveStatusDialog(false)
+                              }} text={textSaveStatusDialog} />
+                            </>
+                          )}
                         </div>
                       </div>
                     ) : null}
@@ -453,38 +430,75 @@ export function otherFieldSplit<const F extends string>(
 }
 
 function PublishButton({
-  data,
+  listing,
   onClick,
+  saveStatusLoading,
+  setErrors
 }: {
-  data?: Pick<
+  listing?: Pick<
     IRealestateOwnerList,
     "id" | "package" | "expiresAt" | "isExpired"
   >;
   onClick: () => Promise<boolean>;
+  saveStatusLoading: boolean;
+  setErrors: (errors: string | null) => void;
 }) {
-  const [showPublishDialog, setShowPublishDialog] = useState<boolean>(false);
-  const [isChanges, setIsChanges] = useState<boolean>(false);
+  const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
+
+  const router = useRouter();
+
+  const handleSubmit = async () => {
+    if (!listing) {
+      return
+    }
+
+    setErrors(null);
+    setStatus("loading");
+
+    try {
+      const data = await fetcherUser(`/listings/${listing.id}/publish`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        router.push('/profile/realestate/success')
+      }
+
+      setStatus("success");
+    } catch (err: any) {
+      setErrors(err?.message ?? "Failed to publish the listing.");
+      setStatus("error");
+    }
+  };
+
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(() => setStatus("idle"), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   return (
-    <>
-      <Button
-        className="bg-green-600 hover:bg-green-700"
-        onClick={async () => {
-          const changes = await onClick();
-          setIsChanges(changes);
-          setShowPublishDialog(true);
-        }}
-      >
-        Submit Listing
-      </Button>
-      {data ? (
-        <PublishDialog
-          isSaved={!isChanges}
-          listing={data}
-          showDialog={showPublishDialog}
-          handleCancel={() => setShowPublishDialog(false)}
-        />
-      ) : null}
-    </>
+    <ButtonSubmit
+      onClick={async () => {
+        const res = await onClick();
+        if (res) {
+          await handleSubmit();
+        }
+      }}
+      type="button"
+      status={saveStatusLoading ? "loading" : status}
+      statusText={{
+        loading: "Submitting...",
+        success: "Submitted",
+        error: "Try again",
+        disabled: "Disabled",
+      }}
+    >
+      Submit Listing
+    </ButtonSubmit>
   );
 }

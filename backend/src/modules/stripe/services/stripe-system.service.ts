@@ -10,15 +10,14 @@ export class StripeSystemService {
 		this.stripe = new Stripe(this.configService.getOrThrow<string>('STRIPE_SECRET_KEY'))
 	}
 
-	async createPaymentCheckout(listingId: number, priceId?: string) {
-		const price =  priceId ? await this.getPrice(priceId) : await this.getDefaultPricePremiumPackage()
+	async createPaymentCheckout(listingId: number, type: 'publish' | 'expiration', priceId?: string) {
+		const price = priceId ? await this.getPrice(priceId) : await this.getDefaultPricePremiumPackage()
 
 		if (!price || !price.period) {
-			throw new InternalServerErrorException("Failed to create payment.")
+			throw new InternalServerErrorException('Failed to create payment.')
 		}
 
 		try {
-			
 			const session = await this.stripe.checkout.sessions.create({
 				payment_method_types: ['card'],
 				line_items: [
@@ -28,17 +27,22 @@ export class StripeSystemService {
 					}
 				],
 				mode: 'payment',
-				success_url: this.configService.getOrThrow<string>('STRIPE_SUCCESS_URL'),
+				success_url:
+					type === 'publish'
+						? this.configService.getOrThrow<string>('STRIPE_SUCCESS_PUBLISH_URL')
+						: this.configService.getOrThrow<string>('STRIPE_SUCCESS_EXPIRATION_URL'),
 				cancel_url: this.configService.getOrThrow<string>('STRIPE_CANCEL_URL'),
 				metadata: {
 					listingId,
 					period: price.period
 				}
 			})
-	
+
 			return { url: session.url }
 		} catch (error) {
-			throw new BadRequestException('The price shown may be inactive at the moment. Please try again later or select another option.')
+			throw new BadRequestException(
+				'The price shown may be inactive at the moment. Please try again later or select another option.'
+			)
 		}
 	}
 

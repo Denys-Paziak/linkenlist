@@ -7,6 +7,7 @@ import { ButtonSubmitStatus, ButtonSubmit } from "../../../../../../components/u
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../../../../../components/ui/dialog";
 import { fetcherUser } from "../../../../../../lib/fetcher";
 import { IRealestateOwnerList, EPackageType } from "../../../../../../types/Realestate";
+import { useRouter } from "next/navigation";
 
 export function PublishDialog({
   listing,
@@ -21,6 +22,8 @@ export function PublishDialog({
 }) {
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const handleSubmit = async () => {
     setErrors(null);
@@ -39,6 +42,7 @@ export function PublishDialog({
         mutate(
           (key) => typeof key === "string" && key.startsWith("/listings/my?"),
         );
+        router.push('/profile/realestate/success')
       }
 
       setStatus("success");
@@ -68,21 +72,6 @@ export function PublishDialog({
         ) : null}
         <DialogHeader>
           <DialogTitle>Publish Listing</DialogTitle>
-          {listing.package === EPackageType.BASIC && (
-            <DialogDescription>
-              Before publishing listings from the Basic package, they undergo
-              moderation. Once approved by the administrator, the ad is
-              automatically published. After that, without re-moderation, you
-              can only edit Seller Information and Pricing. If you need to change other information in the ad, you need to deactivate it.
-            </DialogDescription>
-          )}
-          {listing.package === EPackageType.PREMIUM &&
-            listing.expiresAt &&
-            !listing.isExpired ? null : (
-            <DialogDescription>
-              The announcement will be published after successful payment.
-            </DialogDescription>
-          )}
           {
             isSaved
               ? null

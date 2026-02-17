@@ -5,9 +5,11 @@ import { useQueryStateWithLocalStorage } from "../../../../../../hooks/use-query
 import { useSearchContext } from "../../search-context";
 import { Button } from "../../../../../../components/ui/button";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export function Actions() {
   const { setQuery } = useSearchContext();
+  const searchParams = useSearchParams()
 
   const [bedrooms, setBedrooms] = useQueryStateWithLocalStorage(
     "/realestate?bedrooms",
@@ -263,7 +265,100 @@ export function Actions() {
   };
 
   useEffect(() => {
-    applyFilters();
+    if (!searchParams.size) {
+      const selectedType = (window.localStorage.getItem("/realestate?type") || "").slice(1, -1)
+      const priceMin = (window.localStorage.getItem("/realestate?price_min") || "")
+      const priceMax = (window.localStorage.getItem("/realestate?price_max") || "")
+      const paymentMin = (window.localStorage.getItem("/realestate?payment_min") || "")
+      const paymentMax = (window.localStorage.getItem("/realestate?payment_max") || "")
+      const bedrooms = (window.localStorage.getItem("/realestate?bedrooms") || "")
+      const bedsExact = (window.localStorage.getItem("/realestate?beds_ex") || "")
+      const bathrooms = (window.localStorage.getItem("/realestate?bathrooms") || "")
+      const bathsExact = (window.localStorage.getItem("/realestate?baths_ex") || "")
+      const homeType = (window.localStorage.getItem("/realestate?home_type") || "").slice(1, -1)
+      const keywords = (window.localStorage.getItem("/realestate?keywords") || "").slice(1, -1)
+      const sqftMin = (window.localStorage.getItem("/realestate?sqft_min") || "")
+      const sqftMax = (window.localStorage.getItem("/realestate?sqft_max") || "")
+      const yearBuiltMin = (window.localStorage.getItem("/realestate?year_min") || "")
+      const yearBuiltMax = (window.localStorage.getItem("/realestate?year_max") || "")
+      const petFriendly = (window.localStorage.getItem("/realestate?pet_friendly") || "")
+      const parking = (window.localStorage.getItem("/realestate?parking") || "")
+      const noHOA = (window.localStorage.getItem("/realestate?no_HOA") || "")
+      const sort = (window.localStorage.getItem("/realestate?sort") || "").slice(1, -1)
+
+      const params = new URLSearchParams({
+        dealType: selectedType,
+      });
+      if (selectedType === "sale") {
+        if (priceMin !== "null") {
+          params.set("minPrice", priceMin);
+        }
+        if (priceMax !== "null") {
+          params.set("maxPrice", priceMax);
+        }
+      }
+      if (selectedType === "rent") {
+        if (paymentMin !== "null") {
+          params.set("minPrice", paymentMin);
+        }
+        if (paymentMax !== "null") {
+          params.set("maxPrice", paymentMax);
+        }
+      }
+
+      if (bedrooms !== "null") {
+        params.set("beds", bedrooms);
+        if (bedsExact !== "false") {
+          params.set("bedsExact", bedsExact);
+        }
+      }
+      if (bathrooms !== "null") {
+        params.set("baths", bathrooms);
+        if (bathsExact !== "false") {
+          params.set("bathsExact", bathsExact);
+        }
+      }
+
+      if (homeType) {
+        params.set("propertyTypes", homeType);
+      }
+
+      if (keywords) {
+        params.set("keywords", keywords);
+      }
+
+      if (sqftMin !== "null") {
+        params.set("minSqft", sqftMin);
+      }
+      if (sqftMax !== "null") {
+        params.set("maxSqft", sqftMax);
+      }
+
+      if (yearBuiltMin !== "null") {
+        params.set("minYearBuilt", yearBuiltMin);
+      }
+      if (yearBuiltMax !== "null") {
+        params.set("maxYearBuilt", yearBuiltMax);
+      }
+
+      if (petFriendly !== "false") {
+        params.set("petFriendly", petFriendly);
+      }
+      if (parking !== "false") {
+        params.set("parking", parking);
+      }
+      if (noHOA !== "false") {
+        params.set("noHOA", noHOA);
+      }
+
+      if (sort) {
+        params.set("sortBy", sort);
+      }
+      console.log(params.toString())
+      setQuery(params.toString());
+    } else {
+      applyFilters();
+    }
   }, []);
 
   return (

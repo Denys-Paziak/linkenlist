@@ -59,7 +59,7 @@ export function RealestateCard({
         )}
       >
         {/* Link covering entire card */}
-        {data.status === EListingStatus.ACTIVE && (
+        {[EListingStatus.ACTIVE, EListingStatus.INACTIVE].includes(data.status) && (
           <Link
             onClick={handleCardClick}
             href={`/realestate/${data.slug}`}
@@ -69,9 +69,9 @@ export function RealestateCard({
             )}
           />
         )}
-        {data.status !== EListingStatus.ACTIVE && (
+        {![EListingStatus.ACTIVE, EListingStatus.INACTIVE].includes(data.status) && (
           <Link
-            href={`/profile/realestate/preview/${data.slug}`}
+            href={`/realestate/preview/${data.slug}`}
             className={cn(
               "absolute inset-0 z-[5]",
               isLoading && "pointer-events-none",
@@ -309,13 +309,13 @@ function renderPrice(listing: {
   return "Price not available";
 }
 export function renderAddress(listing: {
-  street?: string | null;
+  street: string | null;
   unit?: string | null;
-  zip?: string | null;
-  state?: string | null;
-  city?: string | null;
+  zip: string | null;
+  state: string | null;
+  city: string | null;
 }) {
-  if (listing.unit && listing.street) {
+  if (listing.unit) {
     return (
       (listing.unit || "[Not specified]") +
       " " +
@@ -330,6 +330,8 @@ export function renderAddress(listing: {
   }
 
   return (
+    (listing.street || "[Not specified]") +
+    ", " +
     (listing.city || "[Not specified]") +
     ", " +
     (listing.state || "[Not specified]") +

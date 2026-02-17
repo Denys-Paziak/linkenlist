@@ -44,26 +44,22 @@ export class ListingSystemService {
 		await this.listingPhotoRepository.update(id, { status })
 	}
 
-	async updateListingStatus(id: number, status: EListingStatus, listingPackage?: EPackageType, packagePeriod?: number) {
-		if (status === EListingStatus.ACTIVE) {
-			await this.listingRepository
-				.createQueryBuilder()
-				.update()
-				.set({
-					status: EListingStatus.ACTIVE,
-					isExpired: false,
-					expiresAt: () => `GREATEST(NOW(), COALESCE("expires_at", NOW())) + (:days * interval '1 day')`,
-					publishedAt: () =>
-						`CASE 
+	async paymentSucceeded(id: number, listingPackage?: EPackageType, packagePeriod?: number) {
+		await this.listingRepository
+			.createQueryBuilder()
+			.update()
+			.set({
+				status: EListingStatus.PENDING,
+				isExpired: false,
+				expiresAt: () => `GREATEST(NOW(), COALESCE("expires_at", NOW())) + (:days * interval '1 day')`,
+				publishedAt: () =>
+					`CASE 
 						WHEN "published_at" IS NULL THEN NOW() 
 						ELSE "published_at" 
 					END`
-				})
-				.setParameters({ days: listingPackage === EPackageType.PREMIUM ? packagePeriod : 90 })
-				.where('id = :id', { id })
-				.execute()
-		} else {
-			await this.listingRepository.update(id, { status })
-		}
+			})
+			.setParameters({ days: listingPackage === EPackageType.PREMIUM ? packagePeriod : 90 })
+			.where('id = :id', { id })
+			.execute()
 	}
 }

@@ -41,7 +41,14 @@ export function BulkRejectDialog({
 
   const handleBulkReject = async () => {
     setFormError(null);
+
+    if (selectedListings.length !== Object.keys(comments).length) {
+      setFormError("All comments are required fields.");
+      return
+    }
+
     setStatus("loading");
+
     try {
       await fetcherAdmin("/admin/listings/bulk-reject", {
         method: "PATCH",
@@ -61,6 +68,8 @@ export function BulkRejectDialog({
       setComments({})
       mutate(
         (key) => typeof key === "string" && key.startsWith("/admin/listings"),
+        undefined,
+        { revalidate: true },
       );
     } catch (err: any) {
       setFormError(err?.message ?? "Reject failed");
@@ -74,7 +83,7 @@ export function BulkRejectDialog({
       return () => clearTimeout(timer);
     }
   }, [status]);
-  
+
   return (
     <Dialog open={isShow} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -89,7 +98,7 @@ export function BulkRejectDialog({
 
         <div className="space-y-6">
           {formError ? <ErrorAlert message={formError} /> : null}
-          
+
           {selectedListings.map((listing) => (
             <ListingCard
               key={listing.id}
@@ -134,7 +143,7 @@ function ListingCard({
   commentValue: string;
   commentChange: (listingId: number, value: string) => void;
 }) {
-  const userName = listing.owner.firstName + " " + listing.owner.lastName;
+  const userName = listing.firstName + " " + listing.lastName;
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -147,13 +156,13 @@ function ListingCard({
 
       <div className="space-y-2">
         <Label
-          htmlFor={`comment-${listing.owner.id}`}
+          htmlFor={`comment-${listing.id}`}
           className="text-sm font-medium"
         >
-          Rejection Message for {userName}
+          Rejection Message for {userName} <span className="text-red-600">*</span>
         </Label>
         <textarea
-          id={`comment-${listing.owner.id}`}
+          id={`comment-${listing.id}`}
           placeholder="Enter your message to the user explaining the rejection..."
           value={commentValue}
           onChange={(e) => commentChange(listing.id, e.target.value)}

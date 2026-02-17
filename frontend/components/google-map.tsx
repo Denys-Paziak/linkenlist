@@ -31,7 +31,7 @@ export function GoogleMap({
     fitBounds: (b: google.maps.LatLngBounds) => void;
     setCenterZoom: (lat: number, lng: number, zoom: number) => void;
   } | null>;
-  priceType: "sale" | "rent";
+  priceType: "sale" | "rent" | "inactive";
 }) {
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -122,7 +122,7 @@ export function GoogleMap({
             const AdvancedMarkerElement = advCtorRef.current!;
             return new AdvancedMarkerElement({
               position,
-              content: createClusterPill(formatCompactNumber(count)),
+              content: createClusterPill(formatCompactNumber(count), priceType === "inactive"),
               zIndex: 1000 + count,
             });
           },
@@ -179,14 +179,18 @@ export function GoogleMap({
       const id = String(l.id);
       const pos = { lat: Number(l.lat), lng: Number(l.lng) };
 
-      const label =
+      const formatListPrice = l.listPrice
+        ? formatCompactNumber(l.listPrice)
+        : ""
+
+      const formatMonthlyRent = l.monthlyRent
+        ? formatCompactNumber(l.monthlyRent)
+        : ""
+
+      const label = priceType === "inactive" ? formatListPrice || formatMonthlyRent + "/mo" :
         priceType === "sale"
-          ? l.listPrice
-            ? formatCompactNumber(l.listPrice)
-            : "--"
-          : l.monthlyRent
-            ? formatCompactNumber(l.monthlyRent)
-            : "--";
+          ? formatListPrice || "--"
+          : formatMonthlyRent || "--";
 
       const existing = markers.get(id);
       if (existing) {
@@ -200,13 +204,13 @@ export function GoogleMap({
         map,
         position: pos,
         title: l.title ?? "",
-        content: createPricePill(label),
+        content: createPricePill(label, priceType === "inactive"),
       });
 
       marker.addListener("gmp-click", () => {
         onMarkerClick(l.id);
       });
-      
+
       markers.set(id, marker);
     }
 
@@ -217,16 +221,16 @@ export function GoogleMap({
   return <div ref={divRef} className="w-full h-full" />;
 }
 
-function createPricePill(label: string) {
+function createPricePill(label: string, inactive: boolean) {
   const el = document.createElement("div");
-  el.className = "gmk-pill";
+  el.className = "gmk-pill" + (inactive ? " gmk-pill-inactive" : "");
   el.textContent = label;
   return el;
 }
 
-function createClusterPill(label: string) {
+function createClusterPill(label: string, inactive: boolean) {
   const el = document.createElement("div");
-  el.className = "gmk-pill gmk-cluster";
+  el.className = "gmk-pill gmk-cluster" + (inactive ? " gmk-pill-inactive" : "");
   el.textContent = label;
   return el;
 }

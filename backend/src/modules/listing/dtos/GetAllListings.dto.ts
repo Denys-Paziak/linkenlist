@@ -39,7 +39,8 @@ function IsMinLessThanOrEqual(property: string, validationOptions?: ValidationOp
 
 export enum EDealType {
 	SALE = 'sale',
-	RENT = 'rent'
+	RENT = 'rent',
+	INACTIVE = 'inactive'
 }
 
 export enum ESortBy {
@@ -52,9 +53,8 @@ export enum ESortBy {
 }
 
 export class GetAllListingsDto {
-	@IsOptional()
 	@IsEnum(EDealType)
-	dealType?: EDealType
+	dealType: EDealType
 
 	@IsOptional()
 	@Type(() => Number)

@@ -165,12 +165,17 @@ export class ListingController {
 		return this.listingQueryService.getMapListings(dto)
 	}
 
-	@OptionalAuthorization()
 	@Get(':slug')
-	async getOneListing(@Req() request: FastifyRequest, @Param() params: ParamSlug) {
-		const userFromToken = request.user as ITokenUser | undefined
+	async getOneListing(@Param() params: ParamSlug) {
+		return await this.listingQueryService.getOneListing(params.slug)
+	}
 
-		return await this.listingQueryService.getOneListing(params.slug, userFromToken?.id)
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
+	@Get('preview/:slug')
+	async getPreviewOneListing(@Req() request: FastifyRequest, @Param() params: ParamSlug) {
+		const userFromToken = request.user as ITokenUser
+
+		return await this.listingQueryService.getPreviewOneListing(params.slug, userFromToken)
 	}
 
 	@Get('bah-rates')

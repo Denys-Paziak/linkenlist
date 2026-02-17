@@ -110,6 +110,8 @@ export function ExpirationDialog({
       setNewExpirationDays({});
       mutate(
         (key) => typeof key === "string" && key.startsWith("/admin/listings"),
+        undefined,
+        { revalidate: true },
       );
     } catch (err: any) {
       setFormError(err?.message ?? "Reject failed");

@@ -25,7 +25,7 @@ export function ListingType() {
         onClick={() => setActiveDropdown(state => !state)}
         className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
       >
-        <span>{selectedType === "rent" ? "For Rent" : "For Sale"}</span>
+        <span>{selectedType === "inactive" ? "Inactive" : selectedType === "rent" ? "For Rent" : "For Sale"}</span>
         <ChevronDown className="h-4 w-4" />
       </button>
       {activeDropdown && (
@@ -37,9 +37,8 @@ export function ListingType() {
                 setSelectedType(type.value);
                 setActiveDropdown(false);
               }}
-              className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${
-                selectedType === type.value ? "bg-primary/10 text-primary" : ""
-              }`}
+              className={`w-full text-left px-3 py-2 hover:bg-gray-50 text-sm first:rounded-t-lg last:rounded-b-lg ${selectedType === type.value ? "bg-primary/10 text-primary" : ""
+                }`}
             >
               {type.label}
             </button>

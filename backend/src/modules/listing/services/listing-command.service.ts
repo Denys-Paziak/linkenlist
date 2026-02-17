@@ -17,6 +17,7 @@ import { formatLocalDateYYYYMMDD } from '../../../utils/format-local-date-YYYYMM
 import { generateRandomSuffix } from '../../../utils/generate-random-suffix.util'
 import { generateSlug } from '../../../utils/slug.util'
 import { ImageQueueService } from '../../image-queue/image-queue.service'
+import { MailService } from '../../mail/mail.service'
 import { NotificationSystemService } from '../../notification/services/notification-system.service'
 import { S3StorageService } from '../../s3-storage/s3-storage.service'
 import { ScheduleQueueService } from '../../schedule-queue/schedule-queue.service'
@@ -59,7 +60,8 @@ export class ListingCommandService {
 		private readonly dataSource: DataSource,
 		private readonly notificationSystemService: NotificationSystemService,
 		private readonly configService: ConfigService,
-		private readonly http: HttpService
+		private readonly http: HttpService,
+		private readonly mailService: MailService
 	) {}
 
 	private async saveImage(file: IMultipartFile, listingId: number): Promise<IUploadedImage> {
@@ -489,22 +491,19 @@ export class ListingCommandService {
 				await this.bulkUpdateListingPhotos(manager.getRepository(ListingPhoto), photos, listingId)
 			}
 
-			if (listing.status === EListingStatus.ACTIVE && listing.package === EPackageType.BASIC) {
-				if (
-					Boolean(
-						dto.location ||
-							dto.property ||
-							dto.listingDetails ||
-							dto.amenities ||
-							dto.outdoorFeatures ||
-							dto.indoorFeatures ||
-							dto.constructionAndLegalRecords ||
-							dto.utilitiesEnergyConnectivity ||
-							photos
-					)
-				) {
-					throw new BadRequestException('Some sections are not available for editing in an active listing.')
-				}
+			let toPending = false
+			if (listing.status === EListingStatus.ACTIVE) {
+				toPending = Boolean(
+					dto.location ||
+						dto.property ||
+						dto.listingDetails ||
+						dto.amenities ||
+						dto.outdoorFeatures ||
+						dto.indoorFeatures ||
+						dto.constructionAndLegalRecords ||
+						dto.utilitiesEnergyConnectivity ||
+						photos
+				)
 			}
 
 			const dateAvailable = data.pricing?.dateAvailable
@@ -521,6 +520,7 @@ export class ListingCommandService {
 				...data.property,
 				...data.seller,
 				...data.utilitiesEnergyConnectivity,
+				status: toPending ? EListingStatus.PENDING : undefined,
 				title,
 				dateAvailable: !dateAvailable ? dateAvailable : formatLocalDateYYYYMMDD(dateAvailable),
 				location: location
@@ -695,14 +695,14 @@ export class ListingCommandService {
 				await manager
 					.getRepository(Listing)
 					.update({ id: listingId, owner: { id: userId } }, { status: EListingStatus.PENDING, isExpired: false })
-				return { action: 'ACTIVATED' as const }
+				return { action: 'PENDING' as const }
 			}
 
 			if (listing.package === EPackageType.PREMIUM && listing.expiresAt && !listing.isExpired) {
 				await manager
 					.getRepository(Listing)
-					.update({ id: listingId, owner: { id: userId } }, { status: EListingStatus.ACTIVE, isExpired: false })
-				return { action: 'ACTIVATED' as const }
+					.update({ id: listingId, owner: { id: userId } }, { status: EListingStatus.PENDING, isExpired: false })
+				return { action: 'PENDING' as const }
 			} else {
 				if (listing.package === EPackageType.PREMIUM) {
 					return { action: 'CHECKOUT' as const }
@@ -712,7 +712,7 @@ export class ListingCommandService {
 			throw new BadRequestException('Unsupported package.')
 		})
 		if (result.action === 'CHECKOUT') {
-			return await this.stripeSystemService.createPaymentCheckout(listingId)
+			return await this.stripeSystemService.createPaymentCheckout(listingId, 'publish')
 		}
 	}
 
@@ -738,17 +738,17 @@ export class ListingCommandService {
 			}
 		}
 
-		return await this.stripeSystemService.createPaymentCheckout(listingId, dto.priceId)
+		return await this.stripeSystemService.createPaymentCheckout(listingId, 'expiration', dto.priceId)
 	}
 
 	async deactivateListing(userId: number, listingId: number) {
 		const res = await this.listingRepository.update(
-			{ id: listingId, owner: { id: userId }, status: In([EListingStatus.ACTIVE, EListingStatus.PENDING]) },
+			{ id: listingId, owner: { id: userId }, status: EListingStatus.ACTIVE },
 			{ status: EListingStatus.INACTIVE }
 		)
 
 		if (!res.affected) {
-			throw new BadRequestException('Only active listing or listing awaiting approval can be deactivated.')
+			throw new BadRequestException('Only active listing can be deactivated.')
 		}
 	}
 
@@ -972,6 +972,10 @@ export class ListingCommandService {
 	async bulkReject(dto: BulkRejectDto) {
 		const listingsIds = dto.listings.map(item => item.id)
 
+		if (listingsIds.length === 0) {
+			return
+		}
+
 		const messageById = new Map<number, string>(dto.listings.map(x => [x.id, x.message]))
 
 		const data = await this.listingRepository.find({
@@ -1034,10 +1038,29 @@ export class ListingCommandService {
 				}
 			})
 		)
+
+		await Promise.allSettled(
+			data.map(async item => {
+				const reason = messageById.get(item.id) || 'No additional details provided.'
+				if (!item.email) return
+
+				try {
+					await this.mailService.sendListingReject(
+						item.email,
+						item.firstName + ' ' + item.lastName,
+						`Your listing "${item.title || 'your listing'}" was rejected.\nReason: ${reason}`
+					)
+				} catch {}
+			})
+		)
 	}
 
 	async bulkAdjustExpiration(dto: BulkAdjustExpirationDto) {
 		const listingsIds = dto.listings.map(item => item.id)
+
+		if (listingsIds.length === 0) {
+			return
+		}
 
 		const daysById = new Map<number, number>(dto.listings.map(x => [x.id, x.days]))
 

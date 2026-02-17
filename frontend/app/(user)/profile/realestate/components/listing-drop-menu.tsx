@@ -62,7 +62,7 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
               </DropdownMenuItem>
             )}
 
-          {data.status === EListingStatus.ACTIVE && (
+          {[EListingStatus.ACTIVE, EListingStatus.INACTIVE].includes(data.status) && (
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link href={`/realestate/${data.slug}`}>
                 <Eye className="h-4 w-4 mr-2" />
@@ -70,9 +70,9 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
               </Link>
             </DropdownMenuItem>
           )}
-          {data.status !== EListingStatus.ACTIVE && (
+          {![EListingStatus.ACTIVE, EListingStatus.INACTIVE].includes(data.status) && (
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href={`/profile/realestate/preview/${data.slug}`}>
+              <Link href={`/realestate/preview/${data.slug}`}>
                 <Eye className="h-4 w-4 mr-2" />
                 View Preview
               </Link>
@@ -96,23 +96,25 @@ export function ListingDropMenu({ data }: { data: IRealestateOwnerList }) {
             </DropdownMenuItem>
           )}
 
-          {(data.status === EListingStatus.ACTIVE ||
-            data.status === EListingStatus.PENDING) && (
+          {data.status === EListingStatus.ACTIVE && (
+            <DropdownMenuItem
+              onClick={() => setShowDeactivateDialog(true)}
+              className="cursor-pointer text-orange-600 focus:text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
+            >
+              <AlertCircle className="h-4 w-4 mr-2" /> Deactivate Listing
+            </DropdownMenuItem>
+          )}
+          {
+            data.status !== EListingStatus.ACTIVE && (
               <DropdownMenuItem
-                onClick={() => setShowDeactivateDialog(true)}
-                className="cursor-pointer text-orange-600 focus:text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
+                onClick={() => setShowDeleteDialog(true)}
+                className="cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 focus:bg-red-50"
               >
-                <AlertCircle className="h-4 w-4 mr-2" /> Deactivate Listing
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Permanently
               </DropdownMenuItem>
-            )}
-
-          <DropdownMenuItem
-            onClick={() => setShowDeleteDialog(true)}
-            className="cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 focus:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Permanently
-          </DropdownMenuItem>
+            )
+          }
         </DropdownMenuContent>
       </DropdownMenu>
       <DeactivateDialog

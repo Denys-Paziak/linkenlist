@@ -7,6 +7,10 @@ export const listingTypeOptions = [
     value: "rent",
     label: "For Rent",
   },
+  {
+    value: "inactive",
+    label: "Inactive",
+  },
 ];
 
 export const bedroomsOptions = [

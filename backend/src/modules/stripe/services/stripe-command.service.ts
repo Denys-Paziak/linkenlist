@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import Stripe from 'stripe'
 
-import { EListingStatus } from '../../../interfaces/EListingStatus'
 import { EPackageType } from '../../../interfaces/EPackageType'
 import { ListingSystemService } from '../../listing/services/listing-system.service'
 
@@ -40,6 +39,6 @@ export class StripeCommandService {
 	}
 
 	private async handlePaymentSucceeded(listingId: number, period: number) {
-		await this.listingSystemService.updateListingStatus(listingId, EListingStatus.ACTIVE, EPackageType.PREMIUM, period)
+		await this.listingSystemService.paymentSucceeded(listingId, EPackageType.PREMIUM, period)
 	}
 }

@@ -20,6 +20,7 @@ import {
   IRealestateOwnerList,
 } from "../../../../../types/Realestate";
 import { mutate } from "swr";
+import { useRouter } from "next/navigation";
 
 export function PublishDialog({
   listing,
@@ -32,6 +33,7 @@ export function PublishDialog({
 }) {
   const [status, setStatus] = useState<ButtonSubmitStatus>("idle");
   const [errors, setErrors] = useState<string | null>(null);
+
 
   const handleSubmit = async () => {
     setErrors(null);
@@ -79,21 +81,6 @@ export function PublishDialog({
         ) : null}
         <DialogHeader>
           <DialogTitle>Publish Listing</DialogTitle>
-          {listing.package === EPackageType.BASIC && (
-            <DialogDescription>
-              Before publishing listings from the Basic package, they undergo
-              moderation. Once approved by the administrator, the ad is
-              automatically published. After that, without re-moderation, you
-              can only edit Seller Information and Pricing. If you need to change other information in the ad, you need to deactivate it.
-            </DialogDescription>
-          )}
-          {listing.package === EPackageType.PREMIUM &&
-            listing.expiresAt &&
-            !listing.isExpired ? null : (
-            <DialogDescription>
-              The announcement will be published after successful payment.
-            </DialogDescription>
-          )}
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleCancel()}>

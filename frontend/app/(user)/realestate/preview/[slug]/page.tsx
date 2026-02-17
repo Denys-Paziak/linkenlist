@@ -1,13 +1,13 @@
 'use client'
 
 import Link from "next/link";
-import { IRealestate } from "../../../../../../types/Realestate";
-import { PropertyActionSidebar } from "../../../../realestate/[slug]/components/property-action-sidebar";
-import { PropertyDescription } from "../../../../realestate/[slug]/components/property-description";
-import { PropertyExpandableSections } from "../../../../realestate/[slug]/components/property-expandable-sections/property-expandable-sections";
-import { PropertyFacts } from "../../../../realestate/[slug]/components/property-facts/property-facts";
-import { PropertyHeader } from "../../../../realestate/[slug]/components/property-header";
-import { PropertyImage } from "../../../../realestate/[slug]/components/property-image/property-image";
+import { IRealestate } from "../../../../../types/Realestate";
+import { PropertyActionSidebar } from "../../[slug]/components/property-action-sidebar";
+import { PropertyDescription } from "../../[slug]/components/property-description";
+import { PropertyExpandableSections } from "../../[slug]/components/property-expandable-sections/property-expandable-sections";
+import { PropertyFacts } from "../../[slug]/components/property-facts/property-facts";
+import { PropertyHeader } from "../../[slug]/components/property-header";
+import { PropertyImage } from "../../[slug]/components/property-image/property-image";
 import useSWR from "swr";
 import { notFound, useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -15,7 +15,7 @@ import { Loader2 } from "lucide-react";
 export default function RealestatePreviewPage() {
     const { slug } = useParams()
 
-    const { data: listing, isLoading } = useSWR<IRealestate>(`/listings/${slug}`, {
+    const { data: listing, isLoading } = useSWR<IRealestate>(`/listings/preview/${slug}`, {
         revalidateOnMount: true
     })
 

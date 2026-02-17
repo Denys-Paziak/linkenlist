@@ -52,19 +52,17 @@ export function DesctopFilter() {
             variant="outline"
             size="sm"
             onClick={() => toggleDropdown("forSale")}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
-              activeDropdown === "forSale"
-                ? "border-slate-600 bg-slate-100 text-slate-800"
-                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${activeDropdown === "forSale"
+              ? "border-slate-600 bg-slate-100 text-slate-800"
+              : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              }`}
           >
             <span className="truncate">
-              {query.get("type") === "rent" ? "For Rent" : "For Sale"}
+              {query.get("type") === "inactive" ? "Inactive" : query.get("type") === "rent" ? "For Rent" : "For Sale"}
             </span>
             <ChevronDown
-              className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                activeDropdown === "forSale" ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "forSale" ? "rotate-180" : ""
+                }`}
             />
           </Button>
 
@@ -74,17 +72,15 @@ export function DesctopFilter() {
               variant="outline"
               size="sm"
               onClick={() => toggleDropdown("price")}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${
-                activeDropdown === "price"
-                  ? "border-slate-600 bg-slate-100 text-slate-800"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${activeDropdown === "price"
+                ? "border-slate-600 bg-slate-100 text-slate-800"
+                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
             >
               <span className="truncate">Price</span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                  activeDropdown === "price" ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "price" ? "rotate-180" : ""
+                  }`}
               />
             </Button>
           </div>
@@ -95,17 +91,15 @@ export function DesctopFilter() {
               variant="outline"
               size="sm"
               onClick={() => toggleDropdown("bedsBaths")}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${
-                activeDropdown === "bedsBaths"
-                  ? "border-slate-600 bg-slate-100 text-slate-800"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${activeDropdown === "bedsBaths"
+                ? "border-slate-600 bg-slate-100 text-slate-800"
+                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
             >
               <span className="truncate">Beds & Baths</span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                  activeDropdown === "bedsBaths" ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "bedsBaths" ? "rotate-180" : ""
+                  }`}
               />
             </Button>
           </div>
@@ -116,17 +110,15 @@ export function DesctopFilter() {
               variant="outline"
               size="sm"
               onClick={() => toggleDropdown("homeType")}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${
-                activeDropdown === "homeType"
-                  ? "border-slate-600 bg-slate-100 text-slate-800"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${activeDropdown === "homeType"
+                ? "border-slate-600 bg-slate-100 text-slate-800"
+                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
             >
               <span className="truncate">Property Types</span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                  activeDropdown === "homeType" ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "homeType" ? "rotate-180" : ""
+                  }`}
               />
             </Button>
           </div>
@@ -137,17 +129,15 @@ export function DesctopFilter() {
               variant="outline"
               size="sm"
               onClick={() => toggleDropdown("sort")}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${
-                activeDropdown === "sort"
-                  ? "border-slate-600 bg-slate-100 text-slate-800"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${activeDropdown === "sort"
+                ? "border-slate-600 bg-slate-100 text-slate-800"
+                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
             >
               <span className="truncate">Sort</span>
               <ChevronDown
-                className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                  activeDropdown === "sort" ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "sort" ? "rotate-180" : ""
+                  }`}
               />
             </Button>
           </div>
@@ -159,17 +149,15 @@ export function DesctopFilter() {
             variant="outline"
             size="sm"
             onClick={() => toggleDropdown("more")}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${
-              activeDropdown === "more"
-                ? "border-slate-600 bg-slate-100 text-slate-800"
-                : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-2 rounded-lg transition-colors whitespace-nowrap ${activeDropdown === "more"
+              ? "border-slate-600 bg-slate-100 text-slate-800"
+              : "border-gray-300 bg-white text-gray-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              }`}
           >
             <span className="truncate">More</span>
             <ChevronDown
-              className={`h-4 w-4 transition-transform flex-shrink-0 ${
-                activeDropdown === "more" ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform flex-shrink-0 ${activeDropdown === "more" ? "rotate-180" : ""
+                }`}
             />
           </Button>
         </div>

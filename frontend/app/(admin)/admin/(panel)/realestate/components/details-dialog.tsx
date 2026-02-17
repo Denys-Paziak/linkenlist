@@ -83,9 +83,9 @@ export function DetailsDialog({
               <div>
                 <span className="font-medium text-gray-600">Posted by:</span>
                 <p>
-                  {selectedListing.owner.firstName +
+                  {selectedListing.firstName +
                     " " +
-                    selectedListing.owner.lastName}
+                    selectedListing.lastName}
                 </p>
               </div>
               <div>

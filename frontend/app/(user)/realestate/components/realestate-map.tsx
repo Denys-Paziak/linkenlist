@@ -81,7 +81,7 @@ export function RealestateMap({
           listings={realestate || []}
           onViewportChange={onViewportChange}
           onMarkerClick={onMarkerClick}
-          priceType={params.get("dealType") as "rent" | "sale"}
+          priceType={params.get("dealType") as "rent" | "sale" | "inactive"}
         />
         {markerListingId && <MapListingCard listingId={markerListingId} />}
       </div>

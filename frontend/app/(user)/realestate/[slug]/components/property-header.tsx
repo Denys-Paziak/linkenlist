@@ -1,5 +1,5 @@
 import { Home, Bed, Bath } from "lucide-react";
-import { IRealestate } from "../../../../../types/Realestate";
+import { EListingStatus, IRealestate } from "../../../../../types/Realestate";
 import { formatDateDiff } from "../../../../../lib/utils";
 
 export function PropertyHeader({ listing }: { listing: IRealestate }) {
@@ -18,6 +18,11 @@ export function PropertyHeader({ listing }: { listing: IRealestate }) {
               {listing.forRent && (
                 <span className="px-3 py-1 text-sm font-bold rounded text-white bg-green-600">
                   FOR RENT
+                </span>
+              )}
+              {listing.status === EListingStatus.INACTIVE && (
+                <span className="px-3 py-1 text-sm font-bold rounded text-white bg-gray-500">
+                  INACTIVE
                 </span>
               )}
             </div>
@@ -132,7 +137,7 @@ function renderPrice(listing: IRealestate) {
 }
 
 function renderAddress(listing: IRealestate) {
-  if (listing.unit && listing.street) {
+  if (listing.unit) {
     return (
       listing.unit +
       " " +
@@ -146,5 +151,5 @@ function renderAddress(listing: IRealestate) {
     );
   }
 
-  return listing.city + ", " + listing.state + " " + listing.zip;
+  return listing.street + ", " + listing.city + ", " + listing.state + " " + listing.zip;
 }
