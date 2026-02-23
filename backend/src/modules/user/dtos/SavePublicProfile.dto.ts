@@ -1,9 +1,9 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator'
+import { IsBoolean, IsEmail, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator'
 
 export class SavePublicProfileDto {
 	@IsOptional()
 	@IsString()
-	avatar?: string | null 
+	avatar?: string | null
 
 	@IsOptional()
 	@IsString()
@@ -36,9 +36,11 @@ export class SavePublicProfileDto {
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
+	@ValidateIf(o => o.publicEmail !== '')
 	@IsEmail()
 	publicEmail?: string
 
+	@IsOptional()
 	@IsBoolean()
-	isPrivate: boolean
+	isPrivate?: boolean
 }
