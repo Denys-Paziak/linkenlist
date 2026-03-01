@@ -25,6 +25,7 @@ import { StripeSystemService } from '../../stripe/services/stripe-system.service
 import { User } from '../../user/entities/User.entity'
 import { BulkAdjustExpirationDto } from '../dtos/BulkAdjustExpiration.dto'
 import { BulkApproveDto } from '../dtos/BulkApprove.dto'
+import { BulkDeleteDto } from '../dtos/BulkDelete.dto'
 import { BulkRejectDto } from '../dtos/BulkReject.dto'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { InitListingDto } from '../dtos/InitListing.dto'
@@ -53,6 +54,8 @@ export class ListingCommandService {
 	constructor(
 		@InjectRepository(Listing)
 		private readonly listingRepository: Repository<Listing>,
+		@InjectRepository(ListingPhoto)
+		private readonly listingPhotoRepository: Repository<ListingPhoto>,
 		private readonly s3StorageService: S3StorageService,
 		private readonly imageQueueService: ImageQueueService,
 		private readonly stripeSystemService: StripeSystemService,
@@ -410,8 +413,6 @@ export class ListingCommandService {
 	async saveListing(user: ITokenUser, listingId: number, dto: SaveListingDto) {
 		const { photos, ...data } = dto
 
-		const deletePhoto: { id: number; originalKey?: string | null; processedKey?: string | null }[] = []
-
 		let slug: string | undefined
 		let title: string | undefined
 
@@ -467,27 +468,6 @@ export class ListingCommandService {
 			}
 
 			if (photos !== undefined) {
-				const remainedIds = photos.map(item => item.id)
-				listing.photos.forEach(photo => {
-					if (!remainedIds.includes(photo.id)) {
-						deletePhoto.push({
-							id: photo.id,
-							originalKey: photo.originalKey,
-							processedKey: photo.processedKey
-						})
-					}
-				})
-
-				if (deletePhoto.length) {
-					await manager
-						.getRepository(ListingPhoto)
-						.createQueryBuilder()
-						.delete()
-						.from(ListingPhoto)
-						.where('id IN (:...ids)', { ids: deletePhoto.map(x => x.id) })
-						.andWhere('listingId = :listingId', { listingId })
-						.execute()
-				}
 				await this.bulkUpdateListingPhotos(manager.getRepository(ListingPhoto), photos, listingId)
 			}
 
@@ -543,17 +523,6 @@ export class ListingCommandService {
 				throw new BadRequestException('Missing fields:' + errorFields.join(','))
 			}
 		})
-
-		for (const keys of deletePhoto) {
-			try {
-				if (keys.originalKey) {
-					await this.s3StorageService.delete(keys.originalKey)
-				}
-				if (keys.processedKey) {
-					await this.s3StorageService.delete(keys.processedKey)
-				}
-			} catch {}
-		}
 	}
 
 	async uploadImages(user: ITokenUser, listingId: number, files: IMultipartFile[]) {
@@ -578,8 +547,9 @@ export class ListingCommandService {
 				})
 
 				if (!listing) throw new NotFoundException('Listing not found.')
-				if (listing.status === EListingStatus.ACTIVE && listing.package === EPackageType.BASIC) {
-					throw new BadRequestException('You cannot edit photos in an active listing.')
+
+				if (listing.status === EListingStatus.ACTIVE) {
+					await manager.getRepository(Listing).update({ id: listing.id }, { status: EListingStatus.PENDING })
 				}
 
 				const photoRepo = manager.getRepository(ListingPhoto)
@@ -593,6 +563,7 @@ export class ListingCommandService {
 				const existingCount = Number(count?.count || 0)
 
 				const limit = listing.package === EPackageType.PREMIUM ? 40 : 5
+
 				if (existingCount + newAttachments.length > limit) {
 					throw new BadRequestException(
 						listing.package === EPackageType.PREMIUM
@@ -666,6 +637,29 @@ export class ListingCommandService {
 			}
 
 			throw err
+		}
+	}
+
+	async deleteImage(user: ITokenUser, listingId: number, imageId: number) {
+		const deletePhoto = await this.listingPhotoRepository.findOne({
+			where:
+				user.role === ERoleName.ADMIN
+					? { id: imageId, listing: { id: listingId } }
+					: { id: imageId, listing: { id: listingId, owner: { id: user.id } } },
+			select: ['id', 'originalKey', 'processedKey']
+		})
+
+		if (deletePhoto) {
+			await this.listingPhotoRepository.delete({ id: deletePhoto.id })
+
+			try {
+				if (deletePhoto.originalKey) {
+					await this.s3StorageService.delete(deletePhoto.originalKey)
+				}
+				if (deletePhoto.processedKey) {
+					await this.s3StorageService.delete(deletePhoto.processedKey)
+				}
+			} catch {}
 		}
 	}
 
@@ -923,6 +917,9 @@ export class ListingCommandService {
 			select: {
 				id: true,
 				title: true,
+				firstName: true,
+				lastName: true,
+				email: true,
 				owner: {
 					id: true
 				}
@@ -967,6 +964,25 @@ export class ListingCommandService {
 				recipientId: item.owner.id
 			}))
 		)
+
+		await Promise.allSettled(
+			data.map(async item => {
+				console.log(item)
+				if (!item.email) return
+
+				try {
+					await this.mailService.sendListingApprove(
+						item.email,
+						item.firstName + ' ' + item.lastName,
+						`Your listing "${item.title || 'your listing'}" has been approved and is now active on the platform.`
+					)
+				} catch {}
+			})
+		)
+	}
+
+	async bulkDelete(dto: BulkDeleteDto) {
+		await this.listingRepository.delete({ id: In(dto.listingsIds) })
 	}
 
 	async bulkReject(dto: BulkRejectDto) {
@@ -1044,6 +1060,7 @@ export class ListingCommandService {
 
 		await Promise.allSettled(
 			data.map(async item => {
+				console.log(item)
 				const reason = messageById.get(item.id) || 'No additional details provided.'
 				if (!item.email) return
 

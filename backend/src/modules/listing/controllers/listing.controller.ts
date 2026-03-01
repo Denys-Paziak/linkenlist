@@ -11,6 +11,7 @@ import { ERoleName } from '../../../interfaces/ERoleName'
 import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { ITokenUser } from '../../../interfaces/ITokenUser'
 import { MultipartOptions } from '../../../utils/file.util'
+import { DeleteImageDto } from '../dtos/DeleteImage.dto'
 import { ExtendListingExpirationDto } from '../dtos/ExtendListingExpiration.dto'
 import { GetAllListingsDto } from '../dtos/GetAllListings.dto'
 import { GetBAHRatesDto } from '../dtos/GetBAHRates.dto'
@@ -92,6 +93,18 @@ export class ListingController {
 		const filesArr = Object.values(files)?.[0]
 
 		return await this.listingCommandService.uploadImages(userFromToken, params.id, filesArr)
+	}
+
+	@Authorization(ERoleName.USER, ERoleName.ADMIN)
+	@Delete(':id/delete-image/:photoId')
+	async deleteImage(@Req() request: FastifyRequest, @Param() params: DeleteImageDto) {
+		const userFromToken = request.user as ITokenUser
+
+		await this.listingCommandService.deleteImage(userFromToken, params.id, params.photoId)
+
+		return {
+			ok: true
+		}
 	}
 
 	@Authorization(ERoleName.USER)

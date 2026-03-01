@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm'
+import {
+	Column,
+	CreateDateColumn,
+	Entity,
+	JoinColumn,
+	ManyToOne,
+	PrimaryGeneratedColumn,
+	Unique,
+	UpdateDateColumn
+} from 'typeorm'
 
 import { ETokenType } from '../../../interfaces/ETokenType'
 import { User } from '../../../modules/user/entities/User.entity'
@@ -25,7 +34,7 @@ export class Token {
 	@JoinColumn({ name: 'user_id' })
 	user: User
 
-	@Column({ type: 'jsonb', enum: ETokenType, nullable: true })
+	@Column({ type: 'jsonb', nullable: true })
 	payload: any
 
 	@CreateDateColumn({ type: 'timestamptz', select: false, name: 'created_at' })

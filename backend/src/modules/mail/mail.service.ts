@@ -457,45 +457,223 @@ export class MailService {
 	}
 
 	async sendListingReject(to: string, name: string, message: string) {
+		const safeMessage = (message ?? '').replace(/\n/g, '<br />')
+
 		await this.send(
 			to,
-			`Listing Reject`,
+			'Listing Rejected',
 			`<!doctype html>
-				<html lang="en">
+			<html lang="en">
 				<head>
 					<meta charset="utf-8" />
 					<meta name="viewport" content="width=device-width, initial-scale=1" />
 					<meta name="x-apple-disable-message-reformatting" />
-					<title>Your listing was rejected</title>
+					<title>Listing rejected</title>
 				</head>
+
 				<body style="margin:0;padding:0;background:${this.BG};">
+					<!-- Preheader (hidden) -->
+					<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+						Your listing was rejected. Review the feedback and submit updates.
+					</div>
+
 					<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${this.BG};">
-					<tr>
-						<td align="center" style="padding:32px 16px;">
-						<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
-							<tr>
-							<td style="background:${this.CARD_BG};border:1px solid ${this.BORDER};border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-								<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-								<tr>
-									<td style="padding:28px 28px 12px 28px;">
-									<h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:${this.TEXT};font-weight:700;">
-										Hello ${name},
-									</h1>
-									</td>
-								</tr>
-								<tr>
-									<td style="padding:0 28px 24px 28px;">
-									<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:${this.MUTED};">
-										${message}
-									</p>
-									</td>
-								</tr>
+						<tr>
+							<td align="center" style="padding:32px 16px;">
+								<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+									<!-- Header -->
+									<tr>
+										<td style="padding:0 0 12px 0;">
+											<div style="font-family:Arial,Helvetica,sans-serif;color:${this.MUTED};font-size:12px;line-height:18px;text-align:left;">
+												Listing notification
+											</div>
+										</td>
+									</tr>
+
+									<!-- Card -->
+									<tr>
+										<td style="background:${this.CARD_BG};border:1px solid ${this.BORDER};border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+											<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+												<tr>
+													<td style="padding:28px 28px 10px 28px;">
+														<h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:${this.TEXT};font-weight:700;">
+															Hello ${name}
+														</h1>
+													</td>
+												</tr>
+
+												<tr>
+													<td style="padding:0 28px 14px 28px;">
+														<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:${this.MUTED};">
+															Unfortunately, your listing didn’t pass moderation.
+														</p>
+													</td>
+												</tr>
+
+												<!-- Status pill -->
+												<tr>
+													<td style="padding:0 28px 18px 28px;">
+														<span style="display:inline-block;padding:6px 10px;background:#fef2f2;border:1px solid rgba(220,38,38,0.18);color:#dc2626;border-radius:999px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;font-weight:700;">
+															Status: Rejected
+														</span>
+													</td>
+												</tr>
+
+												<!-- Message / feedback box -->
+												<tr>
+													<td style="padding:0 28px 18px 28px;">
+														<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+															style="background:${this.BG};border:1px solid ${this.BORDER};border-radius:10px;">
+															<tr>
+																<td style="padding:12px 14px;">
+																	<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;color:${this.MUTED};font-weight:700;letter-spacing:0.2px;text-transform:uppercase;">
+																		Feedback
+																	</div>
+																	<div style="margin-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:${this.TEXT};">
+																		${safeMessage}
+																	</div>
+																</td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+
+												<tr>
+													<td style="padding:0 28px 24px 28px;">
+														<hr style="border:none;border-top:1px solid ${this.BORDER};margin:0 0 16px 0;" />
+														<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${this.MUTED};">
+															You can update your listing and submit it again for review.
+														</p>
+													</td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+
+									<!-- Footer -->
+									<tr>
+										<td style="padding:14px 4px 0 4px;text-align:left;">
+											<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${this.MUTED};">
+												This is an automated message. Please do not reply.
+											</p>
+										</td>
+									</tr>
+
 								</table>
 							</td>
-							</tr>
-						</table>
-						</td>
-					</tr>
+						</tr>
+					</table>
+				</body>
+			</html>`
+		)
+	}
+
+	async sendListingApprove(to: string, name: string, message: string) {
+		const safeMessage = (message ?? '').replace(/\n/g, '<br />')
+
+		await this.send(
+			to,
+			'Listing Approved',
+			`<!doctype html>
+			<html lang="en">
+				<head>
+					<meta charset="utf-8" />
+					<meta name="viewport" content="width=device-width, initial-scale=1" />
+					<meta name="x-apple-disable-message-reformatting" />
+					<title>Listing approved</title>
+				</head>
+
+				<body style="margin:0;padding:0;background:${this.BG};">
+					<!-- Preheader (hidden) -->
+					<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+						Your listing has been approved and is now active.
+					</div>
+
+					<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${this.BG};">
+						<tr>
+							<td align="center" style="padding:32px 16px;">
+								<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+									<!-- Header -->
+									<tr>
+										<td style="padding:0 0 12px 0;">
+											<div style="font-family:Arial,Helvetica,sans-serif;color:${this.MUTED};font-size:12px;line-height:18px;text-align:left;">
+												Listing notification
+											</div>
+										</td>
+									</tr>
+
+									<!-- Card -->
+									<tr>
+										<td style="background:${this.CARD_BG};border:1px solid ${this.BORDER};border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+											<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+												<tr>
+													<td style="padding:28px 28px 10px 28px;">
+														<h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:34px;color:${this.TEXT};font-weight:700;">
+															Hello ${name}
+														</h1>
+													</td>
+												</tr>
+
+												<tr>
+													<td style="padding:0 28px 14px 28px;">
+														<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:${this.MUTED};">
+															Good news — your listing has been approved and is now active on LinkEnlist.
+														</p>
+													</td>
+												</tr>
+
+												<!-- Status pill -->
+												<tr>
+													<td style="padding:0 28px 18px 28px;">
+														<span style="display:inline-block;padding:6px 10px;background:#ecfdf5;border:1px solid rgba(22,163,74,0.18);color:#16a34a;border-radius:999px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;font-weight:700;">
+															Status: Approved
+														</span>
+													</td>
+												</tr>
+
+												<!-- Message box -->
+												<tr>
+													<td style="padding:0 28px 18px 28px;">
+														<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+															style="background:${this.BG};border:1px solid ${this.BORDER};border-radius:10px;">
+															<tr>
+																<td style="padding:12px 14px;">
+																	<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;color:${this.MUTED};font-weight:700;letter-spacing:0.2px;text-transform:uppercase;">
+																		Note
+																	</div>
+																	<div style="margin-top:6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:${this.TEXT};">
+																		${safeMessage}
+																	</div>
+																</td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+
+												<tr>
+													<td style="padding:0 28px 24px 28px;">
+														<hr style="border:none;border-top:1px solid ${this.BORDER};margin:0 0 16px 0;" />
+														<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${this.MUTED};">
+															This is an automated notification. If you need help, contact support from your dashboard.
+														</p>
+													</td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+
+									<!-- Footer -->
+									<tr>
+										<td style="padding:14px 4px 0 4px;text-align:left;">
+											<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${this.MUTED};">
+												This is an automated message. Please do not reply.
+											</p>
+										</td>
+									</tr>
+
+								</table>
+							</td>
+						</tr>
 					</table>
 				</body>
 			</html>`

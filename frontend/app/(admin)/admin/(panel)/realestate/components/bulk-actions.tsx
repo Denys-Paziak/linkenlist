@@ -13,6 +13,7 @@ import {
 import { fetcherAdmin } from "../../../../../../lib/fetcher";
 import { mutate } from "swr";
 import { ErrorAlert } from "../../../../../../components/ui/error-alert";
+import { BulkDeleteDialog } from "./bulk-delete-dialog";
 
 export function BulkActions({
   selectedListings,
@@ -21,6 +22,7 @@ export function BulkActions({
 }) {
   const [showBulkRejectDialog, setShowBulkRejectDialog] = useState(false);
   const [showExpirationDialog, setShowExpirationDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [statusBulkApprove, setStatusBulkApprove] =
     useState<ButtonSubmitStatus>("idle");
@@ -94,6 +96,14 @@ export function BulkActions({
           <Calendar className="h-4 w-4 mr-1" />
           Adjust Expiration
         </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => setShowDeleteDialog(true)}
+        >
+          <XCircle className="h-4 w-4 mr-1" />
+          Delete
+        </Button>
       </div>
 
       <ExpirationDialog
@@ -105,6 +115,12 @@ export function BulkActions({
       <BulkRejectDialog
         isShow={showBulkRejectDialog}
         onClose={() => setShowBulkRejectDialog(false)}
+        selectedListings={selectedListings}
+      />
+
+      <BulkDeleteDialog
+        isShow={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
         selectedListings={selectedListings}
       />
     </>

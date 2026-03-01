@@ -28,7 +28,7 @@ export function AutocompleteSearch({
 
         elRef.current.setAttribute(
           "placeholder",
-          "Biloxi, MS",
+          "City, Zip Code or Duty Station",
         );
       }
 

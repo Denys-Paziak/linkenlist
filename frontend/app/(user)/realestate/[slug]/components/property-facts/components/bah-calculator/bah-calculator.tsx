@@ -122,7 +122,7 @@ export function BAHCalculator() {
     <div className="mt-6 pt-6 border-t border-gray-200">
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
         <h3 className="text-lg font-bold text-[#002244] mb-4">
-          Calculate Your BAH:
+          Calculate your CY26 BAH Rate:
         </h3>
 
         <div className="space-y-4">

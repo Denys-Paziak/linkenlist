@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Query, Res, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Patch, Post, Query, Res, UseInterceptors } from '@nestjs/common'
 import type { FastifyReply } from 'fastify'
 
 import { Authorization } from '../../../decorators/auth.decorator'
@@ -9,6 +9,7 @@ import { IMultipartFile } from '../../../interfaces/IMultipartFile'
 import { MultipartOptions } from '../../../utils/file.util'
 import { BulkAdjustExpirationDto } from '../dtos/BulkAdjustExpiration.dto'
 import { BulkApproveDto } from '../dtos/BulkApprove.dto'
+import { BulkDeleteDto } from '../dtos/BulkDelete.dto'
 import { BulkRejectDto } from '../dtos/BulkReject.dto'
 import { ExportListingsDto } from '../dtos/ExportListings.dto'
 import { GetAdminAllListingsDto } from '../dtos/GetAdminAllListings.dto'
@@ -76,6 +77,16 @@ export class ListingAdminController {
 	@Patch('bulk-approve')
 	async bulkApprove(@Body() dto: BulkApproveDto) {
 		await this.listingCommandService.bulkApprove(dto)
+
+		return {
+			ok: true
+		}
+	}
+
+	@Authorization(ERoleName.ADMIN)
+	@Delete('bulk-delete')
+	async bulkDelete(@Body() dto: BulkDeleteDto) {
+		await this.listingCommandService.bulkDelete(dto)
 
 		return {
 			ok: true

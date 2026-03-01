@@ -262,32 +262,34 @@ export class ListingQueryService {
 	}
 
 	async getOneCardListing(listingId: number) {
-		return await this.listingRepository.findOne({
-			where: [
-				{ id: listingId, status: EListingStatus.ACTIVE },
-				{ id: listingId, status: EListingStatus.INACTIVE }
-			],
-			relations: ['photos'],
-			select: [
-				'id',
-				'status',
-				'listPrice',
-				'monthlyRent',
-				'premiumFeatures',
-				'bedrooms',
-				'bathroomsFull',
-				'bathroomsHalf',
-				'interiorSize',
-				'street',
-				'unit',
-				'zip',
-				'state',
-				'city',
-				'slug',
-				'title',
+		return await this.listingRepository
+			.createQueryBuilder('listing')
+			.leftJoinAndSelect('listing.photos', 'photos')
+			.where('listing.id = :id', { id: listingId })
+			.andWhere('listing.status IN (:...statuses)', {
+				statuses: [EListingStatus.ACTIVE, EListingStatus.INACTIVE]
+			})
+			.orderBy('photos.position', 'ASC')
+			.select([
+				'listing.id',
+				'listing.status',
+				'listing.listPrice',
+				'listing.monthlyRent',
+				'listing.premiumFeatures',
+				'listing.bedrooms',
+				'listing.bathroomsFull',
+				'listing.bathroomsHalf',
+				'listing.interiorSize',
+				'listing.street',
+				'listing.unit',
+				'listing.zip',
+				'listing.state',
+				'listing.city',
+				'listing.slug',
+				'listing.title',
 				'photos'
-			]
-		})
+			])
+			.getOne()
 	}
 
 	async getMapListings(filters: GetMapListingsDto) {
@@ -557,6 +559,7 @@ export class ListingQueryService {
 			.skip(offset)
 			.take(limit)
 			.orderBy('listing.createdAt', 'DESC')
+			.addOrderBy('photos.position', 'ASC')
 			.select([
 				'listing.id',
 				'listing.status',

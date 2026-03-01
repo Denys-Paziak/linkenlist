@@ -11,6 +11,8 @@ import { Dispatch, SetStateAction } from "react";
 import { move } from "@dnd-kit/helpers";
 import { Button } from "../../../../../../../../components/ui/button";
 import { Input } from "../../../../../../../../components/ui/input-listing-variant";
+import { useParams } from "next/navigation";
+import { fetcherUser } from "../../../../../../../../lib/fetcher";
 
 export function PhotoPreview({
   status,
@@ -131,7 +133,19 @@ function Photo({
   index: number;
   setIsDirty: () => void;
 }) {
+  const { id } = useParams();
+
   const { ref, handleRef, sortable } = useSortable({ id: photoData.id, index });
+
+  const onDelete = async (photoId: number) => {
+    await fetcherUser(
+      `/listings/${id}/delete-image/${photoId}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -155,6 +169,7 @@ function Photo({
               setPhotos((state) =>
                 state.filter((item) => item.id !== photoData.id)
               );
+              onDelete(photoData.id)
             }}
           >
             <X className="h-4 w-4" />
