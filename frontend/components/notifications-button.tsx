@@ -52,20 +52,23 @@ export function NotificationsButton({
   return (
     <div className="relative notifications-container">
       <button
-        className="relative px-4 py-2 text-white hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-[#FFDD00] transition-all duration-150 ease-in-out rounded-md touch-manipulation"
+        className="max-md:w-full relative px-4 py-2 max-md:px-3 max-md:py-1.5 max-md:hover:bg-white/20 text-white hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-[#FFDD00] transition-all duration-150 ease-in-out rounded-md touch-manipulation"
         aria-label="Notifications"
         onClick={() => setIsNotificationsOpen(true)}
       >
-        <Bell className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4" />
+          <p className="hidden max-md:block text-sm">Notifications</p>
+        </div>
         {(data?.[1] || 0) > 0 && (
-          <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 max-md:left-[130px] bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {(data?.[1] || 0) > 9 ? "9+" : data?.[1]}
           </span>
         )}
       </button>
 
       {isNotificationsOpen && (
-        <div className="absolute top-full right-0 mt-1 w-[20rem] bg-white border border-gray-200 rounded-lg shadow-xl z-[1010] animate-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full right-0 max-md:right-auto max-md:left-0  mt-1 w-[20rem] bg-white border border-gray-200 rounded-lg shadow-xl z-[1010] animate-in slide-in-from-top-2 duration-200">
           <div className="py-2">
             <div className="px-4 py-2 border-b border-gray-100">
               <p className="text-sm font-bold text-foreground">Notifications</p>

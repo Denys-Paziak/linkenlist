@@ -71,7 +71,7 @@ export function MobileFilter({ isOpen, onClose }: MobileFilterProps) {
             <Sort />
           </div>
 
-          <Actions />
+          <Actions onClose={onClose} />
         </div>
       </div>
     </div>

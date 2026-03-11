@@ -176,7 +176,7 @@ export function Header() {
         {isMobileMenuOpen && (
           <>
             <div
-              className="fixed inset-0 bg-black/50 z-[999] md:hidden"
+              className="fixed inset-0 top-14 bg-black/50 z-[999] md:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
 
@@ -308,7 +308,7 @@ function LogOutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors text-left rounded"
+      className="flex items-center w-full gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors text-left rounded max-md:text-white max-md:hover:bg-white/20 max-md:hover:text-white max-md:px-3 max-md:py-1.5"
     >
       {status === "idle" ? (
         <LogOut className="h-4 w-4" />

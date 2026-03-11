@@ -7,7 +7,11 @@ import { Button } from "../../../../../../components/ui/button";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-export function Actions() {
+export function Actions({
+  onClose
+}: {
+  onClose: () => void;
+}) {
   const { setQuery } = useSearchContext();
   const searchParams = useSearchParams()
 
@@ -364,7 +368,10 @@ export function Actions() {
   return (
     <div className="flex gap-2 p-4">
       <Button
-        onClick={applyFilters}
+        onClick={() => {
+          applyFilters()
+          onClose()
+        }}
         className="flex-1 bg-slate-700 hover:bg-slate-800 text-white"
       >
         Apply Filters
